@@ -37,6 +37,9 @@ public class Maze : MonoBehaviour
         float yPos = (location.y - size.y * 0.5f) * cellScaleY;
         newCell.transform.position = new Vector3(xPos, yPos, 0f);
 
+        newCell.row = location.x;
+        newCell.col = location.y;
+
         return newCell;
     }
 

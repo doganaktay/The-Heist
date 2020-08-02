@@ -1,10 +1,16 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class MazeCell : MonoBehaviour
 {
     public IntVector2 pos;
+	public int areaIndex;
+	public int state = 0;
+	public int row, col;
+
+	public TextMeshPro cellText;
 
 	public bool visited = false;
 

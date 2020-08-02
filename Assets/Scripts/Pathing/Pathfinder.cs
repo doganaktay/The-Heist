@@ -116,19 +116,22 @@ public class Pathfinder : MonoBehaviour
                     if (cell == endCell)
                     { pathFound = true; break; }
                 }
-            }   
+            }
         }
 
         if(!pathFound)
         { Debug.Log("no available path"); return null; }
 
+        maze.cells[endPos.x, endPos.y].state = 1;
         path.Add(maze.cells[endPos.x, endPos.y]);
         var previous = maze.cells[endPos.x, endPos.y].exploredFrom;
         while (previous != startCell)
         {
+            previous.state = 1;
             path.Add(previous);
             previous = previous.exploredFrom;
         }
+        startCell.state = 1;
         path.Add(startCell);
         path.Reverse();
 
@@ -155,6 +158,7 @@ public class Pathfinder : MonoBehaviour
             cell.exploredFrom = null;
             cell.distanceFromStart = 0;
             cell.transform.GetChild(0).GetComponent<Renderer>().material.color = Color.white;
+            cell.state = 0;
         }
     }
 
