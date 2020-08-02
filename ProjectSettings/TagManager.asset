@@ -13,9 +13,9 @@ TagManager:
   - UI
   - 
   - 
-  - 
-  - 
-  - 
+  - Player
+  - Wall
+  - Cell
   - 
   - 
   - 
@@ -40,4 +40,10 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Maze
+    uniqueID: 2898884375
+    locked: 0
+  - name: OnMaze
+    uniqueID: 3043528123
     locked: 0

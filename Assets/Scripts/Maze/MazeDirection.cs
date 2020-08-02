@@ -57,5 +57,12 @@ public static class MazeDirections
 		return rotations[(int)direction];
 	}
 
-	
+	// MazeCellWall extension method, in here because this is currently the only static class
+	public static void RemoveWall(this MazeCellWall wall)
+	{
+		wall.cell.connectedCells.Add(wall.otherCell);
+		wall.otherCell.connectedCells.Add(wall.cell);
+
+		GameObject.Destroy(wall.gameObject);
+	}
 }

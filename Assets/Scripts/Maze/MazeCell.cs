@@ -8,9 +8,10 @@ public class MazeCell : MonoBehaviour
 
 	public bool visited = false;
 
-	public List<MazeCell> connectedCells = new List<MazeCell>();
+	public HashSet<MazeCell> connectedCells = new HashSet<MazeCell>();
 	public MazeCell exploredFrom;
 	public int distanceFromStart;
+	public int travelCost;
 
 	private MazeCellEdge[] edges = new MazeCellEdge[MazeDirections.Count];
 

@@ -83,19 +83,15 @@ public class Maze : MonoBehaviour
                 CreatePassage(currentCell, neighbor, direction);
                 activeCells.Add(neighbor);
 
-                if (!currentCell.connectedCells.Contains(neighbor))
-                    currentCell.connectedCells.Add(neighbor);
-                if (!neighbor.connectedCells.Contains(currentCell))
-                    neighbor.connectedCells.Add(currentCell);
+                currentCell.connectedCells.Add(neighbor);
+                neighbor.connectedCells.Add(currentCell);
             }
             else
             {
                 CreateWall(currentCell, neighbor, direction);
-
-                if (currentCell.connectedCells.Contains(neighbor))
-                    currentCell.connectedCells.Remove(neighbor);
-                if (neighbor.connectedCells.Contains(currentCell))
-                    neighbor.connectedCells.Remove(currentCell);
+ 
+                currentCell.connectedCells.Remove(neighbor);
+                neighbor.connectedCells.Remove(currentCell);
             }
         }
         else

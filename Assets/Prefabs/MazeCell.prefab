@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 3116785791752703769}
   - component: {fileID: 3116785791752703768}
   - component: {fileID: 4087401115876208777}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: MazeCell
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -49,8 +49,9 @@ MonoBehaviour:
     x: 0
     y: 0
   visited: 0
-  connectedCells: []
   exploredFrom: {fileID: 0}
+  distanceFromStart: 0
+  travelCost: 0
 --- !u!61 &4087401115876208777
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -61,7 +62,7 @@ BoxCollider2D:
   m_Enabled: 1
   m_Density: 1
   m_Material: {fileID: 0}
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
@@ -87,7 +88,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3116785793764658220}
   - component: {fileID: 3116785793764658221}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Cell
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -144,8 +145,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: -1396082921
+  m_SortingLayer: 1
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: bfb89ae64e4e143428ee2a3303386344, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
