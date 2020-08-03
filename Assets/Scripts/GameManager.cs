@@ -28,7 +28,9 @@ public class GameManager : MonoBehaviour
 		if (Input.GetKeyDown(KeyCode.Alpha1))
 		{
 			RestartGame();
-			Restart();
+
+			if(Restart != null)
+				Restart();
 		}
 	}
 
@@ -45,8 +47,10 @@ public class GameManager : MonoBehaviour
 							  mazeInstance.cells[0, 0].transform.position.y, -1f), Quaternion.identity);
 
 		ai.maze = mazeInstance;
+		ai.pathfinder = pathfinder;
 		ai.startPos = new IntVector2(0, 0);
 		ai.endPos = new IntVector2(mazeInstance.size.x - 1, mazeInstance.size.y - 1);
+		ai.NewPath();
 
 		MazeGenFinished();
 	}
@@ -55,7 +59,7 @@ public class GameManager : MonoBehaviour
 	{		
 		Destroy(mazeInstance.gameObject);
 		Destroy(player.gameObject);
-		Destroy(ai.gameObject);
+		ai.FlagAndDestroy();
 
 		BeginGame();
 	}

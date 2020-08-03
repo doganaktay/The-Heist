@@ -68,9 +68,9 @@ public class AreaFinder : MonoBehaviour
                 {
                     HashSet<int> neighbors = new HashSet<int>();
 
-                    if (k >= 0 && grid[j, k].state == 0)
+                    if (k >= 0 && grid[j, k].state == 0 && grid[j,k].connectedCells.Contains(grid[j,i]))
                         neighbors.Add(labels[j, k]);
-                    if (h >= 0 && grid[h, i].state == 0)
+                    if (h >= 0 && grid[h, i].state == 0 && grid[h, i].connectedCells.Contains(grid[j, i]))
                         neighbors.Add(labels[h, i]);
 
                     if (neighbors.Count == 0)
@@ -100,9 +100,9 @@ public class AreaFinder : MonoBehaviour
                 {
                     HashSet<int> neighbors = new HashSet<int>();
 
-                    if (k >= 0 && grid[j, k].state == 1)
+                    if (k >= 0 && grid[j, k].state == 1 && grid[j, k].connectedCells.Contains(grid[j, i]))
                         neighbors.Add(labels[j, k]);
-                    if (h >= 0 && grid[h, i].state == 1)
+                    if (h >= 0 && grid[h, i].state == 1 && grid[h, i].connectedCells.Contains(grid[j, i]))
                         neighbors.Add(labels[h, i]);
 
                     if (neighbors.Count == 0)
