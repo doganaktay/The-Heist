@@ -16,6 +16,7 @@ public class GameManager : MonoBehaviour
 	private Maze mazeInstance;
 
 	public event Action Restart;
+	public event Action MazeGenFinished;
 
 	private void Start()
 	{
@@ -26,8 +27,8 @@ public class GameManager : MonoBehaviour
 	{
 		if (Input.GetKeyDown(KeyCode.Alpha1))
 		{
-			Restart();
 			RestartGame();
+			Restart();
 		}
 	}
 
@@ -42,6 +43,7 @@ public class GameManager : MonoBehaviour
 		player = Instantiate(playerPrefab, new Vector3(transform.position.x, transform.position.y, -2f), Quaternion.identity);
 		ai = Instantiate(aiPrefab, new Vector3(mazeInstance.cells[0, 0].transform.position.x,
 							  mazeInstance.cells[0, 0].transform.position.y, -1f), Quaternion.identity);
+		MazeGenFinished();
 	}
 
 	private void RestartGame()

@@ -63,6 +63,6 @@ public static class MazeDirections
 		wall.cell.connectedCells.Add(wall.otherCell);
 		wall.otherCell.connectedCells.Add(wall.cell);
 
-		GameObject.Destroy(wall.gameObject);
+		wall.gameObject.SetActive(false);
 	}
 }

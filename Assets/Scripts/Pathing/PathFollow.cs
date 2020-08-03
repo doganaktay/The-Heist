@@ -18,12 +18,14 @@ public class PathFollow : MonoBehaviour
 
     public float stepTime = 0.5f;
 
+    //bool readyToDestroy = false;
+
     private void Awake()
     {
         gameManager = FindObjectOfType<GameManager>();
-        gameManager.Restart += RestartGame;
+        gameManager.MazeGenFinished += GetNewPath;
         player = FindObjectOfType<Player>();
-        player.MazeChange += GetNewPath;
+        player.MazeChange += UpdatePath;
     }
 
     void Start()
@@ -36,18 +38,17 @@ public class PathFollow : MonoBehaviour
     }
 
     void GetNewPath()
-    {        
-        // the coroutine needs to be cached when it is started for the stop command to work
-        StopCoroutine(followPath);
-        currentPath = pathfinder.SetNewPath(new IntVector2(currentCell.pos.x, currentCell.pos.y), endPos);
-        followPath = StartCoroutine(FollowPath());
-    }
-
-    void RestartGame()
     {
         StopCoroutine(followPath);
         transform.position = new Vector3(maze.cells[0, 0].transform.position.x,
                               maze.cells[0, 0].transform.position.y, -1f);
+        currentPath = pathfinder.SetNewPath(new IntVector2(currentCell.pos.x, currentCell.pos.y), endPos);
+        followPath = StartCoroutine(FollowPath());
+    }
+
+    void UpdatePath()
+    {
+        StopCoroutine(followPath);
         currentPath = pathfinder.SetNewPath(new IntVector2(currentCell.pos.x, currentCell.pos.y), endPos);
         followPath = StartCoroutine(FollowPath());
     }
@@ -78,7 +79,7 @@ public class PathFollow : MonoBehaviour
 
     private void OnDestroy()
     {
-        player.MazeChange -= GetNewPath;
-        gameManager.Restart -= RestartGame; ;
+        gameManager.MazeGenFinished -= GetNewPath;
+        player.MazeChange -= UpdatePath;
     }
 }

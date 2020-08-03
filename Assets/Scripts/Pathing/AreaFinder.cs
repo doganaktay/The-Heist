@@ -7,6 +7,7 @@ using TMPro;
 
 public class AreaFinder : MonoBehaviour
 {
+    GameManager gameManager;
     MazeCell[,] grid;
     public Maze maze;
 
@@ -19,6 +20,13 @@ public class AreaFinder : MonoBehaviour
     Dictionary<int, List<MazeCell>> lowCellAreas = new Dictionary<int, List<MazeCell>>();
     Dictionary<int, List<MazeCell>> highCellAreas = new Dictionary<int, List<MazeCell>>();
 
+    private void Start()
+    {
+        gameManager = FindObjectOfType<GameManager>();
+        gameManager.MazeGenFinished += FindAreas;
+        gameManager.Restart += FindAreas;
+    }
+
     public void FindAreas()
     {
         SetNewGrid();
@@ -27,7 +35,8 @@ public class AreaFinder : MonoBehaviour
 
     public void SetNewGrid()
     {
-        grid = new MazeCell[maze.size.x, maze.size.y];
+        if(grid == null)
+            grid = new MazeCell[maze.size.x, maze.size.y];
 
         for (int i = 0; i < maze.size.x; i++)
         {
@@ -36,6 +45,12 @@ public class AreaFinder : MonoBehaviour
                 grid[i, j] = maze.cells[i, j];
             }
         }
+    }
+
+    void OnDestroy()
+    {
+        gameManager.MazeGenFinished -= FindAreas;
+        gameManager.Restart -= FindAreas;
     }
 
 

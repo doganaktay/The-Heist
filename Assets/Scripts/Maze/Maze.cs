@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -14,6 +15,8 @@ public class Maze : MonoBehaviour
     public MazeCellPassage passagePrefab;
     public MazeCellWall wallPrefab;
 
+    public event Action MazeGenFinished;
+
     public void Generate()
     {
         cells = new MazeCell[size.x, size.y];
@@ -24,6 +27,8 @@ public class Maze : MonoBehaviour
         {
             DoNextGenerationStep(activeCells);
         }
+
+        //MazeGenFinished();
     }
 
     MazeCell CreateCell(IntVector2 location)
@@ -47,7 +52,7 @@ public class Maze : MonoBehaviour
     {
         get
         {
-            return new IntVector2(Random.Range(0, size.x), Random.Range(0, size.y));
+            return new IntVector2(UnityEngine.Random.Range(0, size.x), UnityEngine.Random.Range(0, size.y));
         }
     }
 

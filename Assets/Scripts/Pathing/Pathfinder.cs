@@ -13,20 +13,6 @@ public class Pathfinder : MonoBehaviour
     List<MazeCell> path = new List<MazeCell>();
     bool pathFound;
 
-    //int pathIndex = 0;
-
-    //private void Update()
-    //{
-    //    RaycastHit2D[] hits = new RaycastHit2D[10];
-    //    ContactFilter2D filter = new ContactFilter2D();
-    //    if (Input.GetMouseButtonDown(0))
-    //    {
-    //        if (Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector3.forward, filter, results: hits) > 0 && pathIndex % 2 == 0)
-    //        { startCell = hits[0].collider.GetComponent<MazeCell>(); pathIndex++; }
-    //        else if (Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector3.forward, filter, results: hits) > 0 && pathIndex % 2 == 1)
-    //        { endCell = hits[0].collider.GetComponent<MazeCell>(); pathIndex++; }
-    //    }
-    //}
 
     // get path with start and end points supplied
     public List<MazeCell> SetNewPath(IntVector2 start, IntVector2 end)
@@ -169,4 +155,18 @@ public class Pathfinder : MonoBehaviour
         if (GUI.Button(new Rect(10, 70, 80, 60), "Find Path"))
             GetPath();
     }
+    //int pathIndex = 0;
+
+    //private void Update()
+    //{
+    //    RaycastHit2D[] hits = new RaycastHit2D[10];
+    //    ContactFilter2D filter = new ContactFilter2D();
+    //    if (Input.GetMouseButtonDown(0))
+    //    {
+    //        if (Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector3.forward, filter, results: hits) > 0 && pathIndex % 2 == 0)
+    //        { startCell = hits[0].collider.GetComponent<MazeCell>(); pathIndex++; }
+    //        else if (Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector3.forward, filter, results: hits) > 0 && pathIndex % 2 == 1)
+    //        { endCell = hits[0].collider.GetComponent<MazeCell>(); pathIndex++; }
+    //    }
+    //}
 }
