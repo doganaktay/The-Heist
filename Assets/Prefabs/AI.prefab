@@ -133,6 +133,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f60d1cd4dbd2463c97d4c5c04ff6acf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  maze: {fileID: 0}
   pathfinder: {fileID: 0}
   startPos:
     x: 0
@@ -140,4 +141,4 @@ MonoBehaviour:
   endPos:
     x: 31
     y: 17
-  stepTime: 0.1
+  stepTime: 1

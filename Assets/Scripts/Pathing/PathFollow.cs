@@ -16,7 +16,8 @@ public class PathFollow : MonoBehaviour
 
     public IntVector2 startPos, endPos;
 
-    public float stepTime = 0.5f;
+    float stepTime;
+    public float stepMultiplier = 1f;
 
     //bool readyToDestroy = false;
 
@@ -30,12 +31,6 @@ public class PathFollow : MonoBehaviour
         pathfinder = FindObjectOfType<Pathfinder>();
     }
 
-    //void Start()
-    //{
-    //    currentPath = pathfinder.SetNewPath(startPos, endPos);
-    //    followPath = StartCoroutine(FollowPath());
-    //}
-
     public void NewPath()
     {
         if(followPath != null)
@@ -43,6 +38,7 @@ public class PathFollow : MonoBehaviour
         transform.position = new Vector3(maze.cells[0, 0].transform.position.x,
                               maze.cells[0, 0].transform.position.y, -1f);
         currentPath = pathfinder.SetNewPath(startPos, endPos);
+        stepTime = stepMultiplier * maze.cells[endPos.x, endPos.y].distanceFromStart / (float)(maze.size.x * maze.size.y);
         followPath = StartCoroutine(FollowPath());
     }
 
@@ -51,8 +47,8 @@ public class PathFollow : MonoBehaviour
         if (followPath != null)
             StopCoroutine(followPath);
         currentPath = pathfinder.SetNewPath(new IntVector2(currentCell.pos.x, currentCell.pos.y), endPos);
+        stepTime = stepMultiplier * maze.cells[endPos.x, endPos.y].distanceFromStart / (float)(maze.size.x * maze.size.y);
         followPath = StartCoroutine(FollowPath());
-
         pathfinder.areafinder.FindAreas();
 
     }
@@ -77,7 +73,7 @@ public class PathFollow : MonoBehaviour
 
             while (rb.position != (Vector2)currentPath[i].transform.position)
             {
-                rb.position = Vector2.MoveTowards(rb.position, currentPath[i].transform.position, 1f);
+                rb.position = Vector2.MoveTowards(rb.position, currentPath[i].transform.position, stepTime);
                 yield return null;
             }
 
