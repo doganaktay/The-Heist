@@ -28,6 +28,7 @@ public class PathFollow : MonoBehaviour
         gameManager.MazeGenFinished += NewPath;
         player = FindObjectOfType<Player>();
         player.MazeChange += UpdatePath;
+
         rb = GetComponent<Rigidbody2D>();
         pathfinder = FindObjectOfType<Pathfinder>();
     }
@@ -50,8 +51,6 @@ public class PathFollow : MonoBehaviour
         currentPath = pathfinder.SetNewPath(new IntVector2(currentCell.pos.x, currentCell.pos.y), endPos);
         stepTime = Mathf.Max(0.05f, stepMultiplier * maze.cells[endPos.x, endPos.y].distanceFromStart / (maze.size.x * maze.size.y));
         followPath = StartCoroutine(FollowPath());
-        pathfinder.areafinder.FindAreas();
-
     }
 
     public void FlagAndDestroy()

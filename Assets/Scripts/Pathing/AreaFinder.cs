@@ -169,44 +169,22 @@ public class AreaFinder : MonoBehaviour
             }
         }
 
-        DeterminePaths();
-        //SetPaths();
+        SetPaths();
+        DetermineConnections();
     }
 
-    void DeterminePaths()
+    void DetermineConnections()
     {
         foreach (var lowCellArea in lowCellAreas)
         {
             lowCellConnected.Add(lowCellArea.Key, new List<MazeCell>());
-            //SearchNeighbours(lowCellConnected[lowCellArea.Key], lowCellArea.Value[0]);
         }
 
         foreach (var highCellArea in highCellAreas)
         {
             highCellConnected.Add(highCellArea.Key, new List<MazeCell>());
-            SearchNeighbours(highCellConnected[highCellArea.Key], highCellArea.Value[0]);
+            SearchNeighbours(highCellArea.Value[0]);
         }
-
-        SetPaths();
-
-        foreach (var connectionCellBlock in highCellConnected)
-        {
-            foreach (var connectionCell in connectionCellBlock.Value)
-            {
-                connectionCell.cellText.color = Color.magenta;
-            }
-        }
-
-        foreach(var connectionCellBlock in lowCellConnected)
-        {
-            foreach(var connectionCell in connectionCellBlock.Value)
-            {
-                connectionCell.cellText.color = Color.yellow;
-            }
-        }
-
-
-        Debug.Log("Low cell area count: " + lowCellConnected.Count + " High cell area count: " + highCellConnected.Count);
     }
 
     void SetPaths()
@@ -215,11 +193,7 @@ public class AreaFinder : MonoBehaviour
         {
             for (int i = 0; i < maze.size.y; i++)
             {
-                if (grid[j, i].state == 0)
-                {
-                    grid[j, i].cellText.color = Color.red;
-                }
-                else
+                if (grid[j, i].state == 1)
                 {
                     grid[j, i].cellText.color = Color.white;
                     grid[j, i].cellText.text = grid[j, i].distanceFromStart.ToString();
@@ -228,7 +202,7 @@ public class AreaFinder : MonoBehaviour
         }
     }
 
-    void SearchNeighbours(List<MazeCell> connectedCells, MazeCell point)
+    void SearchNeighbours(MazeCell point)
     {
         int k = point.row - 1;
         int h = point.col - 1;
@@ -240,33 +214,53 @@ public class AreaFinder : MonoBehaviour
         if (m < maze.size.y && !grid[point.row, m].searched && grid[point.row, point.col].connectedCells.Contains(grid[point.row, m]))
         {
             if (grid[point.row, point.col].state == grid[point.row, m].state)
-                SearchNeighbours(connectedCells, grid[point.row, m]);
+                SearchNeighbours(grid[point.row, m]);
             else
-            { connectedCells.Add(grid[point.row, m]); lowCellConnected[grid[point.row, m].areaIndex].Add(grid[point.row, point.col]); }
+            {
+                grid[point.row, m].cellText.color = Color.magenta;
+                highCellConnected[grid[point.row, point.col].areaIndex].Add(grid[point.row, m]);
+                grid[point.row, point.col].cellText.color = Color.yellow;
+                lowCellConnected[grid[point.row, m].areaIndex].Add(grid[point.row, point.col]);
+            }
         }
 
         if (l < maze.size.x && !grid[l, point.col].searched && grid[point.row, point.col].connectedCells.Contains(grid[l, point.col]))
         {
             if (grid[point.row, point.col].state == grid[l, point.col].state)
-                SearchNeighbours(connectedCells, grid[l, point.col]);
+                SearchNeighbours(grid[l, point.col]);
             else
-            { connectedCells.Add(grid[l, point.col]); lowCellConnected[grid[l, point.col].areaIndex].Add(grid[point.row, point.col]); }
+            {
+                grid[l, point.col].cellText.color = Color.magenta;
+                highCellConnected[grid[point.row, point.col].areaIndex].Add(grid[l, point.col]);
+                grid[point.row, point.col].cellText.color = Color.yellow;
+                lowCellConnected[grid[l, point.col].areaIndex].Add(grid[point.row, point.col]);
+            }
         }
 
         if (h >= 0 && !grid[point.row, h].searched && grid[point.row, point.col].connectedCells.Contains(grid[point.row, h]))
         {
             if (grid[point.row, point.col].state == grid[point.row, h].state)
-                SearchNeighbours(connectedCells, grid[point.row, h]);
+                SearchNeighbours(grid[point.row, h]);
             else
-            { connectedCells.Add(grid[point.row, h]); lowCellConnected[grid[point.row, h].areaIndex].Add(grid[point.row, point.col]); }
+            {
+                grid[point.row, h].cellText.color = Color.magenta;
+                highCellConnected[grid[point.row, point.col].areaIndex].Add(grid[point.row, h]);
+                grid[point.row, point.col].cellText.color = Color.yellow;
+                lowCellConnected[grid[point.row, h].areaIndex].Add(grid[point.row, point.col]);
+            }
         }
         if (k >= 0 && !grid[k, point.col].searched && grid[point.row, point.col].connectedCells.Contains(grid[k, point.col]))
         {
 
             if (grid[point.row, point.col].state == grid[k, point.col].state)
-                SearchNeighbours(connectedCells, grid[k, point.col]);
+                SearchNeighbours(grid[k, point.col]);
             else
-            { connectedCells.Add(grid[k, point.col]); lowCellConnected[grid[k, point.col].areaIndex].Add(grid[point.row, point.col]); }
+            {
+                grid[k, point.col].cellText.color = Color.magenta;
+                highCellConnected[grid[point.row, point.col].areaIndex].Add(grid[k, point.col]);
+                grid[point.row, point.col].cellText.color = Color.yellow;
+                lowCellConnected[grid[k, point.col].areaIndex].Add(grid[point.row, point.col]);
+            }
         }
     }
 

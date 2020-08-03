@@ -153,6 +153,7 @@ public class Pathfinder : MonoBehaviour
             cell.exploredFrom = null;
             cell.distanceFromStart = 0;
             cell.transform.GetChild(0).GetComponent<Renderer>().material.color = Color.white;
+            cell.cellText.color = Color.red;
             cell.state = 0;
         }
     }

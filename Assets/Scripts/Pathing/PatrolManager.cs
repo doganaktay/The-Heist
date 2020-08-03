@@ -21,7 +21,6 @@ public class PatrolManager : MonoBehaviour
 
     public void CreateNewPatrol()
     {
-
         List<MazeCell> currentPath = pathfinder.GetCurrentPath();
 
         if (currentPath == null) return;
