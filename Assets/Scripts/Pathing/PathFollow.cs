@@ -23,7 +23,7 @@ public class PathFollow : MonoBehaviour
     private void Awake()
     {
         gameManager = FindObjectOfType<GameManager>();
-        gameManager.MazeGenFinished += GetNewPath;
+        gameManager.MazeGenFinished += NewPath;
         player = FindObjectOfType<Player>();
         player.MazeChange += UpdatePath;
     }
@@ -37,12 +37,12 @@ public class PathFollow : MonoBehaviour
         followPath = StartCoroutine(FollowPath());
     }
 
-    void GetNewPath()
+    void NewPath()
     {
         StopCoroutine(followPath);
         transform.position = new Vector3(maze.cells[0, 0].transform.position.x,
                               maze.cells[0, 0].transform.position.y, -1f);
-        currentPath = pathfinder.SetNewPath(new IntVector2(currentCell.pos.x, currentCell.pos.y), endPos);
+        currentPath = pathfinder.SetNewPath(startPos, endPos);
         followPath = StartCoroutine(FollowPath());
     }
 
@@ -51,6 +51,9 @@ public class PathFollow : MonoBehaviour
         StopCoroutine(followPath);
         currentPath = pathfinder.SetNewPath(new IntVector2(currentCell.pos.x, currentCell.pos.y), endPos);
         followPath = StartCoroutine(FollowPath());
+
+        pathfinder.areafinder.FindAreas();
+
     }
 
     IEnumerator FollowPath()
@@ -79,7 +82,7 @@ public class PathFollow : MonoBehaviour
 
     private void OnDestroy()
     {
-        gameManager.MazeGenFinished -= GetNewPath;
+        gameManager.MazeGenFinished -= NewPath;
         player.MazeChange -= UpdatePath;
     }
 }

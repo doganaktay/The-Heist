@@ -15,8 +15,6 @@ public class Maze : MonoBehaviour
     public MazeCellPassage passagePrefab;
     public MazeCellWall wallPrefab;
 
-    public event Action MazeGenFinished;
-
     public void Generate()
     {
         cells = new MazeCell[size.x, size.y];
@@ -27,8 +25,6 @@ public class Maze : MonoBehaviour
         {
             DoNextGenerationStep(activeCells);
         }
-
-        //MazeGenFinished();
     }
 
     MazeCell CreateCell(IntVector2 location)

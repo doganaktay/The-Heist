@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Pathfinder : MonoBehaviour
 {
+    public AreaFinder areafinder;
     public PatrolManager patrolManager;
     public Maze maze;
     public IntVector2 startPos, endPos;
@@ -50,17 +51,22 @@ public class Pathfinder : MonoBehaviour
         if (!pathFound)
         { Debug.Log("no available path"); return null; }
 
+        maze.cells[endPos.x, endPos.y].state = 1;
         path.Add(maze.cells[endPos.x, endPos.y]);
         var previous = maze.cells[endPos.x, endPos.y].exploredFrom;
         while (previous != startCell)
         {
+            previous.state = 1;
             path.Add(previous);
             previous = previous.exploredFrom;
         }
+        startCell.state = 1;
         path.Add(startCell);
         path.Reverse();
 
         DisplayPath(path, Color.red);
+
+        areafinder.FindAreas();
 
         return path;
     }
@@ -120,6 +126,8 @@ public class Pathfinder : MonoBehaviour
         startCell.state = 1;
         path.Add(startCell);
         path.Reverse();
+
+        areafinder.ResetGrid();
 
         DisplayPath(path, Color.red);
 
