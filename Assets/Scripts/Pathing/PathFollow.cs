@@ -17,6 +17,7 @@ public class PathFollow : MonoBehaviour
     public IntVector2 startPos, endPos;
 
     float stepTime;
+    [Tooltip("Multiplied with the percentage of cells that are part of the path to get a lerp step ratio")]
     public float stepMultiplier = 1f;
 
     //bool readyToDestroy = false;
@@ -38,7 +39,7 @@ public class PathFollow : MonoBehaviour
         transform.position = new Vector3(maze.cells[0, 0].transform.position.x,
                               maze.cells[0, 0].transform.position.y, -1f);
         currentPath = pathfinder.SetNewPath(startPos, endPos);
-        stepTime = stepMultiplier * maze.cells[endPos.x, endPos.y].distanceFromStart / (float)(maze.size.x * maze.size.y);
+        stepTime = Mathf.Max(0.05f, stepMultiplier * maze.cells[endPos.x, endPos.y].distanceFromStart / (maze.size.x * maze.size.y));
         followPath = StartCoroutine(FollowPath());
     }
 
@@ -47,7 +48,7 @@ public class PathFollow : MonoBehaviour
         if (followPath != null)
             StopCoroutine(followPath);
         currentPath = pathfinder.SetNewPath(new IntVector2(currentCell.pos.x, currentCell.pos.y), endPos);
-        stepTime = stepMultiplier * maze.cells[endPos.x, endPos.y].distanceFromStart / (float)(maze.size.x * maze.size.y);
+        stepTime = Mathf.Max(0.05f, stepMultiplier * maze.cells[endPos.x, endPos.y].distanceFromStart / (maze.size.x * maze.size.y));
         followPath = StartCoroutine(FollowPath());
         pathfinder.areafinder.FindAreas();
 

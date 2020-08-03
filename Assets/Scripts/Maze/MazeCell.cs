@@ -13,6 +13,7 @@ public class MazeCell : MonoBehaviour
 	public TextMeshPro cellText;
 
 	public bool visited = false;
+	public bool searched = false;
 
 	public HashSet<MazeCell> connectedCells = new HashSet<MazeCell>();
 	public MazeCell exploredFrom;

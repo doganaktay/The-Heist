@@ -127,7 +127,7 @@ public class Pathfinder : MonoBehaviour
         path.Add(startCell);
         path.Reverse();
 
-        areafinder.ResetGrid();
+        areafinder.FindAreas();
 
         DisplayPath(path, Color.red);
 
@@ -149,6 +149,7 @@ public class Pathfinder : MonoBehaviour
         foreach(MazeCell cell in maze.cells)
         {
             cell.visited = false;
+            cell.searched = false;
             cell.exploredFrom = null;
             cell.distanceFromStart = 0;
             cell.transform.GetChild(0).GetComponent<Renderer>().material.color = Color.white;
