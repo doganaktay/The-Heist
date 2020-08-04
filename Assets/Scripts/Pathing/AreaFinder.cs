@@ -38,8 +38,6 @@ public class AreaFinder : MonoBehaviour
         {
             DisplayEntryPoints();
             player.hitIndexChanged = false;
-
-            Debug.Log("entry points updated");
         }
     }
 

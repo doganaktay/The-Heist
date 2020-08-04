@@ -14,6 +14,8 @@ public class Player : MonoBehaviour
     int lastAreaIndex;
     public bool hitIndexChanged = false;
     public int cellState;
+    int lastCellState;
+    public bool cellStateChanged = false;
 
     Collider2D[] hits;
     Collider2D previousHit;
@@ -73,10 +75,11 @@ public class Player : MonoBehaviour
             if (cell.state == 0)
                 areaIndex = cell.areaIndex;
 
-            if (lastAreaIndex != areaIndex)
+            if (lastAreaIndex != areaIndex || lastCellState != cellState)
                 hitIndexChanged = true;
 
             lastAreaIndex = areaIndex;
+            lastCellState = cellState;
             previousHit = hits[0];
 
         }
