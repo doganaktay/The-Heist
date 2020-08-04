@@ -7,6 +7,10 @@ using TMPro;
 
 public class AreaFinder : MonoBehaviour
 {
+    // need this reference to highlight entry points
+    // set by game manager
+    public Player player;
+
     MazeCell[,] grid;
     public Maze maze;
 
@@ -21,6 +25,43 @@ public class AreaFinder : MonoBehaviour
 
     Dictionary<int, List<MazeCell>> lowCellConnected = new Dictionary<int, List<MazeCell>>();
     Dictionary<int, List<MazeCell>> highCellConnected = new Dictionary<int, List<MazeCell>>();
+
+    List<MazeCell> entryCells = new List<MazeCell>();
+
+    public List<MazeCell> GetRandomArea(){ return lowCellAreas.ElementAt(UnityEngine.Random.Range(0, 1)).Value; }
+    public List<MazeCell> GetPathLinkPoints(int areaIndex){ return lowCellConnected[areaIndex]; }
+    public List<MazeCell> GetPatrolAreaIndex(int areaIndex) { return lowCellAreas[areaIndex]; }
+
+    void Update()
+    {
+        if (player.hitIndexChanged)
+        {
+            DisplayEntryPoints();
+            player.hitIndexChanged = false;
+
+            Debug.Log("entry points updated");
+        }
+    }
+
+    public void DisplayEntryPoints()
+    {
+        foreach (var cell in entryCells)
+        {
+            cell.mat.color = cell.startColor;
+        }
+
+        entryCells.Clear();
+
+        if (player.cellState == 1) return;
+
+        entryCells.AddRange(GetPathLinkPoints(player.areaIndex));
+
+        foreach(var cell in entryCells)
+        {
+            cell.mat.color = Color.black;
+            Debug.Log(cell.name);
+        }
+    }
 
     public void FindAreas()
     {
@@ -270,6 +311,7 @@ public class AreaFinder : MonoBehaviour
         if (GUI.Button(new Rect(10, 130, 80, 60), "Find Areas"))
             FindAreas();
     }
+
     //    void DropLongestHighAreaCCL()
     //    {
     //        if (allDropped) return;

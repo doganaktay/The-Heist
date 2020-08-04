@@ -6,14 +6,21 @@ using UnityEngine;
 public class Player : MonoBehaviour
 {
     Rigidbody2D rb;
+    Transform playerPos;
     public float speed;
     [Range(0.001f, 0.999f)]
     public float brakeSpeed = 0.1f;
+    public int areaIndex = 0;
+    int lastAreaIndex;
+    public bool hitIndexChanged = false;
+    public int cellState;
 
     Collider2D[] hits;
-    int wallLayerMask = 1 << 9;
+    Collider2D previousHit;
+    static int wallLayerMask = 1 << 9;
+    static int cellLayerMask = 1 << 10;
 
-    public event Action MazeChange;   
+    public event Action MazeChange;
 
     private void Start()
     {
@@ -48,5 +55,31 @@ public class Player : MonoBehaviour
                 MazeChange();
             }
         }
+
+        TrackLocation();
     }
+
+    void TrackLocation()
+    {
+        int hitCount = Physics2D.OverlapCircleNonAlloc(transform.position, 3.5f, results: hits, cellLayerMask);
+
+        if (hitCount > 0)
+        {
+            if (hits[0] == previousHit) { return; }
+
+            MazeCell cell = hits[0].GetComponent<MazeCell>();
+            cellState = cell.state;
+
+            if (cell.state == 0)
+                areaIndex = cell.areaIndex;
+
+            if (lastAreaIndex != areaIndex)
+                hitIndexChanged = true;
+
+            lastAreaIndex = areaIndex;
+            previousHit = hits[0];
+
+        }
+    }
+    
 }

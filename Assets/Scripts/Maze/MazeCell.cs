@@ -11,6 +11,8 @@ public class MazeCell : MonoBehaviour
 	public int row, col;
 
 	public TextMeshPro cellText;
+	public Material mat;
+	public Color startColor;
 
 	public bool visited = false;
 	public bool searched = false;
@@ -22,7 +24,13 @@ public class MazeCell : MonoBehaviour
 
 	private MazeCellEdge[] edges = new MazeCellEdge[MazeDirections.Count];
 
-	public MazeCellEdge GetEdge(MazeDirection direction)
+    void Start()
+    {
+		mat = transform.GetChild(0).GetComponent<Renderer>().material;
+		startColor = mat.color;
+    }
+
+    public MazeCellEdge GetEdge(MazeDirection direction)
 	{
 		return edges[(int)direction];
 	}
