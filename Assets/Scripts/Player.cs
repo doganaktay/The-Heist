@@ -15,7 +15,9 @@ public class Player : MonoBehaviour
     public bool hitIndexChanged = false;
     public int cellState;
     int lastCellState;
-    public bool cellStateChanged = false;
+    MazeCell lastCell;
+    public MazeCell currentCell;
+    public bool cellChanged = false;
 
     Collider2D[] hits;
     Collider2D previousHit;
@@ -67,19 +69,31 @@ public class Player : MonoBehaviour
 
         if (hitCount > 0)
         {
-            if (hits[0] == previousHit) { return; }
+            float dist = Mathf.Infinity;
+            int closestIndex = 0;
+            for(int i = 0; i < hitCount; i++)
+            {
+                var temp = Vector2.Distance(hits[i].transform.position, transform.position);
+                dist = temp < dist ? temp : dist;
+                if(temp < dist)
+                {
+                    dist = temp;
+                    closestIndex = i;
+                }
+            }
 
-            MazeCell cell = hits[0].GetComponent<MazeCell>();
-            cellState = cell.state;
+            if (hits[closestIndex] == previousHit) { return; }
 
-            if (cell.state == 0)
-                areaIndex = cell.areaIndex;
+            currentCell = hits[closestIndex].GetComponent<MazeCell>();
+            cellChanged = true;
 
-            if (lastAreaIndex != areaIndex || lastCellState != cellState)
+            cellState = currentCell.state;
+            areaIndex = currentCell.areaIndex;
+
+            if (lastAreaIndex != areaIndex)
                 hitIndexChanged = true;
 
             lastAreaIndex = areaIndex;
-            lastCellState = cellState;
             previousHit = hits[0];
 
         }

@@ -14,20 +14,26 @@ public class MazeCell : MonoBehaviour
 	public Material mat;
 	public Color startColor;
 
-	public bool visited = false;
+	public bool[] visited;
 	public bool searched = false;
 
 	public HashSet<MazeCell> connectedCells = new HashSet<MazeCell>();
-	public MazeCell exploredFrom;
-	public int distanceFromStart;
-	public int travelCost;
+	public MazeCell[] exploredFrom;
+	public int[] distanceFromStart;
+	
 
 	private MazeCellEdge[] edges = new MazeCellEdge[MazeDirections.Count];
 
-    void Start()
+    void Awake()
     {
 		mat = transform.GetChild(0).GetComponent<Renderer>().material;
 		startColor = mat.color;
+
+		visited = new bool[5];
+		for(int i = 0; i < visited.Length; i++)
+        { visited[i] = false; }
+		exploredFrom = new MazeCell[5];
+		distanceFromStart = new int[5];
     }
 
     public MazeCellEdge GetEdge(MazeDirection direction)

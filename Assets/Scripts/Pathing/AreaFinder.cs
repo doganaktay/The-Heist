@@ -29,8 +29,8 @@ public class AreaFinder : MonoBehaviour
     List<MazeCell> entryCells = new List<MazeCell>();
 
     public List<MazeCell> GetRandomArea(){ return lowCellAreas.ElementAt(UnityEngine.Random.Range(0, 1)).Value; }
-    public List<MazeCell> GetPathLinkPoints(int areaIndex){ return lowCellConnected[areaIndex]; }
-    public List<MazeCell> GetPatrolAreaIndex(int areaIndex) { return lowCellAreas[areaIndex]; }
+    public List<MazeCell> GetPatrolAreaIndex(int areaIndex){ return lowCellAreas[areaIndex]; }
+    public List<MazeCell> GetConnectionPoints(int areaIndex){ return lowCellConnected[areaIndex]; }
 
     void Update()
     {
@@ -45,19 +45,18 @@ public class AreaFinder : MonoBehaviour
     {
         foreach (var cell in entryCells)
         {
-            cell.mat.color = cell.startColor;
+            cell.mat.color = Color.red;
         }
 
         entryCells.Clear();
 
         if (player.cellState == 1) return;
 
-        entryCells.AddRange(GetPathLinkPoints(player.areaIndex));
+        entryCells.AddRange(GetConnectionPoints(player.areaIndex));
 
         foreach(var cell in entryCells)
         {
             cell.mat.color = Color.black;
-            Debug.Log(cell.name);
         }
     }
 
@@ -235,7 +234,7 @@ public class AreaFinder : MonoBehaviour
                 if (grid[j, i].state == 1)
                 {
                     grid[j, i].cellText.color = Color.white;
-                    grid[j, i].cellText.text = grid[j, i].distanceFromStart.ToString();
+                    grid[j, i].cellText.text = grid[j, i].distanceFromStart[0].ToString();
                 }   
             }
         }
@@ -304,80 +303,9 @@ public class AreaFinder : MonoBehaviour
     }
 
 
-    private void OnGUI()
-    {
-        if (GUI.Button(new Rect(10, 130, 80, 60), "Find Areas"))
-            FindAreas();
-    }
-
-    //    void DropLongestHighAreaCCL()
-    //    {
-    //        if (allDropped) return;
-
-    //        int highestCount = 0;
-    //        int highestIndex = 0;
-
-    //        foreach (var highCellArea in highCellAreas)
-    //        {
-    //            if(highCellArea.Value.Count > highestCount)
-    //            {
-    //                highestCount = highCellArea.Value.Count;
-    //                highestIndex = highCellArea.Key;
-    //            }
-    //        }
-
-    //        foreach (MazeCell point in highCellAreas[highestIndex])
-    //        {
-    //            StartCoroutine(MoveCellDown(point.cell));
-    //        }
-
-    //        highCellAreas.Remove(highestIndex);
-
-    //        if (highCellAreas.Count == 0)
-    //        {
-    //            allDropped = true;
-    //        }
-    //    }
-
-    //    void DropShortestHighAreaCCL()
-    //    {
-    //        if (allDropped) return;
-
-    //        int lowestCount = 10000;
-    //        int lowestIndex = 0;
-
-    //        foreach (var highCellArea in highCellAreas)
-    //        {
-    //            if (highCellArea.Value.Count < lowestCount)
-    //            {
-    //                lowestCount = highCellArea.Value.Count;
-    //                lowestIndex = highCellArea.Key;
-    //            }
-    //        }
-
-    //        foreach (MazeCell point in highCellAreas[lowestIndex])
-    //        {
-    //            StartCoroutine(MoveCellDown(point.cell));
-    //        }
-
-    //        highCellAreas.Remove(lowestIndex);
-
-    //        if (highCellAreas.Count == 0)
-    //        {
-    //            allDropped = true;
-    //        }
-    //    }
-
-    //    void RaiseAreas()
-    //    {
-    //        foreach(var highCellArea in highCellAreas)
-    //        {
-    //            foreach (MazeCell point in highCellArea.Value)
-    //            {
-    //                StartCoroutine(MoveCell(point.cell));
-    //            }
-    //        }
-    //    }
-
-
+    //private void OnGUI()
+    //{
+    //    if (GUI.Button(new Rect(10, 130, 80, 60), "Find Areas"))
+    //        FindAreas();
+    //}
 }

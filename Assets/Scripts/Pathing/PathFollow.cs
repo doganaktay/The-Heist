@@ -37,10 +37,10 @@ public class PathFollow : MonoBehaviour
     {
         if(followPath != null)
             StopCoroutine(followPath);
-        transform.position = new Vector3(maze.cells[0, 0].transform.position.x,
-                              maze.cells[0, 0].transform.position.y, -1f);
+        transform.position = new Vector3(maze.cells[startPos.x, startPos.y].transform.position.x,
+                              maze.cells[startPos.x, startPos.y].transform.position.y, -1f);
         currentPath = pathfinder.SetNewPath(startPos, endPos);
-        stepTime = Mathf.Max(0.05f, stepMultiplier * maze.cells[endPos.x, endPos.y].distanceFromStart / (maze.size.x * maze.size.y));
+        stepTime = Mathf.Max(0.05f, stepMultiplier * maze.cells[endPos.x, endPos.y].distanceFromStart[0] / (maze.size.x * maze.size.y));
         followPath = StartCoroutine(FollowPath());
     }
 
@@ -49,7 +49,7 @@ public class PathFollow : MonoBehaviour
         if (followPath != null)
             StopCoroutine(followPath);
         currentPath = pathfinder.SetNewPath(new IntVector2(currentCell.pos.x, currentCell.pos.y), endPos);
-        stepTime = Mathf.Max(0.05f, stepMultiplier * maze.cells[endPos.x, endPos.y].distanceFromStart / (maze.size.x * maze.size.y));
+        stepTime = Mathf.Max(0.05f, stepMultiplier * maze.cells[endPos.x, endPos.y].distanceFromStart[0] / (maze.size.x * maze.size.y));
         followPath = StartCoroutine(FollowPath());
     }
 
@@ -61,7 +61,7 @@ public class PathFollow : MonoBehaviour
 
     IEnumerator FollowPath()
     {
-        var endPos = pathfinder.GetDestination();
+        var endPos = pathfinder.GetDestination(0);
 
         for(int i = 0; i < currentPath.Count; i++)
         {

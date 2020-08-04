@@ -1,190 +1,273 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class Pathfinder : MonoBehaviour
 {
+    public Player player;
     public AreaFinder areafinder;
     public PatrolManager patrolManager;
     public Maze maze;
     public IntVector2 startPos, endPos;
-    MazeCell startCell, endCell;
 
-    Queue<MazeCell> queue = new Queue<MazeCell>();
-    List<MazeCell> path = new List<MazeCell>();
-    bool pathFound;
+    // path
+    MazeCell[] startCell;
+    MazeCell[] endCell;
+    Queue<MazeCell>[] queue;
+    List<MazeCell>[] path;
+    List<MazeCell> explored;
+    bool[] pathFound;
 
+    public bool gameHasReset = false;
+
+    int searchSize = 5;
+    int currentSearchIndex = 0;
+
+    private void Start()
+    {
+        pathFound = new bool[searchSize];
+        queue = new Queue<MazeCell>[searchSize];
+        path = new List<MazeCell>[searchSize];
+        startCell = new MazeCell[searchSize];
+        endCell = new MazeCell[searchSize];
+
+    }
+
+    void Update()
+    {
+        if (player.cellChanged)
+        {
+            if (player.currentCell.state == 0)
+                SetNewSecondaryPath(player.currentCell.pos, player.areaIndex);
+            else
+            {
+                if(!gameHasReset)
+                    ResetCells(explored, 1);
+            }
+
+        player.cellChanged = false;
+        }
+    }
+
+    private void OnGUI()
+    {
+        if (GUI.Button(new Rect(10, 70, 80, 60), "get path"))
+            Update();
+    }
+
+    int GetSearchIndex()
+    {
+        currentSearchIndex++;
+
+        if (currentSearchIndex == searchSize)
+            currentSearchIndex = 1;
+
+        return currentSearchIndex;
+    }
 
     // get path with start and end points supplied
-    public List<MazeCell> SetNewPath(IntVector2 start, IntVector2 end)
+    public List<MazeCell> SetNewSecondaryPath(IntVector2 pos, int areaIndex)
     {
-        if (maze.cells != null)
-            ResetPathfinding();
-        path.Clear();
-        pathFound = false;
+        int pathIndex = 1;
 
-        startCell = maze.cells[start.x, start.y];
-        queue.Enqueue(startCell);
-        startCell.visited = true;
-        endCell = maze.cells[end.x, end.y];
+        if (path[pathIndex] == null)
+            path[pathIndex] = new List<MazeCell>();
+
+        if (queue[pathIndex] == null)
+            queue[pathIndex] = new Queue<MazeCell>();
+
+        if (explored == null)
+            explored = new List<MazeCell>();
+
+        if (!gameHasReset)
+            ResetCells(explored, pathIndex);
+        else
+            gameHasReset = false;
+
+        explored.Clear();
+
+        path[pathIndex].Clear();
+        pathFound[pathIndex] = false;
+
+        var connectionPoints = areafinder.GetConnectionPoints(areaIndex);
+
+        List<MazeCell>[] alternatePaths = new List<MazeCell>[connectionPoints.Count];
+
+        for (int j = 0; j < connectionPoints.Count; j++)
+        {
+            if (alternatePaths[j] == null)
+                alternatePaths[j] = new List<MazeCell>();
+
+            startCell[pathIndex] = connectionPoints[j];
+            queue[pathIndex].Enqueue(startCell[pathIndex]);
+            startCell[pathIndex].visited[pathIndex] = true;
+            endCell[pathIndex] = maze.cells[pos.x, pos.y];
+
+            MazeCell currentCell;
+
+            while (queue[pathIndex].Count > 0)
+            {
+                currentCell = queue[pathIndex].Dequeue();
+
+                foreach (MazeCell cell in currentCell.connectedCells)
+                {
+                    if (!cell.visited[pathIndex] && cell.state == 0)
+                    {
+                        queue[pathIndex].Enqueue(cell);
+                        cell.visited[pathIndex] = true;
+                        cell.exploredFrom[pathIndex] = currentCell;
+                        cell.distanceFromStart[pathIndex] = 1 + cell.exploredFrom[pathIndex].distanceFromStart[pathIndex];
+
+                        explored.Add(cell);
+
+                        if (cell == endCell[pathIndex])
+                        {
+                            pathFound[pathIndex] = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (!pathFound[pathIndex])
+            { Debug.Log("no available path"); continue; }
+
+            alternatePaths[j].Add(endCell[pathIndex]);
+            var previous = endCell[pathIndex].exploredFrom[pathIndex];
+            while (previous != startCell[pathIndex])
+            {
+                alternatePaths[j].Add(previous);
+                previous = previous.exploredFrom[pathIndex];
+            }
+            alternatePaths[j].Add(startCell[pathIndex]);
+            alternatePaths[j].Reverse();
+
+            if(connectionPoints.Count > 1 && j < connectionPoints.Count - 1)
+                ResetCells(explored, pathIndex);
+        }
+
+        var ordered = alternatePaths.OrderBy(x => x.Count).ToArray();
+
+        path[pathIndex].AddRange(ordered[0]);
+
+
+        DisplayPath(path[pathIndex], new Color(0.3645f, 0.6643f, 0.9360f), pathIndex, false);
+
+        return path[pathIndex];
+    }
+
+    // get path with start and end points supplied
+    public List<MazeCell> SetNewPath(IntVector2 start, IntVector2 end, int pathIndex = 0)
+    {
+        ResetCells(pathIndex, true);
+
+        if (path[pathIndex] == null)
+            path[pathIndex] = new List<MazeCell>();
+        if (queue[pathIndex] == null)
+            queue[pathIndex] = new Queue<MazeCell>();
+
+        path[pathIndex].Clear();
+        pathFound[pathIndex] = false;
+
+        startCell[pathIndex] = maze.cells[start.x, start.y];
+        queue[pathIndex].Enqueue(startCell[pathIndex]);
+        startCell[pathIndex].visited[pathIndex] = true;
+        endCell[pathIndex] = maze.cells[end.x, end.y];
 
         MazeCell currentCell;
-        while (queue.Count > 0)
+        while (queue[pathIndex].Count > 0)
         {
-            currentCell = queue.Dequeue();
+            currentCell = queue[pathIndex].Dequeue();
 
             foreach (MazeCell cell in currentCell.connectedCells)
             {
-                if (!cell.visited)
+                if (!cell.visited[pathIndex])
                 {
-                    queue.Enqueue(cell);
-                    cell.visited = true;
-                    cell.exploredFrom = currentCell;
-                    cell.distanceFromStart = 1 + cell.exploredFrom.distanceFromStart;
+                    queue[pathIndex].Enqueue(cell);
+                    cell.visited[pathIndex] = true;
+                    cell.exploredFrom[pathIndex] = currentCell;
+                    cell.distanceFromStart[pathIndex] = 1 + cell.exploredFrom[pathIndex].distanceFromStart[pathIndex];
 
-                    if (cell == endCell)
-                    { pathFound = true; break; }
+                    if (cell == endCell[pathIndex])
+                    { pathFound[pathIndex] = true; break; }
                 }
             }
         }
 
-        if (!pathFound)
-        { Debug.Log("no available path"); return null; }
+        //if (!pathFound[pathIndex])
+        //{ Debug.Log("no available path"); return null; }
 
         maze.cells[endPos.x, endPos.y].state = 1;
-        path.Add(maze.cells[endPos.x, endPos.y]);
-        var previous = maze.cells[endPos.x, endPos.y].exploredFrom;
-        while (previous != startCell)
+        path[pathIndex].Add(maze.cells[endPos.x, endPos.y]);
+        var previous = maze.cells[endPos.x, endPos.y].exploredFrom[pathIndex];
+        while (previous != startCell[pathIndex])
         {
             previous.state = 1;
-            path.Add(previous);
-            previous = previous.exploredFrom;
+            path[pathIndex].Add(previous);
+            previous = previous.exploredFrom[pathIndex];
         }
-        startCell.state = 1;
-        path.Add(startCell);
-        path.Reverse();
+        startCell[pathIndex].state = 1;
+        path[pathIndex].Add(startCell[pathIndex]);
+        path[pathIndex].Reverse();
 
-        DisplayPath(path, Color.red);
+        DisplayPath(path[pathIndex], Color.red, pathIndex);
 
         areafinder.FindAreas();
 
-        return path;
+        return path[pathIndex];
     }
 
     public List<MazeCell> GetPatrolPath(IntVector2 start, IntVector2 end, int areaIndex)
     {
-        var linkPoints = areafinder.GetPathLinkPoints(areaIndex);
+        var linkPoints = areafinder.GetConnectionPoints(areaIndex);
         var patrolArea = areafinder.GetPatrolAreaIndex(areaIndex);
 
         return patrolArea;
     }
 
-    public List<MazeCell> GetCurrentPath() { return path; }
+    public List<MazeCell> GetCurrentPath(int index) { return path[index]; }
 
-    public MazeCell GetDestination()
+    public MazeCell GetDestination(int pathIndex)
     {
-        return endCell;
+        return endCell[pathIndex];
     }
 
-    // get path with indices stored as public variables in pathfinder
-    public List<MazeCell> GetPath()
-    {
-        if(maze.cells != null)
-            ResetPathfinding();
-        path.Clear();
-        pathFound = false;
-
-        startCell = maze.cells[startPos.x, startPos.y];
-        queue.Enqueue(startCell);
-        startCell.visited = true;
-        endCell = maze.cells[endPos.x, endPos.y];
-
-        MazeCell currentCell;
-        while(queue.Count > 0)
-        {
-            currentCell = queue.Dequeue();
-
-            foreach (MazeCell cell in currentCell.connectedCells)
-            {
-                if (!cell.visited)
-                {
-                    queue.Enqueue(cell);
-                    cell.visited = true;
-                    cell.exploredFrom = currentCell;
-                    cell.distanceFromStart = 1 + cell.exploredFrom.distanceFromStart;
-
-                    if (cell == endCell)
-                    { pathFound = true; break; }
-                }
-            }
-        }
-
-        if(!pathFound)
-        { Debug.Log("no available path"); return null; }
-
-        maze.cells[endPos.x, endPos.y].state = 1;
-        path.Add(maze.cells[endPos.x, endPos.y]);
-        var previous = maze.cells[endPos.x, endPos.y].exploredFrom;
-        while (previous != startCell)
-        {
-            previous.state = 1;
-            path.Add(previous);
-            previous = previous.exploredFrom;
-        }
-        startCell.state = 1;
-        path.Add(startCell);
-        path.Reverse();
-
-        areafinder.FindAreas();
-
-        DisplayPath(path, Color.red);
-
-        return path;
-    }
-
-    void DisplayPath(List<MazeCell> path, Color color)
+    void DisplayPath(List<MazeCell> path, Color color, int pathIndex, bool setEndPoints = true)
     {
         foreach(MazeCell cell in path)
         {
-            if(cell == startCell || cell == endCell)
+            if(setEndPoints && (cell == startCell[pathIndex] || cell == endCell[pathIndex]))
             { cell.transform.GetChild(0).GetComponent<Renderer>().material.color = Color.green; continue; }
             cell.transform.GetChild(0).GetComponent<Renderer>().material.color = color;
         }
     }
 
-    void ResetPathfinding()
+    void ResetCells(int index, bool resetAll = false)
     {
-        foreach(MazeCell cell in maze.cells)
+        foreach (MazeCell cell in maze.cells)
         {
-            cell.visited = false;
-            cell.searched = false;
-            cell.exploredFrom = null;
-            cell.distanceFromStart = 0;
-            cell.transform.GetChild(0).GetComponent<Renderer>().material.color = Color.white;
+            cell.visited[index] = false;
+            cell.exploredFrom[index] = null;
+            cell.distanceFromStart[index] = 0;
             cell.cellText.color = Color.red;
+            cell.transform.GetChild(0).GetComponent<Renderer>().material.color = cell.startColor;
+            cell.searched = false;
             cell.state = 0;
         }
     }
 
-    
-
-    private void OnGUI()
+    void ResetCells(List<MazeCell> explored, int index)
     {
-        if (GUI.Button(new Rect(10, 70, 80, 60), "Find Path"))
-            GetPath();
-    }
-    //int pathIndex = 0;
+            if (explored.Count == 0) return;
 
-    //private void Update()
-    //{
-    //    RaycastHit2D[] hits = new RaycastHit2D[10];
-    //    ContactFilter2D filter = new ContactFilter2D();
-    //    if (Input.GetMouseButtonDown(0))
-    //    {
-    //        if (Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector3.forward, filter, results: hits) > 0 && pathIndex % 2 == 0)
-    //        { startCell = hits[0].collider.GetComponent<MazeCell>(); pathIndex++; }
-    //        else if (Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector3.forward, filter, results: hits) > 0 && pathIndex % 2 == 1)
-    //        { endCell = hits[0].collider.GetComponent<MazeCell>(); pathIndex++; }
-    //    }
-    //}
+            foreach (MazeCell cell in explored)
+            {
+                cell.visited[index] = false;
+                cell.exploredFrom[index] = null;
+                cell.distanceFromStart[index] = 0;
+                cell.transform.GetChild(0).GetComponent<Renderer>().material.color = cell.startColor;
+            }  
+    }
+
 }

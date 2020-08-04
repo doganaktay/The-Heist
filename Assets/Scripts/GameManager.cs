@@ -15,7 +15,6 @@ public class GameManager : MonoBehaviour
 	public Maze mazePrefab;
 	private Maze mazeInstance;
 
-	public event Action Restart;
 	public event Action MazeGenFinished;
 
 	private void Start()
@@ -28,9 +27,6 @@ public class GameManager : MonoBehaviour
 		if (Input.GetKeyDown(KeyCode.Alpha1))
 		{
 			RestartGame();
-
-			if(Restart != null)
-				Restart();
 		}
 	}
 
@@ -38,9 +34,13 @@ public class GameManager : MonoBehaviour
 	{
 		mazeInstance = Instantiate(mazePrefab);
 		mazeInstance.Generate();
+
 		pathfinder.maze = mazeInstance;
 		pathfinder.areafinder = areafinder;
+		pathfinder.gameHasReset = true;
+
         areafinder.maze = mazeInstance;
+
 		patrolManager.pathfinder = pathfinder;
 		patrolManager.areafinder = areafinder;
 
@@ -49,6 +49,7 @@ public class GameManager : MonoBehaviour
 							  mazeInstance.cells[0, 0].transform.position.y, -1f), Quaternion.identity);
 
 		areafinder.player = player;
+		pathfinder.player = player;
 		ai.maze = mazeInstance;
 		ai.pathfinder = pathfinder;
 		ai.startPos = new IntVector2(0, 0);
