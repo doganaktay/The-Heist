@@ -53,7 +53,7 @@ public class PathFollow : MonoBehaviour
         followPath = StartCoroutine(FollowPath());
     }
 
-    public void FlagAndDestroy()
+    public void StopAndDestroy()
     {
         StopCoroutine(followPath);
         Destroy(gameObject);

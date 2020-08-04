@@ -19,7 +19,7 @@ public class Pathfinder : MonoBehaviour
     List<MazeCell> explored;
     bool[] pathFound;
 
-    public bool gameHasReset = false;
+    public bool hasReset = false;
 
     int searchSize = 5;
     int currentSearchIndex = 0;
@@ -42,7 +42,7 @@ public class Pathfinder : MonoBehaviour
                 SetNewSecondaryPath(player.currentCell.pos, player.areaIndex);
             else
             {
-                if(!gameHasReset)
+                if(!hasReset)
                     ResetCells(explored, 1);
             }
 
@@ -80,10 +80,10 @@ public class Pathfinder : MonoBehaviour
         if (explored == null)
             explored = new List<MazeCell>();
 
-        if (!gameHasReset)
+        if (!hasReset)
             ResetCells(explored, pathIndex);
         else
-            gameHasReset = false;
+            hasReset = false;
 
         explored.Clear();
 
@@ -109,6 +109,7 @@ public class Pathfinder : MonoBehaviour
             while (queue[pathIndex].Count > 0)
             {
                 currentCell = queue[pathIndex].Dequeue();
+                explored.Add(currentCell);
 
                 foreach (MazeCell cell in currentCell.connectedCells)
                 {
@@ -151,7 +152,6 @@ public class Pathfinder : MonoBehaviour
 
         path[pathIndex].AddRange(ordered[0]);
 
-
         DisplayPath(path[pathIndex], new Color(0.3645f, 0.6643f, 0.9360f), pathIndex, false);
 
         return path[pathIndex];
@@ -160,7 +160,7 @@ public class Pathfinder : MonoBehaviour
     // get path with start and end points supplied
     public List<MazeCell> SetNewPath(IntVector2 start, IntVector2 end, int pathIndex = 0)
     {
-        ResetCells(pathIndex, true);
+        ResetCells(pathIndex);
 
         if (path[pathIndex] == null)
             path[pathIndex] = new List<MazeCell>();
@@ -243,7 +243,7 @@ public class Pathfinder : MonoBehaviour
         }
     }
 
-    void ResetCells(int index, bool resetAll = false)
+    void ResetCells(int index)
     {
         foreach (MazeCell cell in maze.cells)
         {
@@ -251,22 +251,25 @@ public class Pathfinder : MonoBehaviour
             cell.exploredFrom[index] = null;
             cell.distanceFromStart[index] = 0;
             cell.cellText.color = Color.red;
-            cell.transform.GetChild(0).GetComponent<Renderer>().material.color = cell.startColor;
+            cell.transform.GetChild(0).GetComponent<Renderer>().material.color = GameManager.startColor;
             cell.searched = false;
             cell.state = 0;
+
+            // manually resetting secondary path variables
+            cell.visited[1] = false;
+            cell.exploredFrom[1] = null;
+            cell.distanceFromStart[1] = 0;
         }
     }
 
     void ResetCells(List<MazeCell> explored, int index)
     {
-            if (explored.Count == 0) return;
-
             foreach (MazeCell cell in explored)
             {
                 cell.visited[index] = false;
                 cell.exploredFrom[index] = null;
                 cell.distanceFromStart[index] = 0;
-                cell.transform.GetChild(0).GetComponent<Renderer>().material.color = cell.startColor;
+                cell.transform.GetChild(0).GetComponent<Renderer>().material.color = cell.state == 0 ? GameManager.startColor : GameManager.mainPathColor;
             }  
     }
 
