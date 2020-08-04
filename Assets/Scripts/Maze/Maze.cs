@@ -34,8 +34,8 @@ public class Maze : MonoBehaviour
         newCell.name = "Maze Cell " + location.x + ", " + location.y;
         newCell.pos = location;
         newCell.transform.parent = transform;
-        float xPos = (location.x - size.x * 0.5f) * cellScaleX;
-        float yPos = (location.y - size.y * 0.5f) * cellScaleY;
+        float xPos = (location.x - size.x * 0.5f) * cellScaleX + cellScaleX / 2;
+        float yPos = (location.y - size.y * 0.5f) * cellScaleY + cellScaleY / 2;
         newCell.transform.position = new Vector3(xPos, yPos, 0f);
 
         newCell.row = location.x;

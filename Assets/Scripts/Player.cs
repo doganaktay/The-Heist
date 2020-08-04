@@ -26,10 +26,19 @@ public class Player : MonoBehaviour
 
     public event Action MazeChange;
 
+    public float clampMarginX = 5f;
+    public float clampMarginY = 5f;
+    float clampX, clampY;
+
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         hits = new Collider2D[10];
+
+        var cam = Camera.main;
+        clampY = cam.orthographicSize - clampMarginY;
+        clampX = cam.orthographicSize / 9 * 16 - clampMarginX;
+
     }
 
     void Update()
@@ -45,7 +54,14 @@ public class Player : MonoBehaviour
         if (force.sqrMagnitude < 0.5f)
             rb.velocity = Vector2.Lerp(rb.velocity, Vector2.zero, brakeSpeed);
 
-        if(Input.GetKeyDown(KeyCode.Space))
+        // clamp to screen
+        float posX = Mathf.Clamp(rb.position.x, -clampX, clampX);
+        float posY = Mathf.Clamp(rb.position.y, -clampY, clampY);
+
+        transform.position = new Vector2(posX, posY);
+
+
+        if (Input.GetKeyDown(KeyCode.Space))
         {
             int hitCount = Physics2D.OverlapCircleNonAlloc(transform.position, 3.5f, results: hits, wallLayerMask);
 

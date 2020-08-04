@@ -198,7 +198,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 519420028}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -5, y: -5.000002, z: -141.70435}
+  m_LocalPosition: {x: 0, y: 0, z: -200}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -307,6 +307,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 07c4482be04d94560bc050d26e996e72, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  player: {fileID: 0}
   maze: {fileID: 0}
 --- !u!4 &600934098
 Transform:
@@ -425,6 +426,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a5443e943a2e4f65a363f9841077a90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  player: {fileID: 0}
+  areafinder: {fileID: 0}
   patrolManager: {fileID: 1571564959}
   maze: {fileID: 0}
   startPos:
@@ -433,6 +436,7 @@ MonoBehaviour:
   endPos:
     x: 31
     y: 17
+  hasReset: 0
 --- !u!4 &798157647
 Transform:
   m_ObjectHideFlags: 0
@@ -491,6 +495,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pathfinder: {fileID: 0}
+  areafinder: {fileID: 0}
   patrolPrefab: {fileID: -1478150257375008109, guid: aaab0ca4958f545f492213de7b26129a,
     type: 3}
   patrols: []
@@ -545,8 +550,10 @@ MonoBehaviour:
   patrolManager: {fileID: 1571564959}
   playerPrefab: {fileID: 7925979547997160563, guid: b27354f4f377042c1953090e61a0d611,
     type: 3}
+  player: {fileID: 0}
   aiPrefab: {fileID: 5284805516819639901, guid: d8a48d35a40914c3b9f9d1fa4319cdba,
     type: 3}
+  ai: {fileID: 0}
   mazePrefab: {fileID: 3960510853015164700, guid: a0b81564ed9294e52a38cae5a243e64d,
     type: 3}
 --- !u!1001 &5284805516683668047

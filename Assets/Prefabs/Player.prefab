@@ -135,3 +135,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 500
   brakeSpeed: 0.25
+  areaIndex: 0
+  hitIndexChanged: 0
+  cellState: 0
+  currentCell: {fileID: 0}
+  cellChanged: 0
+  clampMarginX: 5
+  clampMarginY: 5
