@@ -24,7 +24,7 @@ public class Player : MonoBehaviour
     static int wallLayerMask = 1 << 9;
     static int cellLayerMask = 1 << 10;
 
-    public event Action MazeChange;
+    public static event Action MazeChange;
 
     public float clampMarginX = 5f;
     public float clampMarginY = 5f;

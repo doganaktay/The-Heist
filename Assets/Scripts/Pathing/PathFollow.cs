@@ -25,9 +25,9 @@ public class PathFollow : MonoBehaviour
     private void Awake()
     {
         gameManager = FindObjectOfType<GameManager>();
-        gameManager.MazeGenFinished += NewPath;
+        GameManager.MazeGenFinished += NewPath;
         player = FindObjectOfType<Player>();
-        player.MazeChange += UpdatePath;
+        Player.MazeChange += UpdatePath;
 
         rb = GetComponent<Rigidbody2D>();
         pathfinder = FindObjectOfType<Pathfinder>();
@@ -55,6 +55,10 @@ public class PathFollow : MonoBehaviour
 
     public void StopAndDestroy()
     {
+        // unsubscribing from events here because this object never gets destroyed directly
+        // except when play is stopped
+        GameManager.MazeGenFinished -= NewPath;
+        Player.MazeChange -= UpdatePath;
         StopCoroutine(followPath);
         Destroy(gameObject);
     }
@@ -79,6 +83,9 @@ public class PathFollow : MonoBehaviour
 
             currentCell = currentPath[i];
 
+            if(i != 0)
+            pathfinder.distanceTravelled++;
+
             if (currentPath[i] == endPos)
                 Debug.Log("path finished");
         }
@@ -87,7 +94,7 @@ public class PathFollow : MonoBehaviour
 
     private void OnDestroy()
     {
-        gameManager.MazeGenFinished -= NewPath;
-        player.MazeChange -= UpdatePath;
+        GameManager.MazeGenFinished -= NewPath;
+        Player.MazeChange -= UpdatePath;
     }
 }

@@ -194,10 +194,12 @@ public class AreaFinder : MonoBehaviour
                 if (grid[j, i].state == 1)
                 {
                     grid[j, i].cellText.color = Color.white;
-                    grid[j, i].cellText.text = grid[j, i].distanceFromStart[0].ToString();
+
+                    var d = grid[j, i].distanceFromStart[0];
+                    grid[j, i].cellText.text = d.ToString();
                 }   
             }
-        }
+        }   
     }
 
     void SearchNeighbours(MazeCell point)

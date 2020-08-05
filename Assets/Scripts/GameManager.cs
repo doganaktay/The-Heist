@@ -15,7 +15,7 @@ public class GameManager : MonoBehaviour
 	public Maze mazePrefab;
 	private Maze mazeInstance;
 
-	public event Action MazeGenFinished;
+	public static event Action MazeGenFinished;
 
 	public static Color startColor = Color.white;
 	public static Color mainPathColor = Color.red;
@@ -41,6 +41,7 @@ public class GameManager : MonoBehaviour
 		pathfinder.maze = mazeInstance;
 		pathfinder.areafinder = areafinder;
 		pathfinder.hasReset = true;
+		pathfinder.initialized = false;
 
         areafinder.maze = mazeInstance;
 
@@ -56,8 +57,6 @@ public class GameManager : MonoBehaviour
 		ai.pathfinder = pathfinder;
 		ai.startPos = new IntVector2(0, 0);
 		ai.endPos = new IntVector2(mazeInstance.size.x - 1, mazeInstance.size.y - 1);
-		ai.NewPath();
-
 
 		MazeGenFinished();
 	}
@@ -66,8 +65,8 @@ public class GameManager : MonoBehaviour
 	{		
 		Destroy(mazeInstance.gameObject);
 		Destroy(player.gameObject);
-		ai.StopAndDestroy();
+        ai.StopAndDestroy();
 
-		BeginGame();
+        BeginGame();
 	}
 }

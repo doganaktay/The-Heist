@@ -137,3 +137,4 @@ MonoBehaviour:
   currentCell: {fileID: 0}
   nextCell: {fileID: 0}
   patrolRandom: 1
+  moveLerpSpeed: 0.1

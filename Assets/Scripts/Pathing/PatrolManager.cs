@@ -7,15 +7,15 @@ public class PatrolManager : MonoBehaviour
     public Pathfinder pathfinder;
     public AreaFinder areafinder;
     public PathPatrol patrolPrefab;
-    public PathPatrol[] patrols;
+    public List<PathPatrol> patrols = new List<PathPatrol>();
     public List<MazeCell> activePath = new List<MazeCell>();
 
     public int patrolCount = 3;
-    public int maxPatrolCount = 20;
+    public int maxPatrolCount = 50;
 
     void Start()
     {
-        patrols = new PathPatrol[maxPatrolCount];
+        GameManager.MazeGenFinished += ResetPatrols;
     }
 
     public void CreateNewPatrol()
@@ -24,15 +24,30 @@ public class PatrolManager : MonoBehaviour
         {
             List<MazeCell> currentPath = areafinder.GetRandomArea();
 
-            //if (patrolCount > currentPath.Count) return;
-
             MazeCell randomCell = currentPath[Random.Range(0, currentPath.Count)];
 
-            patrols[i] = Instantiate(patrolPrefab, randomCell.transform.position, Quaternion.identity);
-            patrols[i].patrolArea = currentPath;
-            patrols[i].currentCell = randomCell;
-            patrols[i].transform.parent = transform;
+            var patrol = Instantiate(patrolPrefab, randomCell.transform.position, Quaternion.identity);
+            patrol.patrolArea = currentPath;
+            patrol.currentCell = randomCell;
+            patrol.transform.parent = transform;
+
+            patrols.Add(patrol);
         }
+    }
+
+    void ResetPatrols()
+    {
+        foreach (var patrol in patrols)
+        {
+            //patrol.StopAndDestroy();
+            if(patrol != null)
+                Destroy(patrol.gameObject);
+        }
+    }
+
+    void OnDestroy()
+    {
+        GameManager.MazeGenFinished -= ResetPatrols;
     }
 
     private void OnGUI()

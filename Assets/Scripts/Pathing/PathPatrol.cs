@@ -14,73 +14,129 @@ public class PathPatrol : MonoBehaviour
 
     Coroutine patrol;
 
+    float moveLerpSpeed;
+    float currentLerpTime = 0f;
+    bool reachedTarget = true;
+
     void Start()
     {
-        if(!patrolRandom)
-            patrol = StartCoroutine(PatrolPath());
-        else
-            patrol = StartCoroutine(PatrolRandom());
+        moveLerpSpeed = Random.Range(0.1f, 1f);
     }
 
-    void ResetCoroutine()
+    void Update()
     {
-        if (patrol != null)
-            StopCoroutine(patrol);
+        if (currentCell.state == 1)
+            Destroy(gameObject);
 
-        if (!patrolRandom)
-            patrol = StartCoroutine(PatrolPath());
-        else
-            patrol = StartCoroutine(PatrolRandom());
-
+        if (patrolRandom)
+            PatrolRandom();
     }
 
-    IEnumerator PatrolPath()
+    void PatrolRandom()
     {
-        var endPos = patrolArea[patrolArea.Count - 1];
-
-        for (int i = 0; i < patrolArea.Count; i++)
+        if (reachedTarget)
         {
-            if (patrolArea == null) yield break;
+            var list = currentCell.connectedCells.ToList();
+            list.Shuffle();
 
-            if (i + 1 < patrolArea.Count && Vector2.Dot(patrolArea[i + 1].transform.position - transform.position,
-                                             patrolArea[i].transform.position - transform.position) < 0)
-                continue;
-
-            while (transform.position != patrolArea[i].transform.position)
+            foreach (var cell in list)
             {
-                transform.position = Vector2.MoveTowards(transform.position, patrolArea[i].transform.position, 0.2f);
-                yield return null;
+                if (cell.state == 0)
+                { nextCell = cell; break; }
             }
 
-            currentCell = patrolArea[i];
-
-            if (patrolArea[i] == endPos)
-            { patrolArea.Reverse(); ResetCoroutine(); }
+            reachedTarget = false;
         }
 
+        if (nextCell == null) return;
+
+        currentLerpTime += Time.deltaTime;
+        if (currentLerpTime > moveLerpSpeed)
+            currentLerpTime = moveLerpSpeed;
+
+        transform.position = Vector2.MoveTowards(transform.position, nextCell.transform.position, moveLerpSpeed);
+
+        if (transform.position == nextCell.transform.position)
+        {
+            currentCell = nextCell;
+            currentLerpTime = 0f;
+            reachedTarget = true;
+        }
     }
 
-    IEnumerator PatrolRandom()
-    {
-        var list = currentCell.connectedCells.ToList();
-        list.Shuffle();
+    //void Start()
+    //{
+    //    if(!patrolRandom)
+    //        patrol = StartCoroutine(PatrolPath());
+    //    else
+    //        patrol = StartCoroutine(PatrolRandom());
+    //}
 
-        foreach (var cell in list)
-        {
-            if (cell.state == 0)
-            { nextCell = cell; break; }
-        }
+    //public void ResetCoroutine()
+    //{
+    //    if (patrol != null)
+    //        StopCoroutine(patrol);
 
-        if (nextCell == null) yield break;
+    //    if (!patrolRandom)
+    //        patrol = StartCoroutine(PatrolPath());
+    //    else
+    //        patrol = StartCoroutine(PatrolRandom());
 
-        while(transform.position != nextCell.transform.position)
-        {
-            transform.position = Vector2.MoveTowards(transform.position, nextCell.transform.position, 0.2f);
-            yield return null;
-        }
+    //}
 
-        currentCell = nextCell;
+    //public void StopAndDestroy()
+    //{
+    //    StopCoroutine(patrol);
+    //    Destroy(gameObject);
+    //}
 
-        ResetCoroutine();
-    }
+    //IEnumerator PatrolPath()
+    //{
+    //    var endPos = patrolArea[patrolArea.Count - 1];
+
+    //    for (int i = 0; i < patrolArea.Count; i++)
+    //    {
+    //        if (patrolArea == null) yield break;
+
+    //        if (i + 1 < patrolArea.Count && Vector2.Dot(patrolArea[i + 1].transform.position - transform.position,
+    //                                         patrolArea[i].transform.position - transform.position) < 0)
+    //            continue;
+
+    //        while (transform.position != patrolArea[i].transform.position)
+    //        {
+    //            transform.position = Vector2.MoveTowards(transform.position, patrolArea[i].transform.position, 0.2f);
+    //            yield return null;
+    //        }
+
+    //        currentCell = patrolArea[i];
+
+    //        if (patrolArea[i] == endPos)
+    //        { patrolArea.Reverse(); ResetCoroutine(); }
+    //    }
+
+    //}
+
+    //IEnumerator PatrolRandom()
+    //{
+    //    var list = currentCell.connectedCells.ToList();
+    //    list.Shuffle();
+
+    //    foreach (var cell in list)
+    //    {
+    //        if (cell.state == 0)
+    //        { nextCell = cell; break; }
+    //    }
+
+    //    if (nextCell == null) yield break;
+
+    //    while(transform.position != nextCell.transform.position)
+    //    {
+    //        transform.position = Vector2.MoveTowards(transform.position, nextCell.transform.position, 0.2f);
+    //        yield return null;
+    //    }
+
+    //    currentCell = nextCell;
+
+    //    ResetCoroutine();
+    //}
 }

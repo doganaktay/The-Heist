@@ -18,11 +18,17 @@ public class Pathfinder : MonoBehaviour
     List<MazeCell>[] path;
     List<MazeCell> explored;
     bool[] pathFound;
-
     public bool hasReset = false;
-
     int searchSize = 5;
     int currentSearchIndex = 0;
+
+
+    // track distance
+    public bool initialized = false;
+    public int startDistance;
+    public int currentDistance;
+    public int distanceTravelled;
+    int distanceCut = 0;
 
     private void Start()
     {
@@ -48,12 +54,6 @@ public class Pathfinder : MonoBehaviour
 
         player.cellChanged = false;
         }
-    }
-
-    private void OnGUI()
-    {
-        if (GUI.Button(new Rect(10, 70, 80, 60), "get path"))
-            Update();
     }
 
     int GetSearchIndex()
@@ -210,6 +210,26 @@ public class Pathfinder : MonoBehaviour
         startCell[pathIndex].state = 1;
         path[pathIndex].Add(startCell[pathIndex]);
         path[pathIndex].Reverse();
+
+        // distance tracking
+        if (!initialized)
+        {
+            startDistance = maze.cells[endPos.x, endPos.y].distanceFromStart[0];
+            currentDistance = startDistance;
+            distanceCut = 0;
+            distanceTravelled = 0;
+            initialized = true;
+
+            Debug.Log(startDistance);
+        }
+        else
+        {
+            var newDist = maze.cells[endPos.x, endPos.y].distanceFromStart[0];
+            distanceCut += currentDistance - newDist - distanceTravelled;
+            currentDistance = newDist;
+            distanceTravelled = 0;
+            Debug.Log("Start distance: " + startDistance + " Current distance: " + currentDistance + " Distance cut: " + distanceCut);
+        }
 
         DisplayPath(path[pathIndex], Color.red, pathIndex);
 
