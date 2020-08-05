@@ -7,18 +7,8 @@ using TMPro;
 
 public class AreaFinder : MonoBehaviour
 {
-    // need this reference to highlight entry points
-    // set by game manager
-    public Player player;
-
     MazeCell[,] grid;
     public Maze maze;
-
-    List<List<MazeCell>> lowAreas = new List<List<MazeCell>>();
-    int lowAreaCount;
-    List<List<MazeCell>> highAreas = new List<List<MazeCell>>();
-    int highAreaCount;
-    bool allDropped = false;
 
     Dictionary<int, List<MazeCell>> lowCellAreas = new Dictionary<int, List<MazeCell>>();
     Dictionary<int, List<MazeCell>> highCellAreas = new Dictionary<int, List<MazeCell>>();
@@ -26,7 +16,7 @@ public class AreaFinder : MonoBehaviour
     Dictionary<int, List<MazeCell>> lowCellConnected = new Dictionary<int, List<MazeCell>>();
     Dictionary<int, List<MazeCell>> highCellConnected = new Dictionary<int, List<MazeCell>>();
 
-    public List<MazeCell> GetRandomArea(){ return lowCellAreas.ElementAt(UnityEngine.Random.Range(0, 1)).Value; }
+    public List<MazeCell> GetRandomArea(){ return lowCellAreas.ElementAt(UnityEngine.Random.Range(0, lowCellAreas.Count)).Value; }
     public List<MazeCell> GetPatrolAreaIndex(int areaIndex){ return lowCellAreas[areaIndex]; }
     public List<MazeCell> GetConnectionPoints(int areaIndex){ return lowCellConnected[areaIndex]; }
 

@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 5284805516819639899}
   - component: {fileID: 5284805516819639900}
   - component: {fileID: -1478150257375008109}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Patroller
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -133,9 +133,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 24513a8233e1f44ec9d6f39172cded68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  patrolStart:
-    x: 0
-    y: 0
-  patrolEnd:
-    x: 0
-    y: 0
+  patrolArea: []
+  currentCell: {fileID: 0}
+  nextCell: {fileID: 0}
+  patrolRandom: 1

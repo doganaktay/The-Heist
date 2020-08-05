@@ -81,7 +81,7 @@ public class Player : MonoBehaviour
 
     void TrackLocation()
     {
-        int hitCount = Physics2D.OverlapCircleNonAlloc(transform.position, 3.5f, results: hits, cellLayerMask);
+        int hitCount = Physics2D.OverlapCircleNonAlloc(transform.position, 1f, results: hits, cellLayerMask);
 
         if (hitCount > 0)
         {

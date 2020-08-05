@@ -39,7 +39,7 @@ public class Pathfinder : MonoBehaviour
         if (player.cellChanged)
         {
             if (player.currentCell.state == 0)
-                SetNewSecondaryPath(player.currentCell.pos, player.areaIndex);
+                SetHighlightPath(player.currentCell.pos, player.areaIndex);
             else
             {
                 if(!hasReset)
@@ -61,13 +61,13 @@ public class Pathfinder : MonoBehaviour
         currentSearchIndex++;
 
         if (currentSearchIndex == searchSize)
-            currentSearchIndex = 1;
+            currentSearchIndex = 2;
 
         return currentSearchIndex;
     }
 
     // get path with start and end points supplied
-    public List<MazeCell> SetNewSecondaryPath(IntVector2 pos, int areaIndex)
+    public List<MazeCell> SetHighlightPath(IntVector2 pos, int areaIndex)
     {
         int pathIndex = 1;
 
@@ -195,8 +195,8 @@ public class Pathfinder : MonoBehaviour
             }
         }
 
-        //if (!pathFound[pathIndex])
-        //{ Debug.Log("no available path"); return null; }
+        if (!pathFound[pathIndex])
+        { Debug.Log("no available path"); return null; }
 
         maze.cells[endPos.x, endPos.y].state = 1;
         path[pathIndex].Add(maze.cells[endPos.x, endPos.y]);

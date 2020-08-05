@@ -51,7 +51,6 @@ public class GameManager : MonoBehaviour
 		ai = Instantiate(aiPrefab, new Vector3(mazeInstance.cells[0, 0].transform.position.x,
 							  mazeInstance.cells[0, 0].transform.position.y, -1f), Quaternion.identity);
 
-		areafinder.player = player;
 		pathfinder.player = player;
 		ai.maze = mazeInstance;
 		ai.pathfinder = pathfinder;

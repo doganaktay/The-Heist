@@ -24,13 +24,14 @@ public class PatrolManager : MonoBehaviour
         {
             List<MazeCell> currentPath = areafinder.GetRandomArea();
 
-            if (patrolCount > currentPath.Count) return;
+            //if (patrolCount > currentPath.Count) return;
 
             MazeCell randomCell = currentPath[Random.Range(0, currentPath.Count)];
 
-            //currentPath.Remove(randomCell);
             patrols[i] = Instantiate(patrolPrefab, randomCell.transform.position, Quaternion.identity);
             patrols[i].patrolArea = currentPath;
+            patrols[i].currentCell = randomCell;
+            patrols[i].transform.parent = transform;
         }
     }
 
