@@ -11,7 +11,6 @@ public class PatrolManager : MonoBehaviour
     public List<MazeCell> activePath = new List<MazeCell>();
 
     public int patrolCount = 3;
-    public int maxPatrolCount = 50;
 
     void Start()
     {
@@ -22,7 +21,7 @@ public class PatrolManager : MonoBehaviour
     {
         for (int i = 0; i < patrolCount; i++)
         {
-            List<MazeCell> currentPath = areafinder.GetRandomArea();
+            List<MazeCell> currentPath = areafinder.GetRandomAreaWeighted();
 
             MazeCell randomCell = currentPath[Random.Range(0, currentPath.Count)];
 

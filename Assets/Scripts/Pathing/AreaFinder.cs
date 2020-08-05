@@ -16,9 +16,43 @@ public class AreaFinder : MonoBehaviour
     Dictionary<int, List<MazeCell>> lowCellConnected = new Dictionary<int, List<MazeCell>>();
     Dictionary<int, List<MazeCell>> highCellConnected = new Dictionary<int, List<MazeCell>>();
 
-    public List<MazeCell> GetRandomArea(){ return lowCellAreas.ElementAt(UnityEngine.Random.Range(0, lowCellAreas.Count)).Value; }
-    public List<MazeCell> GetPatrolAreaIndex(int areaIndex){ return lowCellAreas[areaIndex]; }
+    public List<MazeCell> GetPatrolAreaByIndex(int areaIndex){ return lowCellAreas[areaIndex]; }
     public List<MazeCell> GetConnectionPoints(int areaIndex){ return lowCellConnected[areaIndex]; }
+    public List<MazeCell> GetRandomArea(){ return lowCellAreas.ElementAt(UnityEngine.Random.Range(0, lowCellAreas.Count)).Value; }
+
+    public List<MazeCell> GetRandomAreaWeighted()
+    {
+        var totalCount = 0;
+        int[] weights = new int[lowCellAreas.Count];
+
+        for(int i = 0; i < lowCellAreas.Count; i++)
+        {
+            if(i == 0)
+                weights[i] = lowCellAreas.ElementAt(i).Value.Count;
+            else
+                weights[i] = lowCellAreas.ElementAt(i).Value.Count + weights[i-1];
+
+            totalCount = weights[i];
+        }
+
+        var rand = UnityEngine.Random.Range(0, totalCount);
+        var destinationIndex = -1;
+
+        //Debug.Log(rand);
+
+        for(int i = 0; i < lowCellAreas.Count; i++)
+        {
+            if (weights[i] >= rand && destinationIndex == -1 ? true : i - 1 < 0 ? true : rand > weights[i-1] ? true : false)
+                destinationIndex = i;
+        }
+
+        Debug.Log("Key: " + lowCellAreas.ElementAt(destinationIndex).Key +
+                  " Weight: " + string.Format("{0:0.000}", (destinationIndex - 1 >= 0 ?
+                  (weights[destinationIndex] - weights[destinationIndex - 1]) / (float)weights[lowCellAreas.Count - 1]:
+                  weights[destinationIndex] / (float)weights[lowCellAreas.Count - 1])));
+
+        return lowCellAreas.ElementAt(destinationIndex).Value;
+    }
 
     public void FindAreas()
     {

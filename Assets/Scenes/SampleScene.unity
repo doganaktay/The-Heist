@@ -307,7 +307,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 07c4482be04d94560bc050d26e996e72, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  player: {fileID: 0}
   maze: {fileID: 0}
 --- !u!4 &600934098
 Transform:
@@ -437,6 +436,10 @@ MonoBehaviour:
     x: 31
     y: 17
   hasReset: 0
+  initialized: 0
+  startDistance: 0
+  currentDistance: 0
+  distanceTravelled: 0
 --- !u!4 &798157647
 Transform:
   m_ObjectHideFlags: 0
@@ -500,8 +503,7 @@ MonoBehaviour:
     type: 3}
   patrols: []
   activePath: []
-  patrolCount: 3
-  maxPatrolCount: 20
+  patrolCount: 100
 --- !u!1 &2057357533
 GameObject:
   m_ObjectHideFlags: 0

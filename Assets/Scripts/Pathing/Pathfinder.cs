@@ -241,7 +241,7 @@ public class Pathfinder : MonoBehaviour
     public List<MazeCell> GetPatrolPath(IntVector2 start, IntVector2 end, int areaIndex)
     {
         var linkPoints = areafinder.GetConnectionPoints(areaIndex);
-        var patrolArea = areafinder.GetPatrolAreaIndex(areaIndex);
+        var patrolArea = areafinder.GetPatrolAreaByIndex(areaIndex);
 
         return patrolArea;
     }
