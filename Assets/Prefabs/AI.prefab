@@ -141,4 +141,4 @@ MonoBehaviour:
   endPos:
     x: 31
     y: 17
-  stepTime: 1
+  stepMultiplier: 1

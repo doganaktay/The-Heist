@@ -22,13 +22,15 @@ public class Pathfinder : MonoBehaviour
     int searchSize = 5;
     int currentSearchIndex = 0;
 
-
     // track distance
     public bool initialized = false;
     public int startDistance;
     public int currentDistance;
     public int distanceTravelled;
     int distanceCut = 0;
+
+    // last level reset time
+    public float lastRestartTime;
 
     private void Start()
     {
@@ -48,7 +50,7 @@ public class Pathfinder : MonoBehaviour
                 SetHighlightPath(player.currentCell.pos, player.areaIndex);
             else
             {
-                if(!hasReset)
+                if (!hasReset)
                     ResetCells(explored, 1);
             }
 
@@ -152,7 +154,7 @@ public class Pathfinder : MonoBehaviour
 
         path[pathIndex].AddRange(ordered[0]);
 
-        DisplayPath(path[pathIndex], new Color(0.3645f, 0.6643f, 0.9360f), pathIndex, false);
+        DisplayPath(path[pathIndex], 2, pathIndex, false);
 
         return path[pathIndex];
     }
@@ -219,8 +221,6 @@ public class Pathfinder : MonoBehaviour
             distanceCut = 0;
             distanceTravelled = 0;
             initialized = true;
-
-            Debug.Log(startDistance);
         }
         else
         {
@@ -231,7 +231,7 @@ public class Pathfinder : MonoBehaviour
             Debug.Log("Start distance: " + startDistance + " Current distance: " + currentDistance + " Distance cut: " + distanceCut);
         }
 
-        DisplayPath(path[pathIndex], Color.red, pathIndex);
+        DisplayPath(path[pathIndex], 1, pathIndex);
 
         areafinder.FindAreas();
 
@@ -253,13 +253,15 @@ public class Pathfinder : MonoBehaviour
         return endCell[pathIndex];
     }
 
-    void DisplayPath(List<MazeCell> path, Color color, int pathIndex, bool setEndPoints = true)
+    void DisplayPath(List<MazeCell> path, int colorIndex, int pathIndex, bool setEndPoints = true)
     {
         foreach(MazeCell cell in path)
         {
-            if(setEndPoints && (cell == startCell[pathIndex] || cell == endCell[pathIndex]))
-            { cell.transform.GetChild(0).GetComponent<Renderer>().material.color = Color.green; continue; }
-            cell.transform.GetChild(0).GetComponent<Renderer>().material.color = color;
+            //if(setEndPoints && (cell == startCell[pathIndex] || cell == endCell[pathIndex]))
+            //{ cell.mat.SetInt(GameManager.colorIndex, 3); continue; }
+            cell.mat.SetInt(GameManager.colorIndex, colorIndex);
+            cell.mat.SetFloat(GameManager.pathIndex, cell.distanceFromStart[pathIndex]);
+            cell.mat.SetFloat(GameManager.pathCount, endCell[pathIndex].distanceFromStart[pathIndex]);
         }
     }
 
@@ -271,15 +273,22 @@ public class Pathfinder : MonoBehaviour
             cell.exploredFrom[index] = null;
             cell.distanceFromStart[index] = 0;
             cell.cellText.color = Color.red;
-            cell.transform.GetChild(0).GetComponent<Renderer>().material.color = GameManager.startColor;
             cell.searched = false;
             cell.state = 0;
+
+            // setting material properties
+            cell.mat.SetInt(GameManager.colorIndex, 0);
+            cell.mat.SetFloat(GameManager.pathIndex, 0);
+            cell.mat.SetFloat(GameManager.pathCount, 0);
+            cell.mat.SetFloat(GameManager.restartTime, Time.time);
 
             // manually resetting secondary path variables
             cell.visited[1] = false;
             cell.exploredFrom[1] = null;
             cell.distanceFromStart[1] = 0;
         }
+
+        lastRestartTime = Time.time;
     }
 
     void ResetCells(List<MazeCell> explored, int index)
@@ -289,7 +298,22 @@ public class Pathfinder : MonoBehaviour
                 cell.visited[index] = false;
                 cell.exploredFrom[index] = null;
                 cell.distanceFromStart[index] = 0;
-                cell.transform.GetChild(0).GetComponent<Renderer>().material.color = cell.state == 0 ? GameManager.startColor : GameManager.mainPathColor;
+
+                var state = cell.state == 1;
+
+                if (state)
+                {
+                    cell.mat.SetFloat(GameManager.pathIndex, cell.distanceFromStart[0]);
+                    cell.mat.SetInt(GameManager.colorIndex, 1);
+                    cell.mat.SetFloat(GameManager.pathCount, endCell[0].distanceFromStart[0]);
+                    cell.mat.SetFloat(GameManager.restartTime, lastRestartTime);
+                }
+                else
+                {
+                    cell.mat.SetInt(GameManager.colorIndex, 0);
+                    cell.mat.SetFloat(GameManager.restartTime, Time.time);
+                }
+
             }  
     }
 

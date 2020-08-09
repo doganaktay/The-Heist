@@ -17,8 +17,13 @@ public class GameManager : MonoBehaviour
 
 	public static event Action MazeGenFinished;
 
-	public static Color startColor = Color.white;
-	public static Color mainPathColor = Color.red;
+	// static property references
+	public static int colorIndex = Shader.PropertyToID("_ColorIndex");
+	public static int pathIndex = Shader.PropertyToID("_PathIndex");
+	public static int pathCount = Shader.PropertyToID("_PathCount");
+	// following is not exposed as a property on the shader
+	// a shader property needs to not be exposed in order to be set globally in script
+	public static int restartTime = Shader.PropertyToID("_RestartTime");
 
 	private void Start()
 	{
@@ -57,6 +62,10 @@ public class GameManager : MonoBehaviour
 		ai.pathfinder = pathfinder;
 		ai.startPos = new IntVector2(0, 0);
 		ai.endPos = new IntVector2(mazeInstance.size.x - 1, mazeInstance.size.y - 1);
+
+		float t = Time.time;
+		Shader.SetGlobalFloat(restartTime, t);
+		pathfinder.lastRestartTime = t;
 
 		MazeGenFinished();
 	}

@@ -14,8 +14,6 @@ public class Player : MonoBehaviour
     int lastAreaIndex;
     public bool hitIndexChanged = false;
     public int cellState;
-    int lastCellState;
-    MazeCell lastCell;
     public MazeCell currentCell;
     public bool cellChanged = false;
 
@@ -59,7 +57,6 @@ public class Player : MonoBehaviour
         float posY = Mathf.Clamp(rb.position.y, -clampY, clampY);
 
         transform.position = new Vector2(posX, posY);
-
 
         if (Input.GetKeyDown(KeyCode.Space))
         {

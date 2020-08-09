@@ -12,7 +12,6 @@ public class MazeCell : MonoBehaviour
 
 	public TextMeshPro cellText;
 	public Material mat;
-	public Color startColor;
 
 	public bool[] visited;
 	public bool searched = false;
@@ -27,7 +26,6 @@ public class MazeCell : MonoBehaviour
     void Awake()
     {
 		mat = transform.GetChild(0).GetComponent<Renderer>().material;
-		startColor = mat.color;
 
 		visited = new bool[5];
 		for(int i = 0; i < visited.Length; i++)
