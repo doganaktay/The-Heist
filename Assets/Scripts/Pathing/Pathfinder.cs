@@ -48,7 +48,8 @@ public class Pathfinder : MonoBehaviour
                 SetHighlightPath(player.currentCell.pos, player.areaIndex);
             else
             {
-                ResetCells(explored[shortestIndex], shortestIndex, true);
+                if(highestIndex<1000)
+                    ResetCells(explored[highestIndex], highestIndex, true);
             }
 
             player.cellChanged = false;
@@ -56,11 +57,12 @@ public class Pathfinder : MonoBehaviour
     }
 
     // keeps track of the used indices of secondary paths
-    int shortestIndex = 1000;
+    int highestIndex = 1000;
     // get path with start and end points supplied
     public List<MazeCell> SetHighlightPath(IntVector2 pos, int areaIndex)
     {
         int pathIndex = 1;
+        int shortestIndex = 1000;
         int shortestCount = 1000;
 
         var connectionPoints = areafinder.GetConnectionPoints(areaIndex);
@@ -136,9 +138,11 @@ public class Pathfinder : MonoBehaviour
 
             if (j < connectionPoints.Count - 1)
                 pathIndex++;
+
+            highestIndex = pathIndex;
         }
 
-        DisplayPath(path[shortestIndex], 2, shortestIndex);
+        DisplayPath(path[shortestIndex], 2, shortestIndex, true);
 
         return path[pathIndex];
     }
@@ -237,14 +241,22 @@ public class Pathfinder : MonoBehaviour
         return endCell[pathIndex];
     }
 
-    void DisplayPath(List<MazeCell> path, int colorIndex, int pathIndex)
+    void DisplayPath(List<MazeCell> path, int colorIndex, int pathIndex, bool resetTime = false)
     {
         foreach(MazeCell cell in path)
         {
             cell.mat.SetInt(GameManager.colorIndex, colorIndex);
             cell.mat.SetFloat(GameManager.pathIndex, cell.distanceFromStart[pathIndex]);
             cell.mat.SetFloat(GameManager.pathCount, endCell[pathIndex].distanceFromStart[pathIndex]);
+
+            if (!resetTime) continue;
+            if (player.hitIndexChanged || (!path.Contains(player.currentCell) && !player.currentCell.connectedCells.Contains(endCell[pathIndex])))
+            {
+                cell.mat.SetFloat(GameManager.restartTime, Time.time);
+            }
         }
+
+        player.hitIndexChanged = false;
     }
 
     void ResetCells(int index)
@@ -265,8 +277,8 @@ public class Pathfinder : MonoBehaviour
             cell.mat.SetFloat(GameManager.restartTime, Time.time);
 
             // manually resetting secondary path variables
-            if (shortestIndex > 10) continue; // this is in case we haven't searched any secondary paths yet
-            for (int i = 1; i <= shortestIndex; i++)
+            if (highestIndex > 10) continue; // this is in case we haven't searched any secondary paths yet
+            for (int i = 1; i <= highestIndex; i++)
             {
                 cell.visited[i] = false;
                 cell.exploredFrom[i] = null;
@@ -309,11 +321,6 @@ public class Pathfinder : MonoBehaviour
                 else
                 {
                     cell.mat.SetInt(GameManager.colorIndex, 0);
-
-                    if (!path[index].Contains(player.currentCell) && !player.currentCell.connectedCells.Contains(endCell[index]))
-                    {
-                        cell.mat.SetFloat(GameManager.restartTime, Time.time);
-                    }
                 }
 
             }  
