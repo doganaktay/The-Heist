@@ -16,11 +16,9 @@ public class Pathfinder : MonoBehaviour
     MazeCell[] endCell;
     Queue<MazeCell>[] queue;
     List<MazeCell>[] path;
-    List<MazeCell> explored;
+    List<MazeCell>[] explored;
     bool[] pathFound;
-    public bool hasReset = false;
     int searchSize = 5;
-    int currentSearchIndex = 0;
 
     // track distance
     public bool initialized = false;
@@ -39,7 +37,7 @@ public class Pathfinder : MonoBehaviour
         path = new List<MazeCell>[searchSize];
         startCell = new MazeCell[searchSize];
         endCell = new MazeCell[searchSize];
-
+        explored = new List<MazeCell>[searchSize];
     }
 
     void Update()
@@ -50,56 +48,40 @@ public class Pathfinder : MonoBehaviour
                 SetHighlightPath(player.currentCell.pos, player.areaIndex);
             else
             {
-                if (!hasReset)
-                    ResetCells(explored, 1);
+                ResetCells(explored[shortestIndex], shortestIndex, true);
             }
 
-        player.cellChanged = false;
+            player.cellChanged = false;
         }
     }
 
-    int GetSearchIndex()
-    {
-        currentSearchIndex++;
-
-        if (currentSearchIndex == searchSize)
-            currentSearchIndex = 2;
-
-        return currentSearchIndex;
-    }
-
+    // keeps track of the used indices of secondary paths
+    int shortestIndex = 1000;
     // get path with start and end points supplied
     public List<MazeCell> SetHighlightPath(IntVector2 pos, int areaIndex)
     {
         int pathIndex = 1;
-
-        if (path[pathIndex] == null)
-            path[pathIndex] = new List<MazeCell>();
-
-        if (queue[pathIndex] == null)
-            queue[pathIndex] = new Queue<MazeCell>();
-
-        if (explored == null)
-            explored = new List<MazeCell>();
-
-        if (!hasReset)
-            ResetCells(explored, pathIndex);
-        else
-            hasReset = false;
-
-        explored.Clear();
-
-        path[pathIndex].Clear();
-        pathFound[pathIndex] = false;
+        int shortestCount = 1000;
 
         var connectionPoints = areafinder.GetConnectionPoints(areaIndex);
 
-        List<MazeCell>[] alternatePaths = new List<MazeCell>[connectionPoints.Count];
-
         for (int j = 0; j < connectionPoints.Count; j++)
         {
-            if (alternatePaths[j] == null)
-                alternatePaths[j] = new List<MazeCell>();
+            if (path[pathIndex] == null)
+                path[pathIndex] = new List<MazeCell>();
+
+            if (queue[pathIndex] == null)
+                queue[pathIndex] = new Queue<MazeCell>();
+
+            if (explored[pathIndex] == null)
+                explored[pathIndex] = new List<MazeCell>();
+            else
+                ResetCells(explored[pathIndex], pathIndex);
+
+            explored[pathIndex].Clear();
+
+            path[pathIndex].Clear();
+            pathFound[pathIndex] = false;
 
             startCell[pathIndex] = connectionPoints[j];
             queue[pathIndex].Enqueue(startCell[pathIndex]);
@@ -111,7 +93,7 @@ public class Pathfinder : MonoBehaviour
             while (queue[pathIndex].Count > 0)
             {
                 currentCell = queue[pathIndex].Dequeue();
-                explored.Add(currentCell);
+                explored[pathIndex].Add(currentCell);
 
                 foreach (MazeCell cell in currentCell.connectedCells)
                 {
@@ -122,7 +104,7 @@ public class Pathfinder : MonoBehaviour
                         cell.exploredFrom[pathIndex] = currentCell;
                         cell.distanceFromStart[pathIndex] = 1 + cell.exploredFrom[pathIndex].distanceFromStart[pathIndex];
 
-                        explored.Add(cell);
+                        explored[pathIndex].Add(cell);
 
                         if (cell == endCell[pathIndex])
                         {
@@ -134,27 +116,29 @@ public class Pathfinder : MonoBehaviour
             }
 
             if (!pathFound[pathIndex])
-            { Debug.Log("no available path"); continue; }
+            { Debug.Log("no available path for: " + pathIndex); continue; }
 
-            alternatePaths[j].Add(endCell[pathIndex]);
+            path[pathIndex].Add(endCell[pathIndex]);
             var previous = endCell[pathIndex].exploredFrom[pathIndex];
             while (previous != startCell[pathIndex])
             {
-                alternatePaths[j].Add(previous);
+                path[pathIndex].Add(previous);
                 previous = previous.exploredFrom[pathIndex];
             }
-            alternatePaths[j].Add(startCell[pathIndex]);
-            alternatePaths[j].Reverse();
+            path[pathIndex].Add(startCell[pathIndex]);
+            path[pathIndex].Reverse();
 
-            if(connectionPoints.Count > 1 && j < connectionPoints.Count - 1)
-                ResetCells(explored, pathIndex);
+            if (path[pathIndex].Count < shortestCount)
+            {
+                shortestIndex = pathIndex;
+                shortestCount = path[pathIndex].Count;
+            }
+
+            if (j < connectionPoints.Count - 1)
+                pathIndex++;
         }
 
-        var ordered = alternatePaths.OrderBy(x => x.Count).ToArray();
-
-        path[pathIndex].AddRange(ordered[0]);
-
-        DisplayPath(path[pathIndex], 2, pathIndex, false);
+        DisplayPath(path[shortestIndex], 2, shortestIndex);
 
         return path[pathIndex];
     }
@@ -253,12 +237,10 @@ public class Pathfinder : MonoBehaviour
         return endCell[pathIndex];
     }
 
-    void DisplayPath(List<MazeCell> path, int colorIndex, int pathIndex, bool setEndPoints = true)
+    void DisplayPath(List<MazeCell> path, int colorIndex, int pathIndex)
     {
         foreach(MazeCell cell in path)
         {
-            //if(setEndPoints && (cell == startCell[pathIndex] || cell == endCell[pathIndex]))
-            //{ cell.mat.SetInt(GameManager.colorIndex, 3); continue; }
             cell.mat.SetInt(GameManager.colorIndex, colorIndex);
             cell.mat.SetFloat(GameManager.pathIndex, cell.distanceFromStart[pathIndex]);
             cell.mat.SetFloat(GameManager.pathCount, endCell[pathIndex].distanceFromStart[pathIndex]);
@@ -283,21 +265,37 @@ public class Pathfinder : MonoBehaviour
             cell.mat.SetFloat(GameManager.restartTime, Time.time);
 
             // manually resetting secondary path variables
-            cell.visited[1] = false;
-            cell.exploredFrom[1] = null;
-            cell.distanceFromStart[1] = 0;
+            if (shortestIndex > 10) continue; // this is in case we haven't searched any secondary paths yet
+            for (int i = 1; i <= shortestIndex; i++)
+            {
+                cell.visited[i] = false;
+                cell.exploredFrom[i] = null;
+                cell.distanceFromStart[i] = 0;
+            }
         }
 
         lastRestartTime = Time.time;
     }
 
-    void ResetCells(List<MazeCell> explored, int index)
+    void ResetCells(List<MazeCell> explored, int index, bool resetAll = false)
     {
             foreach (MazeCell cell in explored)
             {
-                cell.visited[index] = false;
-                cell.exploredFrom[index] = null;
-                cell.distanceFromStart[index] = 0;
+                if (resetAll)
+                {
+                    for(int i=1; i<=index; i++)
+                    {
+                        cell.visited[i] = false;
+                        cell.exploredFrom[i] = null;
+                        cell.distanceFromStart[i] = 0;
+                    }
+                }
+                else
+                {
+                    cell.visited[index] = false;
+                    cell.exploredFrom[index] = null;
+                    cell.distanceFromStart[index] = 0;
+                }
 
                 var state = cell.state == 1;
 
@@ -311,7 +309,11 @@ public class Pathfinder : MonoBehaviour
                 else
                 {
                     cell.mat.SetInt(GameManager.colorIndex, 0);
-                    cell.mat.SetFloat(GameManager.restartTime, Time.time);
+
+                    if (!path[index].Contains(player.currentCell) && !player.currentCell.connectedCells.Contains(endCell[index]))
+                    {
+                        cell.mat.SetFloat(GameManager.restartTime, Time.time);
+                    }
                 }
 
             }  

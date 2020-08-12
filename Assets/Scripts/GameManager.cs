@@ -45,7 +45,6 @@ public class GameManager : MonoBehaviour
 
 		pathfinder.maze = mazeInstance;
 		pathfinder.areafinder = areafinder;
-		pathfinder.hasReset = true;
 		pathfinder.initialized = false;
 
         areafinder.maze = mazeInstance;
@@ -62,10 +61,6 @@ public class GameManager : MonoBehaviour
 		ai.pathfinder = pathfinder;
 		ai.startPos = new IntVector2(0, 0);
 		ai.endPos = new IntVector2(mazeInstance.size.x - 1, mazeInstance.size.y - 1);
-
-		float t = Time.time;
-		Shader.SetGlobalFloat(restartTime, t);
-		pathfinder.lastRestartTime = t;
 
 		MazeGenFinished();
 	}
