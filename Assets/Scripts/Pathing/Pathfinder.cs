@@ -241,20 +241,26 @@ public class Pathfinder : MonoBehaviour
         return endCell[pathIndex];
     }
 
+    // tracking last start and end for timer reset
+    MazeCell lastStartCell, lastEndCell;
     void DisplayPath(List<MazeCell> path, int colorIndex, int pathIndex, bool resetTime = false)
     {
-        foreach(MazeCell cell in path)
+        bool reset = player.hitIndexChanged || lastStartCell != startCell[pathIndex] || !player.currentCell.connectedCells.Contains(lastEndCell);
+
+        foreach (MazeCell cell in path)
         {
             cell.mat.SetInt(GameManager.colorIndex, colorIndex);
             cell.mat.SetFloat(GameManager.pathIndex, cell.distanceFromStart[pathIndex]);
             cell.mat.SetFloat(GameManager.pathCount, endCell[pathIndex].distanceFromStart[pathIndex]);
 
             if (!resetTime) continue;
-            if (player.hitIndexChanged || (!path.Contains(player.currentCell) && !player.currentCell.connectedCells.Contains(endCell[pathIndex])))
-            {
-                cell.mat.SetFloat(GameManager.restartTime, Time.time);
-            }
+
+            if (reset)
+            { cell.mat.SetFloat(GameManager.restartTime, Time.time); }
         }
+
+        lastStartCell = startCell[pathIndex];
+        lastEndCell = endCell[pathIndex];
 
         player.hitIndexChanged = false;
     }
