@@ -241,11 +241,12 @@ public class Pathfinder : MonoBehaviour
         return endCell[pathIndex];
     }
 
-    // tracking last start and end for timer reset
+    // tracking last start and end cellfor timer reset
     MazeCell lastStartCell, lastEndCell;
+    // Display path
     void DisplayPath(List<MazeCell> path, int colorIndex, int pathIndex, bool resetTime = false)
     {
-        bool reset = player.hitIndexChanged || lastStartCell != startCell[pathIndex] || !player.currentCell.connectedCells.Contains(lastEndCell);
+        bool reset = player.hitIndexChanged || lastStartCell != startCell[pathIndex] || !endCell[pathIndex].connectedCells.Contains(lastEndCell);
 
         foreach (MazeCell cell in path)
         {
@@ -253,15 +254,15 @@ public class Pathfinder : MonoBehaviour
             cell.mat.SetFloat(GameManager.pathIndex, cell.distanceFromStart[pathIndex]);
             cell.mat.SetFloat(GameManager.pathCount, endCell[pathIndex].distanceFromStart[pathIndex]);
 
-            if (!resetTime) continue;
-
-            if (reset)
+            if (resetTime && reset)
             { cell.mat.SetFloat(GameManager.restartTime, Time.time); }
         }
 
+        if(!reset)
+        path.ElementAt(path.Count - 1).mat.SetFloat(GameManager.restartTime, lastEndCell.mat.GetFloat(GameManager.restartTime));
+
         lastStartCell = startCell[pathIndex];
         lastEndCell = endCell[pathIndex];
-
         player.hitIndexChanged = false;
     }
 

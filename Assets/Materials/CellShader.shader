@@ -77,6 +77,7 @@
 			};
 
 			sampler2D _MainTex;
+			//float4 _MainTex_TexelSize;
 			sampler2D _AlphaTex;
 			float _AlphaSplitEnabled;
 
@@ -84,7 +85,7 @@
 			{
 				v2f OUT;
 				OUT.vertex = UnityObjectToClipPos(IN.vertex);
-				OUT.texcoord = IN.texcoord;
+				OUT.texcoord = (IN.texcoord-0.5);
 				OUT.color = IN.color * selectColor(_ColorIndex);
 				#ifdef PIXELSNAP_ON
 				OUT.vertex = UnityPixelSnap (OUT.vertex);
@@ -116,7 +117,7 @@
 				float t;
 
 				if(_PathIndex >= count - _HighlightCount && _PathIndex < count)
-					t = 1 - (count - _PathIndex) / _HighlightCount;
+					t = 1 - pow((count - _PathIndex) / _HighlightCount,1.0/1.5); // taking the pow with a fractional exp for smoother blend
 				else
 					t = 0;
 
@@ -127,6 +128,14 @@
 					fixed4 baseC = selectColor(0);
 					c = lerp(baseC, c, t);
 				}
+
+				// Get the colors of the surrounding pixels
+                //fixed4 up = tex2D(_MainTex, IN.texcoord + fixed2(0, _MainTex_TexelSize.y));
+                //fixed4 down = tex2D(_MainTex, IN.texcoord - fixed2(0, _MainTex_TexelSize.y));
+                //fixed4 left = tex2D(_MainTex, IN.texcoord - fixed2(_MainTex_TexelSize.x, 0));
+                //fixed4 right = tex2D(_MainTex, IN.texcoord + fixed2(_MainTex_TexelSize.x, 0));
+
+				
 
 				c.rgb *= c.a;
 				return c;
