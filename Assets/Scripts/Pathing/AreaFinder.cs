@@ -20,6 +20,33 @@ public class AreaFinder : MonoBehaviour
     public List<MazeCell> GetConnectionPoints(int areaIndex){ return lowCellConnected[areaIndex]; }
     public List<MazeCell> GetRandomArea(){ return lowCellAreas.ElementAt(UnityEngine.Random.Range(0, lowCellAreas.Count)).Value; }
 
+    public void MakeRoom()
+    {
+        var room = GetRandomAreaWeighted();
+
+        foreach(var cell in room)
+        {
+            for (int i = 0; i < MazeDirections.vectors.Length; i++)
+            {
+                var xpos = cell.pos.x + MazeDirections.vectors[i].x;
+                var ypos = cell.pos.y + MazeDirections.vectors[i].y;
+
+                if (xpos < 0 || ypos < 0 || xpos > maze.size.x - 1 || ypos > maze.size.y - 1)
+                    continue;
+
+                var neighbour = maze.cells[xpos, ypos];
+
+                if (!cell.connectedCells.Contains(neighbour) && cell.state == neighbour.state && cell.areaIndex == neighbour.areaIndex)
+                {
+                    var wall = (MazeCellWall)cell.GetEdge((MazeDirection)i);
+                    MazeDirections.RemoveWall(wall);
+                    var otherWall = (MazeCellWall)neighbour.GetEdge(MazeDirections.GetOpposite((MazeDirection)i));
+                    MazeDirections.RemoveWall(otherWall);
+                }
+            }
+        }
+    }
+
     public List<MazeCell> GetRandomAreaWeighted()
     {
         var totalCount = 0;
@@ -52,12 +79,14 @@ public class AreaFinder : MonoBehaviour
         return lowCellAreas.ElementAt(destinationIndex).Value;
     }
 
+    // being called by pathfinder when the maze changes
     public void FindAreas()
     {
         ResetGrid();
         NewDetermineAreas();
     }
 
+    // resets local copy of grid to current maze
     public void ResetGrid()
     {
         if(grid == null)
@@ -297,9 +326,9 @@ public class AreaFinder : MonoBehaviour
     }
 
 
-    //private void OnGUI()
-    //{
-    //    if (GUI.Button(new Rect(10, 130, 80, 60), "Find Areas"))
-    //        FindAreas();
-    //}
+    private void OnGUI()
+    {
+        if (GUI.Button(new Rect(10, 130, 80, 60), "Make Room"))
+            MakeRoom();
+    }
 }

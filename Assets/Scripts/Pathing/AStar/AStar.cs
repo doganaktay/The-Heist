@@ -8,8 +8,8 @@ public class AStar : MonoBehaviour
     public Pathfinder pathfinder;
     public AreaFinder areafinder;
 
-    //public Dictionary<MazeCell, MazeCell> cameFrom = new Dictionary<MazeCell, MazeCell>();
-    //public Dictionary<MazeCell, float> costSoFar = new Dictionary<MazeCell, float>();
+    public static Dictionary<MazeCell, MazeCell> cameFrom = new Dictionary<MazeCell, MazeCell>();
+    public static Dictionary<MazeCell, float> costSoFar = new Dictionary<MazeCell, float>();
 
     static public float Heuristic(MazeCell a, MazeCell b)
     {
@@ -20,17 +20,16 @@ public class AStar : MonoBehaviour
     public List<MazeCell> aStarPath = new List<MazeCell>();
     FastPriorityQueue<MazeCell> frontier;
 
-    public List<MazeCell> AStarSearch(MazeCell start, MazeCell end)
+    public List<MazeCell> GetAStarPath(MazeCell start, MazeCell end)
     {
-        Dictionary<MazeCell, MazeCell> cameFrom = new Dictionary<MazeCell, MazeCell>();
-        Dictionary<MazeCell, float> costSoFar = new Dictionary<MazeCell, float>();
+        // clearing dictionaries for re-use
+        cameFrom.Clear();
+        costSoFar.Clear();
 
         pathFound = false;
 
         if (frontier == null)
             frontier = new FastPriorityQueue<MazeCell>(maze.size.x * maze.size.y);
-
-        //var frontier = new FastPriorityQueue<MazeCell>(maze.size.x * maze.size.y);
 
         frontier.Enqueue(start, 0);
 
@@ -63,6 +62,7 @@ public class AStar : MonoBehaviour
             }
         }
 
+        // resetting the nodes still left in queue after astar completes
         while(frontier.Count > 0)
         {
             var node = frontier.Dequeue();
@@ -84,6 +84,7 @@ public class AStar : MonoBehaviour
         aStarPath.Add(start);
         aStarPath.Reverse();
 
+        // resetting the nodes in path for re-use
         foreach(var node in aStarPath)
         {
             frontier.ResetNode(node);
@@ -101,12 +102,11 @@ public class AStar : MonoBehaviour
             var a = l[Random.Range(0, l.Count)];
             var b = l[Random.Range(0, l.Count)];
 
-            var list = AStarSearch(a, b);
+            var list = GetAStarPath(a, b);
 
             foreach(var item in list)
             {
-                Debug.Log(item.gameObject.name);
-                item.mat.SetFloat(GameManager.colorIndex, 1);
+                item.mat.SetColorIndex(1);
             }
         }
     }

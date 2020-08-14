@@ -18,14 +18,6 @@ public class GameManager : MonoBehaviour
 
 	public static event Action MazeGenFinished;
 
-	// static property references
-	public static int colorIndex = Shader.PropertyToID("_ColorIndex");
-	public static int pathIndex = Shader.PropertyToID("_PathIndex");
-	public static int pathCount = Shader.PropertyToID("_PathCount");
-	// following is not exposed as a property on the shader
-	// a shader property needs to not be exposed in order to be set globally in script
-	public static int restartTime = Shader.PropertyToID("_RestartTime");
-
 	private void Start()
 	{
 		BeginGame();

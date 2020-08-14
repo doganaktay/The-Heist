@@ -250,16 +250,16 @@ public class Pathfinder : MonoBehaviour
 
         foreach (MazeCell cell in path)
         {
-            cell.mat.SetInt(GameManager.colorIndex, colorIndex);
-            cell.mat.SetFloat(GameManager.pathIndex, cell.distanceFromStart[pathIndex]);
-            cell.mat.SetFloat(GameManager.pathCount, endCell[pathIndex].distanceFromStart[pathIndex]);
+            cell.mat.SetColorIndex(colorIndex);
+            cell.mat.SetPathIndex(cell.distanceFromStart[pathIndex]);
+            cell.mat.SetPathCount(endCell[pathIndex].distanceFromStart[pathIndex]);
 
             if (resetTime && reset)
-            { cell.mat.SetFloat(GameManager.restartTime, Time.time); }
+            { cell.mat.SetRestartTime(Time.time); }
         }
 
         if(!reset)
-        path.ElementAt(path.Count - 1).mat.SetFloat(GameManager.restartTime, lastEndCell.mat.GetFloat(GameManager.restartTime));
+        path.ElementAt(path.Count - 1).mat.SetRestartTime(lastEndCell.mat.GetRestartTime());
 
         lastStartCell = startCell[pathIndex];
         lastEndCell = endCell[pathIndex];
@@ -278,10 +278,10 @@ public class Pathfinder : MonoBehaviour
             cell.state = 0;
 
             // setting material properties
-            cell.mat.SetInt(GameManager.colorIndex, 0);
-            cell.mat.SetFloat(GameManager.pathIndex, 0);
-            cell.mat.SetFloat(GameManager.pathCount, 0);
-            cell.mat.SetFloat(GameManager.restartTime, Time.time);
+            cell.mat.SetColorIndex(0);
+            cell.mat.SetPathIndex(0);
+            cell.mat.SetPathCount(0);
+            cell.mat.SetRestartTime(Time.time);
 
             // manually resetting secondary path variables
             if (highestIndex > 10) continue; // this is in case we haven't searched any secondary paths yet
@@ -320,14 +320,14 @@ public class Pathfinder : MonoBehaviour
 
                 if (state)
                 {
-                    cell.mat.SetFloat(GameManager.pathIndex, cell.distanceFromStart[0]);
-                    cell.mat.SetInt(GameManager.colorIndex, 1);
-                    cell.mat.SetFloat(GameManager.pathCount, endCell[0].distanceFromStart[0]);
-                    cell.mat.SetFloat(GameManager.restartTime, lastRestartTime);
+                    cell.mat.SetPathIndex(cell.distanceFromStart[0]);
+                    cell.mat.SetColorIndex(1);
+                    cell.mat.SetPathCount(endCell[0].distanceFromStart[0]);
+                    cell.mat.SetRestartTime(lastRestartTime);
                 }
                 else
                 {
-                    cell.mat.SetInt(GameManager.colorIndex, 0);
+                    cell.mat.SetColorIndex(0);
                 }
 
             }  
