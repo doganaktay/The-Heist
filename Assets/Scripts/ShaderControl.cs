@@ -8,6 +8,7 @@ public static class ShaderControl
 	public static readonly int colorIndex = Shader.PropertyToID("_ColorIndex");
 	public static readonly int pathIndex = Shader.PropertyToID("_PathIndex");
 	public static readonly int pathCount = Shader.PropertyToID("_PathCount");
+	public static readonly int baseColor = Shader.PropertyToID("_BaseColor");
 	// following is not exposed as a property on the shader
 	// a shader property needs to not be exposed in order to be set globally in script
 	public static readonly int restartTime = Shader.PropertyToID("_RestartTime");
@@ -21,5 +22,6 @@ public static class ShaderControl
 	public static float GetPathCount(this Material mat) { return mat.GetFloat(pathCount); }
 	public static void SetRestartTime(this Material mat, float time) => mat.SetFloat(restartTime, time);
 	public static float GetRestartTime(this Material mat) { return mat.GetFloat(restartTime); }
+	public static void SetBaseColor(this Material mat, Color color) => mat.SetColor(baseColor, color);
 
 }
