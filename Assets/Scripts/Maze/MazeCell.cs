@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
-public class MazeCell : MonoBehaviour
+public class MazeCell : FastPriorityQueueNode
 {
     public IntVector2 pos;
 	public int areaIndex;
@@ -19,7 +19,9 @@ public class MazeCell : MonoBehaviour
 	public HashSet<MazeCell> connectedCells = new HashSet<MazeCell>();
 	public MazeCell[] exploredFrom;
 	public int[] distanceFromStart;
-	
+
+	// for A*
+	public int travelCost;
 
 	private MazeCellEdge[] edges = new MazeCellEdge[MazeDirections.Count];
 
@@ -75,4 +77,9 @@ public class MazeCell : MonoBehaviour
 			throw new System.InvalidOperationException("MazeCell has no uninitialized directions left.");
 		}
 	}
+
+	public HashSet<MazeCell> GetNeighbours()
+    {
+		return connectedCells;
+    }
 }

@@ -38,18 +38,16 @@ public class AreaFinder : MonoBehaviour
         var rand = UnityEngine.Random.Range(0, totalCount);
         var destinationIndex = -1;
 
-        //Debug.Log(rand);
-
         for(int i = 0; i < lowCellAreas.Count; i++)
         {
             if (weights[i] >= rand && destinationIndex == -1 ? true : i - 1 < 0 ? true : rand > weights[i-1] ? true : false)
                 destinationIndex = i;
         }
 
-        Debug.Log("Key: " + lowCellAreas.ElementAt(destinationIndex).Key +
-                  " Weight: " + string.Format("{0:0.000}", (destinationIndex - 1 >= 0 ?
-                  (weights[destinationIndex] - weights[destinationIndex - 1]) / (float)weights[lowCellAreas.Count - 1]:
-                  weights[destinationIndex] / (float)weights[lowCellAreas.Count - 1])));
+        //Debug.Log("Key: " + lowCellAreas.ElementAt(destinationIndex).Key +
+        //          " Weight: " + string.Format("{0:0.000}", (destinationIndex - 1 >= 0 ?
+        //          (weights[destinationIndex] - weights[destinationIndex - 1]) / (float)weights[lowCellAreas.Count - 1]:
+        //          weights[destinationIndex] / (float)weights[lowCellAreas.Count - 1])));
 
         return lowCellAreas.ElementAt(destinationIndex).Value;
     }

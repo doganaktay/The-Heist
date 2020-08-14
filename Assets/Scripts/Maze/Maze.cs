@@ -122,4 +122,10 @@ public class Maze : MonoBehaviour
             wall.Initialize(otherCell, cell, direction.GetOpposite());
         }
     }
+
+    // for A* through interface
+    public float Cost(MazeCell a, MazeCell b)
+    {
+        return b.travelCost;
+    }
 }

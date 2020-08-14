@@ -21,7 +21,7 @@ public static class MazeDirections
 		}
 	}
 
-	private static IntVector2[] vectors = {
+	public static IntVector2[] vectors = {
 		new IntVector2(0, 1),
 		new IntVector2(1, 0),
 		new IntVector2(0, -1),
