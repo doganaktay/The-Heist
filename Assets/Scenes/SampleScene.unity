@@ -249,7 +249,7 @@ PrefabInstance:
     - target: {fileID: 3497784237843523081, guid: eec22deb43dd643b392e2c654c127b34,
         type: 3}
       propertyPath: m_RootOrder
-      value: 7
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 3497784237843523081, guid: eec22deb43dd643b392e2c654c127b34,
         type: 3}
@@ -278,6 +278,51 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: eec22deb43dd643b392e2c654c127b34, type: 3}
+--- !u!1 &595692257
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 595692258}
+  - component: {fileID: 595692259}
+  m_Layer: 0
+  m_Name: TextOverlay
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &595692258
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 595692257}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 6
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &595692259
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 595692257}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4a353221932c4862aad109e538b010d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maze: {fileID: 0}
+  cellText: {fileID: 681265794407287086, guid: 059e74b8d86ac45b281372589e4ab01d, type: 3}
 --- !u!1 &600934096
 GameObject:
   m_ObjectHideFlags: 0
@@ -367,7 +412,7 @@ PrefabInstance:
     - target: {fileID: 3116785791752703769, guid: 7a0856d39a0d24cc982e3afdbdbc7971,
         type: 3}
       propertyPath: m_RootOrder
-      value: 6
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 3116785791752703769, guid: 7a0856d39a0d24cc982e3afdbdbc7971,
         type: 3}
@@ -598,6 +643,7 @@ MonoBehaviour:
   aStar: {fileID: 1620038531}
   areafinder: {fileID: 600934097}
   patrolManager: {fileID: 1571564959}
+  textOverlay: {fileID: 595692259}
   playerPrefab: {fileID: 7925979547997160563, guid: b27354f4f377042c1953090e61a0d611,
     type: 3}
   player: {fileID: 0}
@@ -651,7 +697,7 @@ PrefabInstance:
     - target: {fileID: 5284805516819639897, guid: d8a48d35a40914c3b9f9d1fa4319cdba,
         type: 3}
       propertyPath: m_RootOrder
-      value: 8
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 5284805516819639897, guid: d8a48d35a40914c3b9f9d1fa4319cdba,
         type: 3}

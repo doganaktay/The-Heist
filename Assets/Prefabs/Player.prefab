@@ -435,4 +435,4 @@ MonoBehaviour:
   cellChanged: 0
   clampMarginX: 5
   clampMarginY: 5
-  maxLinePoints: 20
+  maxLinePoints: 50

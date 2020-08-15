@@ -9,6 +9,7 @@ public class GameManager : MonoBehaviour
 	public AStar aStar;
     public AreaFinder areafinder;
     public PatrolManager patrolManager;
+	public TextOverlay textOverlay;
 	public Player playerPrefab;
 	public Player player;
 	public PathFollow aiPrefab;
@@ -55,6 +56,10 @@ public class GameManager : MonoBehaviour
 		// pass references to patrol manager
 		patrolManager.pathfinder = pathfinder;
 		patrolManager.areafinder = areafinder;
+
+		// initialize and pass references to text overlay
+		textOverlay.maze = mazeInstance;
+		textOverlay.InitializeDisplay();
 
 		// instantiate player & AI (AI currently disabled)
 		player = Instantiate(playerPrefab, new Vector3(mazeInstance.cells[0, 0].transform.position.x,
