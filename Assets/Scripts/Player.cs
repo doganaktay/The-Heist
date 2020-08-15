@@ -38,6 +38,7 @@ public class Player : MonoBehaviour
     LineRenderer projectileLine;
     [SerializeField]
     int maxLinePoints = 20;
+    bool lineReset = true;
 
     private void Start()
     {
@@ -80,13 +81,17 @@ public class Player : MonoBehaviour
         if (Input.GetMouseButton(0))
         {
             DrawTrajectory(true);
+            lineReset = false;
         }
-        else
+        else if (!lineReset)
+        {
             DrawTrajectory(false);
+            lineReset = true;
+        }
 
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            var hitCount = Physics2D.RaycastNonAlloc(transform.position, aim.transform.up, results: rayHits, 5f, projectileLayerMask);
+            var hitCount = Physics2D.RaycastNonAlloc(transform.position, aim.transform.up, results: rayHits, 5f, wallLayerMask);
 
             if (hitCount == 2)
             {
@@ -125,11 +130,11 @@ public class Player : MonoBehaviour
                         projectileLine.SetPosition(0, ro);
                     }
 
-                    Debug.DrawRay(ro, rd, Color.red, 5f);
+                    //Debug.DrawRay(ro, rd, Color.red, 5f);
 
                     var surfaceNormal = rayHits[0].normal;
 
-                    Debug.DrawRay(rayHits[0].point, surfaceNormal*2f, Color.blue, 5f);
+                    //Debug.DrawRay(rayHits[0].point, surfaceNormal*2f, Color.blue, 5f);
 
                     var dot = Vector2.Dot(rd, surfaceNormal);
 
@@ -144,7 +149,7 @@ public class Player : MonoBehaviour
                     ro = linePos + surfaceNormal*0.01f;
                     rd = rd - 2f * dot * surfaceNormal;
 
-                    Debug.DrawRay(ro, rd, Color.red, 5f);
+                    //Debug.DrawRay(ro, rd, Color.red, 5f);
 
                     // 9 is the wall layer
                     if (rayHits[0].collider.gameObject.layer != 9)
