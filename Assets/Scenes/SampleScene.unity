@@ -534,7 +534,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maze: {fileID: 0}
+  pathfinder: {fileID: 0}
   areafinder: {fileID: 0}
+  aStarPath: []
 --- !u!4 &1620038532
 Transform:
   m_ObjectHideFlags: 0

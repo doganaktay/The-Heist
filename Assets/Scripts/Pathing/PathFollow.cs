@@ -24,9 +24,7 @@ public class PathFollow : MonoBehaviour
 
     private void Awake()
     {
-        gameManager = FindObjectOfType<GameManager>();
         GameManager.MazeGenFinished += NewPath;
-        player = FindObjectOfType<Player>();
         Player.MazeChange += UpdatePath;
 
         rb = GetComponent<Rigidbody2D>();
@@ -48,7 +46,7 @@ public class PathFollow : MonoBehaviour
     {
         if (followPath != null)
             StopCoroutine(followPath);
-        currentPath = pathfinder.SetNewPath(new IntVector2(currentCell.pos.x, currentCell.pos.y), endPos);
+        currentPath = pathfinder.SetNewPath(startPos, endPos);
         stepTime = Mathf.Max(0.05f, stepMultiplier * maze.cells[endPos.x, endPos.y].distanceFromStart[0] / (maze.size.x * maze.size.y));
         followPath = StartCoroutine(FollowPath());
     }

@@ -32,6 +32,9 @@ public class Pathfinder : MonoBehaviour
 
     private void Start()
     {
+        GameManager.MazeGenFinished += NewPath;
+        Player.MazeChange += NewPath;
+
         pathFound = new bool[searchSize];
         queue = new Queue<MazeCell>[searchSize];
         path = new List<MazeCell>[searchSize];
@@ -54,6 +57,18 @@ public class Pathfinder : MonoBehaviour
 
             player.cellChanged = false;
         }
+    }
+
+    private void OnDestroy()
+    {
+        GameManager.MazeGenFinished -= NewPath;
+        Player.MazeChange -= NewPath;
+    }
+
+    // For setting maze path from startPos to endPos
+    public void NewPath()
+    {
+        SetNewPath(startPos, endPos);
     }
 
     // keeps track of the used indices of secondary paths

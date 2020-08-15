@@ -41,6 +41,8 @@ public class GameManager : MonoBehaviour
 		pathfinder.maze = mazeInstance;
 		pathfinder.areafinder = areafinder;
 		pathfinder.initialized = false;
+		pathfinder.startPos = new IntVector2(0, 0);
+		pathfinder.endPos = new IntVector2(mazeInstance.size.x - 1, mazeInstance.size.y - 1);
 
 		// pass references to AStar
 		aStar.maze = mazeInstance;
@@ -54,19 +56,20 @@ public class GameManager : MonoBehaviour
 		patrolManager.pathfinder = pathfinder;
 		patrolManager.areafinder = areafinder;
 
-		// instantiate player & AI
-		player = Instantiate(playerPrefab, new Vector3(transform.position.x, transform.position.y, -2f), Quaternion.identity);
-		ai = Instantiate(aiPrefab, new Vector3(mazeInstance.cells[0, 0].transform.position.x,
-							  mazeInstance.cells[0, 0].transform.position.y, -1f), Quaternion.identity);
+		// instantiate player & AI (AI currently disabled)
+		player = Instantiate(playerPrefab, new Vector3(mazeInstance.cells[0, 0].transform.position.x,
+										   mazeInstance.cells[0, 0].transform.position.y, -1f), Quaternion.identity);
+
+		//ai = Instantiate(aiPrefab, new Vector3(mazeInstance.cells[0, 0].transform.position.x, mazeInstance.cells[0, 0].transform.position.y, -1f), Quaternion.identity);
 
 		// pass another reference to pathfinder
 		pathfinder.player = player;
 
 		// pass references to AI
-		ai.maze = mazeInstance;
-		ai.pathfinder = pathfinder;
-		ai.startPos = new IntVector2(0, 0);
-		ai.endPos = new IntVector2(mazeInstance.size.x - 1, mazeInstance.size.y - 1);
+		//ai.maze = mazeInstance;
+		//ai.pathfinder = pathfinder;
+		//ai.startPos = new IntVector2(0, 0);
+		//ai.endPos = new IntVector2(mazeInstance.size.x - 1, mazeInstance.size.y - 1);
 
 		// call event
 		MazeGenFinished();
@@ -76,7 +79,7 @@ public class GameManager : MonoBehaviour
 	{		
 		Destroy(mazeInstance.gameObject);
 		Destroy(player.gameObject);
-        ai.StopAndDestroy();
+        //ai.StopAndDestroy();
 
         BeginGame();
 	}

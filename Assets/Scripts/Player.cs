@@ -28,19 +28,28 @@ public class Player : MonoBehaviour
     public float clampMarginY = 5f;
     float clampX, clampY;
 
+    Camera cam;
+    Transform aim;
+    Vector2 mousePos;
+
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         hits = new Collider2D[10];
 
-        var cam = Camera.main;
+        cam = Camera.main;
         clampY = cam.orthographicSize - clampMarginY;
         clampX = cam.orthographicSize / 9 * 16 - clampMarginX;
+
+        aim = transform.GetChild(0).transform;
 
     }
 
     void Update()
     {
+        // tracking mouse input pos for cell highlighting and player aim
+        mousePos = cam.ScreenToWorldPoint(Input.mousePosition);
+
         float x = Input.GetAxis("Horizontal");
         float y = Input.GetAxis("Vertical");
 
@@ -73,12 +82,25 @@ public class Player : MonoBehaviour
             }
         }
 
-        TrackLocation();
+        TrackMouseLocation();
+        FaceMouse();
     }
 
-    void TrackLocation()
+    // a holder object for the aim of equal scale with player parent object is rotated
+    // the aim itself is a child of this aim holder so as the holder rotates on its own axis
+    // the aim rotates around the circle
+    void FaceMouse()
     {
-        int hitCount = Physics2D.OverlapCircleNonAlloc(transform.position, 1f, results: hits, cellLayerMask);
+        Vector2 diff = mousePos - (Vector2)transform.position;
+        diff = diff.normalized;
+        float rot = Mathf.Atan2(diff.y, diff.x) * Mathf.Rad2Deg;
+        aim.transform.localRotation = Quaternion.Euler(0f, 0f, rot-90f);
+    }
+
+    void TrackMouseLocation()
+    {
+        int hitCount = Physics2D.OverlapCircleNonAlloc(mousePos, 1f, results: hits, cellLayerMask);
+        //int hitCount = Physics2D.OverlapCircleNonAlloc(transform.position, 1f, results: hits, cellLayerMask);
 
         if (hitCount > 0)
         {
@@ -107,7 +129,7 @@ public class Player : MonoBehaviour
                 hitIndexChanged = true;
 
             lastAreaIndex = areaIndex;
-            previousHit = hits[0];
+            previousHit = hits[closestIndex];
 
         }
     }
