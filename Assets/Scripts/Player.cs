@@ -19,6 +19,9 @@ public class Player : MonoBehaviour
 
     Collider2D[] hits;
     Collider2D previousHit;
+    RaycastHit2D[] rayHits;
+    // mask currently includes walls and player
+    static int projectileLayerMask = 1 << 9 | 1<<8;
     static int wallLayerMask = 1 << 9;
     static int cellLayerMask = 1 << 10;
 
@@ -32,16 +35,23 @@ public class Player : MonoBehaviour
     Transform aim;
     Vector2 mousePos;
 
+    LineRenderer projectileLine;
+    [SerializeField]
+    int maxLinePoints = 20;
+
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         hits = new Collider2D[10];
+        rayHits = new RaycastHit2D[10];
 
         cam = Camera.main;
         clampY = cam.orthographicSize - clampMarginY;
         clampX = cam.orthographicSize / 9 * 16 - clampMarginX;
 
         aim = transform.GetChild(0).transform;
+
+        projectileLine = GetComponent<LineRenderer>();
 
     }
 
@@ -50,8 +60,8 @@ public class Player : MonoBehaviour
         // tracking mouse input pos for cell highlighting and player aim
         mousePos = cam.ScreenToWorldPoint(Input.mousePosition);
 
-        float x = Input.GetAxis("Horizontal");
-        float y = Input.GetAxis("Vertical");
+        float x = Input.GetAxisRaw("Horizontal");
+        float y = Input.GetAxisRaw("Vertical");
 
         Vector2 force = new Vector2(x, y);
         Vector2 velocity = force.normalized * speed * Time.deltaTime;
@@ -67,15 +77,22 @@ public class Player : MonoBehaviour
 
         transform.position = new Vector2(posX, posY);
 
+        if (Input.GetMouseButton(0))
+        {
+            DrawTrajectory(true);
+        }
+        else
+            DrawTrajectory(false);
+
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            int hitCount = Physics2D.OverlapCircleNonAlloc(transform.position, 3.5f, results: hits, wallLayerMask);
+            var hitCount = Physics2D.RaycastNonAlloc(transform.position, aim.transform.up, results: rayHits, 5f, projectileLayerMask);
 
             if (hitCount == 2)
             {
                 for (int i = 0; i < hitCount; i++)
                 {
-                    hits[i].GetComponentInParent<MazeCellWall>().RemoveWall();
+                    rayHits[i].transform.GetComponentInParent<MazeCellWall>().RemoveWall();
                 }
 
                 MazeChange();
@@ -84,6 +101,59 @@ public class Player : MonoBehaviour
 
         TrackMouseLocation();
         FaceMouse();
+    }
+
+    // calculate and display projectile line
+    void DrawTrajectory(bool draw)
+    {
+        if (draw)
+        {
+            Vector2 ro = transform.position + aim.transform.up * transform.localScale.x / 2f*1.1f;
+            Vector2 rd = aim.transform.up;
+
+            projectileLine.positionCount = 0;
+
+            for (int i = 1; i < maxLinePoints; i++)
+            {
+                var hitCount = Physics2D.RaycastNonAlloc(ro, rd, results: rayHits, 100f, projectileLayerMask);
+
+                if (hitCount > 0)
+                {
+                    if(i == 1)
+                    {
+                        projectileLine.positionCount++;
+                        projectileLine.SetPosition(0, ro);
+                    }
+
+                    Debug.DrawRay(ro, rd, Color.red, 5f);
+
+                    var surfaceNormal = rayHits[0].normal;
+
+                    Debug.DrawRay(rayHits[0].point, surfaceNormal*2f, Color.blue, 5f);
+
+                    var dot = Vector2.Dot(rd, surfaceNormal);
+
+                    //if (dot < -0.98f && i-1>0)
+                    //{ Debug.Log("angle too sharp"); break;}
+
+                    projectileLine.positionCount++;
+
+                    Vector2 linePos = rayHits[0].point;
+                    projectileLine.SetPosition(i, linePos);
+
+                    ro = linePos + surfaceNormal*0.01f;
+                    rd = rd - 2f * dot * surfaceNormal;
+
+                    Debug.DrawRay(ro, rd, Color.red, 5f);
+
+                    // 9 is the wall layer
+                    if (rayHits[0].collider.gameObject.layer != 9)
+                        break;
+                }
+            }
+        }
+        else
+            projectileLine.Reset();
     }
 
     // a holder object for the aim of equal scale with player parent object is rotated
@@ -97,6 +167,8 @@ public class Player : MonoBehaviour
         aim.transform.localRotation = Quaternion.Euler(0f, 0f, rot-90f);
     }
 
+    // track what cell the mouse is currently over
+    // and set bools used by other scripts for updating
     void TrackMouseLocation()
     {
         int hitCount = Physics2D.OverlapCircleNonAlloc(mousePos, 1f, results: hits, cellLayerMask);

@@ -5,6 +5,8 @@ using UnityEngine;
 
 public static class Extensions
 {
+    // material extensions are in the ShaderControl script
+
     public static void Shuffle<T>(this IList<T> list)
     {
         System.Random rng = new System.Random();
@@ -18,4 +20,7 @@ public static class Extensions
             list[n] = value;
         }
     }
+
+    public static void Reset(this LineRenderer line) => line.positionCount = 0;
+    
 }
