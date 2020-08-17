@@ -34,11 +34,16 @@ public class Player : MonoBehaviour
     Camera cam;
     Transform aim;
     Vector2 mousePos;
+    Vector2 lastMousePos;
+    Vector3 lastPos;
 
     LineRenderer projectileLine;
     [SerializeField]
     int maxLinePoints = 20;
     bool lineReset = true;
+
+    [SerializeField]
+    float projectileWidth = 3f;
 
     private void Start()
     {
@@ -68,6 +73,7 @@ public class Player : MonoBehaviour
         Vector2 velocity = force.normalized * speed * Time.deltaTime;
 
         rb.AddForce(velocity, ForceMode2D.Impulse);
+        //rb.velocity = velocity;
 
         if (force.sqrMagnitude < 0.5f)
             rb.velocity = Vector2.Lerp(rb.velocity, Vector2.zero, brakeSpeed);
@@ -80,8 +86,14 @@ public class Player : MonoBehaviour
 
         if (Input.GetMouseButton(0))
         {
-            DrawTrajectory(true);
-            lineReset = false;
+            // only draw line again if mouse position has moved
+            if(lastMousePos != mousePos || lastPos != transform.position)
+            {
+                DrawTrajectory(true);
+                lineReset = false;
+                lastMousePos = mousePos;
+                lastPos = transform.position;
+            }
         }
         else if (!lineReset)
         {
@@ -108,53 +120,43 @@ public class Player : MonoBehaviour
         FaceMouse();
     }
 
-    // calculate and display projectile line
     void DrawTrajectory(bool draw)
     {
         if (draw)
         {
-            Vector2 ro = transform.position + aim.transform.up * transform.localScale.x / 2f*1.1f;
+            Vector2 ro = transform.position + aim.transform.up * (transform.localScale.x / 2f * 1.1f + projectileWidth / 2f);
             Vector2 rd = aim.transform.up;
+
+            projectileLine.startWidth = projectileWidth;
+            projectileLine.endWidth = projectileWidth;
 
             projectileLine.positionCount = 0;
 
             for (int i = 1; i < maxLinePoints; i++)
             {
-                var hitCount = Physics2D.RaycastNonAlloc(ro, rd, results: rayHits, 100f, projectileLayerMask);
+                var hitCount = Physics2D.CircleCastNonAlloc(ro, projectileWidth/2f, rd, results: rayHits, 500f, projectileLayerMask);
 
-                if (hitCount > 0)
+                if (hitCount == 0)
+                    break;
+
+                if (i == 1)
                 {
-                    if(i == 1)
-                    {
-                        projectileLine.positionCount++;
-                        projectileLine.SetPosition(0, ro);
-                    }
-
-                    //Debug.DrawRay(ro, rd, Color.red, 5f);
-
-                    var surfaceNormal = rayHits[0].normal;
-
-                    //Debug.DrawRay(rayHits[0].point, surfaceNormal*2f, Color.blue, 5f);
-
-                    var dot = Vector2.Dot(rd, surfaceNormal);
-
-                    //if (dot < -0.98f && i-1>0)
-                    //{ Debug.Log("angle too sharp"); break;}
-
                     projectileLine.positionCount++;
-
-                    Vector2 linePos = rayHits[0].point;
-                    projectileLine.SetPosition(i, linePos);
-
-                    ro = linePos + surfaceNormal*0.01f;
-                    rd = rd - 2f * dot * surfaceNormal;
-
-                    //Debug.DrawRay(ro, rd, Color.red, 5f);
-
-                    // 9 is the wall layer
-                    if (rayHits[0].collider.gameObject.layer != 9)
-                        break;
+                    projectileLine.SetPosition(0, ro);
                 }
+
+                var surfaceNormal = rayHits[0].normal;
+                var dot = Vector2.Dot(rd, surfaceNormal);
+
+                ro = ro + rd * rayHits[0].distance + surfaceNormal * 0.01f;
+                rd = rd - 2f * dot * surfaceNormal;
+
+                projectileLine.positionCount++;
+                projectileLine.SetPosition(i, ro);
+
+                // 9 is the wall layer
+                if (rayHits[0].collider.gameObject.layer != 9)
+                    break;
             }
         }
         else

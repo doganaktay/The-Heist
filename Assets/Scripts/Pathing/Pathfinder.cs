@@ -18,7 +18,7 @@ public class Pathfinder : MonoBehaviour
     List<MazeCell>[] path;
     List<MazeCell>[] explored;
     bool[] pathFound;
-    int searchSize = 5;
+    int searchSize = 10;
 
     // track distance
     public bool initialized = false;

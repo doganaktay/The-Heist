@@ -407,7 +407,7 @@ LineRenderer:
       m_NumColorKeys: 2
       m_NumAlphaKeys: 2
     numCornerVertices: 3
-    numCapVertices: 0
+    numCapVertices: 3
     alignment: 0
     textureMode: 1
     shadowBias: 0.5
@@ -435,4 +435,5 @@ MonoBehaviour:
   cellChanged: 0
   clampMarginX: 5
   clampMarginY: 5
-  maxLinePoints: 50
+  maxLinePoints: 20
+  projectileWidth: 3

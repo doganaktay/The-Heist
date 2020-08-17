@@ -20,7 +20,11 @@ public class AreaFinder : MonoBehaviour
     public List<MazeCell> GetConnectionPoints(int areaIndex){ return lowCellConnected[areaIndex]; }
     public List<MazeCell> GetRandomArea(){ return lowCellAreas.ElementAt(UnityEngine.Random.Range(0, lowCellAreas.Count)).Value; }
 
-    public void MakeRoom()
+    #if UNITY_EDITOR
+    public bool displayCellID = false;
+    #endif
+
+    public void MakeRoom(float percent = 1f)
     {
         var room = GetRandomAreaWeighted();
 
@@ -36,7 +40,8 @@ public class AreaFinder : MonoBehaviour
 
                 var neighbour = maze.cells[xpos, ypos];
 
-                if (!cell.connectedCells.Contains(neighbour) && cell.state == neighbour.state && cell.areaIndex == neighbour.areaIndex)
+                if (!cell.connectedCells.Contains(neighbour) && cell.state == neighbour.state
+                    && cell.areaIndex == neighbour.areaIndex && UnityEngine.Random.Range(0f,1f) < percent)
                 {
                     var wall = (MazeCellWall)cell.GetEdge((MazeDirection)i);
                     MazeDirections.RemoveWall(wall);
@@ -201,7 +206,11 @@ public class AreaFinder : MonoBehaviour
                 {
                     labels[j, i] = linkedLow[labels[j, i]].Min();
                     grid[j, i].areaIndex = labels[j, i];
-                    grid[j, i].cellText.text = labels[j, i].ToString();
+
+                    #if UNITY_EDITOR
+                    if (displayCellID)
+                        grid[j, i].cellText.text = labels[j, i].ToString();
+                    #endif
 
                     if (!lowCellAreas.ContainsKey(labels[j, i]))
                     {
@@ -215,7 +224,11 @@ public class AreaFinder : MonoBehaviour
                 {
                     labels[j, i] = linkedHigh[labels[j, i]].Min();
                     grid[j, i].areaIndex = labels[j, i];
-                    grid[j, i].cellText.text = labels[j, i].ToString();
+
+                    #if UNITY_EDITOR
+                    if (displayCellID)
+                        grid[j, i].cellText.text = labels[j, i].ToString();
+                    #endif
 
                     if (!highCellAreas.ContainsKey(labels[j, i]))
                     {
@@ -254,10 +267,15 @@ public class AreaFinder : MonoBehaviour
             {
                 if (grid[j, i].state == 1)
                 {
-                    grid[j, i].cellText.color = Color.white;
-
                     var d = grid[j, i].distanceFromStart[0];
-                    grid[j, i].cellText.text = d.ToString();
+
+                    #if UNITY_EDITOR
+                    if (displayCellID)
+                    {
+                        grid[j, i].cellText.color = Color.white;
+                        grid[j, i].cellText.text = d.ToString();
+                    }
+                    #endif
                 }   
             }
         }   
@@ -278,10 +296,16 @@ public class AreaFinder : MonoBehaviour
                 SearchNeighbours(grid[point.row, m]);
             else
             {
-                grid[point.row, m].cellText.color = Color.magenta;
                 highCellConnected[grid[point.row, point.col].areaIndex].Add(grid[point.row, m]);
-                grid[point.row, point.col].cellText.color = Color.yellow;
                 lowCellConnected[grid[point.row, m].areaIndex].Add(grid[point.row, point.col]);
+
+                #if UNITY_EDITOR
+                if (displayCellID)
+                {
+                    grid[point.row, m].cellText.color = Color.magenta;
+                    grid[point.row, point.col].cellText.color = Color.yellow;
+                }
+                #endif
             }
         }
 
@@ -291,10 +315,16 @@ public class AreaFinder : MonoBehaviour
                 SearchNeighbours(grid[l, point.col]);
             else
             {
-                grid[l, point.col].cellText.color = Color.magenta;
                 highCellConnected[grid[point.row, point.col].areaIndex].Add(grid[l, point.col]);
-                grid[point.row, point.col].cellText.color = Color.yellow;
                 lowCellConnected[grid[l, point.col].areaIndex].Add(grid[point.row, point.col]);
+
+                #if UNITY_EDITOR
+                if (displayCellID)
+                {
+                    grid[l, point.col].cellText.color = Color.magenta;
+                    grid[point.row, point.col].cellText.color = Color.yellow;
+                }
+                #endif
             }
         }
 
@@ -304,10 +334,16 @@ public class AreaFinder : MonoBehaviour
                 SearchNeighbours(grid[point.row, h]);
             else
             {
-                grid[point.row, h].cellText.color = Color.magenta;
                 highCellConnected[grid[point.row, point.col].areaIndex].Add(grid[point.row, h]);
-                grid[point.row, point.col].cellText.color = Color.yellow;
                 lowCellConnected[grid[point.row, h].areaIndex].Add(grid[point.row, point.col]);
+
+                #if UNITY_EDITOR
+                if (displayCellID)
+                {
+                    grid[point.row, h].cellText.color = Color.magenta;
+                    grid[point.row, point.col].cellText.color = Color.yellow;
+                }
+                #endif
             }
         }
         if (k >= 0 && !grid[k, point.col].searched && grid[point.row, point.col].connectedCells.Contains(grid[k, point.col]))
@@ -317,14 +353,19 @@ public class AreaFinder : MonoBehaviour
                 SearchNeighbours(grid[k, point.col]);
             else
             {
-                grid[k, point.col].cellText.color = Color.magenta;
                 highCellConnected[grid[point.row, point.col].areaIndex].Add(grid[k, point.col]);
-                grid[point.row, point.col].cellText.color = Color.yellow;
                 lowCellConnected[grid[k, point.col].areaIndex].Add(grid[point.row, point.col]);
+
+                #if UNITY_EDITOR
+                if (displayCellID)
+                {
+                    grid[k, point.col].cellText.color = Color.magenta;
+                    grid[point.row, point.col].cellText.color = Color.yellow;
+                }
+                #endif
             }
         }
     }
-
 
     private void OnGUI()
     {
