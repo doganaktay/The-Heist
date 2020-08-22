@@ -5,8 +5,8 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
+    Trajectory trajectory;
     Rigidbody2D rb;
-    Transform playerPos;
     public float speed;
     [Range(0.001f, 0.999f)]
     public float brakeSpeed = 0.1f;
@@ -38,12 +38,13 @@ public class Player : MonoBehaviour
     Vector3 lastPos;
 
     LineRenderer projectileLine;
+    bool lineReset = true;
     [SerializeField]
     int maxLinePoints = 20;
-    bool lineReset = true;
-
     [SerializeField]
     float projectileWidth = 3f;
+    [SerializeField]
+    float zOffset = -5f;
 
     private void Start()
     {
@@ -58,6 +59,7 @@ public class Player : MonoBehaviour
         aim = transform.GetChild(0).transform;
 
         projectileLine = GetComponent<LineRenderer>();
+        trajectory = FindObjectOfType<Trajectory>();
 
     }
 
@@ -127,22 +129,21 @@ public class Player : MonoBehaviour
             Vector2 ro = transform.position + aim.transform.up * (transform.localScale.x / 2f * 1.1f + projectileWidth / 2f);
             Vector2 rd = aim.transform.up;
 
-            projectileLine.startWidth = projectileWidth;
-            projectileLine.endWidth = projectileWidth;
-
-            projectileLine.positionCount = 0;
+            trajectory.width = projectileWidth;
+            trajectory.points.Clear();
+            trajectory.dirs.Clear();
 
             for (int i = 1; i < maxLinePoints; i++)
             {
-                var hitCount = Physics2D.CircleCastNonAlloc(ro, projectileWidth/2f, rd, results: rayHits, 500f, projectileLayerMask);
+                var hitCount = Physics2D.CircleCastNonAlloc(ro, projectileWidth / 2f, rd, results: rayHits, 500f, projectileLayerMask);
 
                 if (hitCount == 0)
                     break;
 
                 if (i == 1)
                 {
-                    projectileLine.positionCount++;
-                    projectileLine.SetPosition(0, ro);
+                    trajectory.points.Add(new Vector3(ro.x, ro.y, zOffset));
+                    trajectory.dirs.Add(new Vector3(rd.x, rd.y, 0));
                 }
 
                 var surfaceNormal = rayHits[0].normal;
@@ -151,17 +152,66 @@ public class Player : MonoBehaviour
                 ro = ro + rd * rayHits[0].distance + surfaceNormal * 0.01f;
                 rd = rd - 2f * dot * surfaceNormal;
 
-                projectileLine.positionCount++;
-                projectileLine.SetPosition(i, ro);
+                trajectory.points.Add(new Vector3(ro.x, ro.y, zOffset));
+                trajectory.dirs.Add(new Vector3(rd.x, rd.y, 0));
 
                 // 9 is the wall layer
                 if (rayHits[0].collider.gameObject.layer != 9)
                     break;
             }
+
+            trajectory.DrawTrajectory();
         }
         else
-            projectileLine.Reset();
+        {
+            trajectory.points.Clear();
+            trajectory.dirs.Clear();
+            trajectory.sharedMesh.Clear();
+        }
     }
+
+    //void DrawTrajectory(bool draw)
+    //{
+    //    if (draw)
+    //    {
+    //        Vector2 ro = transform.position + aim.transform.up * (transform.localScale.x / 2f * 1.1f + projectileWidth / 2f);
+    //        Vector2 rd = aim.transform.up;
+
+    //        projectileLine.startWidth = projectileWidth;
+    //        projectileLine.endWidth = projectileWidth;
+
+    //        projectileLine.positionCount = 0;
+
+    //        for (int i = 1; i < maxLinePoints; i++)
+    //        {
+    //            var hitCount = Physics2D.CircleCastNonAlloc(ro, projectileWidth / 2f, rd, results: rayHits, 500f, projectileLayerMask);
+
+    //            if (hitCount == 0)
+    //                break;
+
+    //            if (i == 1)
+    //            {
+    //                projectileLine.positionCount++;
+    //                projectileLine.SetPosition(0, ro);
+    //            }
+
+    //            var surfaceNormal = rayHits[0].normal;
+    //            var dot = Vector2.Dot(rd, surfaceNormal);
+
+    //            ro = ro + rd * rayHits[0].distance + surfaceNormal * 0.01f;
+    //            rd = rd - 2f * dot * surfaceNormal;
+
+    //            projectileLine.positionCount++;
+    //            projectileLine.SetPosition(i, ro);
+
+    //            // 9 is the wall layer
+    //            if (rayHits[0].collider.gameObject.layer != 9)
+    //                break;
+    //        }
+    //    }
+    //    else
+    //        projectileLine.Reset();
+    //}
 
     // a holder object for the aim of equal scale with player parent object is rotated
     // the aim itself is a child of this aim holder so as the holder rotates on its own axis
