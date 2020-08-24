@@ -353,7 +353,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maze: {fileID: 0}
-  displayCellID: 1
+  displayCellID: 0
 --- !u!4 &600934098
 Transform:
   m_ObjectHideFlags: 0
@@ -542,8 +542,8 @@ Light:
   serializedVersion: 10
   m_Type: 1
   m_Shape: 0
-  m_Color: {r: 0.7688679, g: 0.9307793, b: 1, a: 1}
-  m_Intensity: 0.35
+  m_Color: {r: 0.7137255, g: 0.880376, b: 1, a: 1}
+  m_Intensity: 0.8
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208

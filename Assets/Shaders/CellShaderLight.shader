@@ -16,20 +16,20 @@
 
 	SubShader
 	{
+		// Pass 1
 		Pass
 		{
 
 		Tags
 		{ 
-			"Queue"="Geometry" 
+			//"Queue"="Geometry" 
 			"LightMode" = "ForwardBase"
 		}
 
-		//Blend One OneMinusSrcAlpha
-
 		CGPROGRAM
 
-			#pragma multi_compile _ SHADOWS_SCREEN
+			//#pragma multi_compile _ SHADOWS_SCREEN
+			#pragma multi_compile_fwdbase_fullshadows
 
 			#pragma vertex vert
 			#pragma fragment frag
@@ -98,12 +98,6 @@
 
 			fixed4 frag(v2f IN) : SV_Target
 			{
-				//#if defined(SHADOWS_SCREEN)
-			    //float attenuation = SHADOW_ATTENUATION(IN);
-				//#endif
-
-				
-
 				fixed4 c = tex2D(_MainTex, IN.uv) * IN.color;
 				fixed shadow = SHADOW_ATTENUATION(IN);
 
@@ -140,19 +134,22 @@
 		ENDCG
 		}
 
+		// Pass 2
 		Pass
 		{
 
 		Tags
 		{ 
-			"Queue"="Geometry" 
+			//"Queue"="Geometry" 
 			"LightMode" = "ForwardAdd"
 		}
 
 		Blend One One
+		ZWrite Off
 
 		CGPROGRAM
-			#pragma multi_compile _ SHADOWS_SCREEN
+			//#pragma multi_compile _ SHADOWS_SCREEN
+			#pragma multi_compile_fwdadd_fullshadows
 
 			#pragma vertex vert
 			#pragma fragment frag
@@ -192,7 +189,7 @@
 
 			struct v2f
 			{
-				float4 vertex : SV_POSITION;
+				float4 pos : SV_POSITION;
 				float3 normal : NORMAL;
 				fixed4 color  : COLOR;
 				float2 uv     : TEXCOORD0;
@@ -206,7 +203,7 @@
 			v2f vert(appdata_t IN)
 			{
 				v2f OUT;
-				OUT.vertex = UnityObjectToClipPos(IN.vertex);
+				OUT.pos = UnityObjectToClipPos(IN.vertex);
 				OUT.worldPos = mul(unity_ObjectToWorld, IN.vertex);
 				OUT.normal = UnityObjectToWorldNormal(IN.normal);
 				OUT.uv = IN.uv;
