@@ -122,6 +122,7 @@ public class Player : MonoBehaviour
         FaceMouse();
     }
 
+    // sends necessary variables and gets Trajectory class to draw a procedural mesh for projectile
     void DrawTrajectory(bool draw)
     {
         if (draw)
@@ -170,6 +171,7 @@ public class Player : MonoBehaviour
         }
     }
 
+    // old way of drawing trajectory with a line renderer
     //void DrawTrajectory(bool draw)
     //{
     //    if (draw)

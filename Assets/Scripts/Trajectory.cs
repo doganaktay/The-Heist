@@ -5,9 +5,6 @@ using UnityEngine;
 [RequireComponent(typeof(MeshFilter))]
 public class Trajectory : MonoBehaviour
 {
-    public Sprite projectileSprite;
-    List<GameObject> projectileSprites = new List<GameObject>();
-
     public List<Vector3> points = new List<Vector3>();
     public List<Vector3> dirs = new List<Vector3>();
     public float width;
@@ -80,7 +77,7 @@ public class Trajectory : MonoBehaviour
 
         // generate circles
         projMesh.Clear();
-        int projCount = lineCount - 1;
+        int projCount = lineCount; // this currently draws a circle at the end point as well, do -1 to not draw final connection point
 
         Vector3[] circleVerts = new Vector3[projCount * circleVertCount];
         Vector3[] circleNormals = new Vector3[projCount * circleVertCount];
@@ -95,8 +92,6 @@ public class Trajectory : MonoBehaviour
             circleUV[c] = new Vector2(0.5f, 0.5f);
             circleNormals[c] = Vector3.back;
 
-            Debug.Log($"Circle {i} center: " + circleVerts[c]);
-
             for (int j = 1; j < circleVertCount; j++)
             {
                 circleVerts[c + j] = circleVerts[c] + Quaternion.AngleAxis(angle * (j - 1), Vector3.back) * Vector3.up * (width / 2f);
@@ -106,9 +101,9 @@ public class Trajectory : MonoBehaviour
                 circleUV[c + j] = new Vector2(normedHorizontal, normedVertical);
             }
 
-            for (int j = 0; j + 2 < circleVertCount; j++)
+            for (int j = 0; j < circleVertCount - 2; j++)
             {
-                int index = c + j * 3;
+                int index = (c + j) * 3;
                 circleTriangles[index + 0] = c + 0;
                 circleTriangles[index + 1] = c + j + 1;
                 circleTriangles[index + 2] = c + j + 2;
@@ -131,7 +126,6 @@ public class Trajectory : MonoBehaviour
         combine[1].mesh = projMesh;
         combine[1].transform = transform.localToWorldMatrix;
 
-        //GetComponent<MeshFilter>().sharedMesh.CombineMeshes(combine);
-        GetComponent<MeshFilter>().sharedMesh = projMesh;
+        GetComponent<MeshFilter>().sharedMesh.CombineMeshes(combine);
     }
 }
