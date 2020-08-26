@@ -28,6 +28,7 @@ public class FieldOfView : MonoBehaviour
 	MeshFilter viewMeshFilter;
 	Mesh viewMesh;
 
+	public Transform aim;
 	public float playerZOffset;
 
 	void Start()
@@ -39,7 +40,7 @@ public class FieldOfView : MonoBehaviour
 
 		hits = new Collider2D[100];
 		filter.layerMask = obstacleMask;
-		playerZOffset = transform.parent.position.z;
+		playerZOffset = transform.parent.transform.position.z;
 
 		StartCoroutine("FindTargetsWithDelay", .2f);
 	}
@@ -87,7 +88,8 @@ public class FieldOfView : MonoBehaviour
 		ViewCastInfo oldViewCast = new ViewCastInfo();
 		for (int i = 0; i <= stepCount; i++)
 		{
-			float angle = transform.eulerAngles.z - viewAngle / 2 + stepAngleSize * i;
+			// using aim holder rotation for facing direction
+			float angle = -aim.eulerAngles.z - viewAngle / 2 + stepAngleSize * i;
 			ViewCastInfo newViewCast = ViewCast(angle);
 
 			if (i > 0)

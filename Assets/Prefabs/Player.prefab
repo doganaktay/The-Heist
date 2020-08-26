@@ -219,7 +219,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 475180fc1d97a4659baa95e3c6c9471d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  viewRadius: 30
+  viewRadius: 40
   viewAngle: 360
   targetMask:
     serializedVersion: 2
@@ -232,6 +232,7 @@ MonoBehaviour:
   edgeResolveIterations: 5
   edgeDstThreshold: 0.1
   maskCutawayDst: 0.1
+  aim: {fileID: 928625601923451}
   playerZOffset: 0
 --- !u!23 &7403064084887006763
 MeshRenderer:
