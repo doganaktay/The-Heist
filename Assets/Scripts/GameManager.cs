@@ -5,6 +5,7 @@ using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
+	public Lights lights;
 	public Pathfinder pathfinder;
 	public AStar aStar;
     public AreaFinder areafinder;
@@ -63,7 +64,7 @@ public class GameManager : MonoBehaviour
 
 		// instantiate player & AI (AI currently disabled)
 		player = Instantiate(playerPrefab, new Vector3(mazeInstance.cells[0, 0].transform.position.x,
-										   mazeInstance.cells[0, 0].transform.position.y, -1f), Quaternion.identity);
+										   mazeInstance.cells[0, 0].transform.position.y, -3.5f), Quaternion.identity);
 
 		//ai = Instantiate(aiPrefab, new Vector3(mazeInstance.cells[0, 0].transform.position.x, mazeInstance.cells[0, 0].transform.position.y, -1f), Quaternion.identity);
 
@@ -75,6 +76,9 @@ public class GameManager : MonoBehaviour
 		//ai.pathfinder = pathfinder;
 		//ai.startPos = new IntVector2(0, 0);
 		//ai.endPos = new IntVector2(mazeInstance.size.x - 1, mazeInstance.size.y - 1);
+
+		// directional light reset
+		lights.StartRotation();
 
 		// call event
 		MazeGenFinished();

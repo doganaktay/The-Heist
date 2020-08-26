@@ -78,6 +78,7 @@ Material:
     - _PathCount: 0
     - _PathIndex: 0
     - _RestartTime: 0
+    - _ShadowBuffer: 0.1
     - _Smoothness: 0.05
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1

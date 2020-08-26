@@ -22,7 +22,6 @@
 
 		Tags
 		{ 
-			//"Queue"="Geometry" 
 			"LightMode" = "ForwardBase"
 		}
 
@@ -126,7 +125,7 @@
 				IN.normal = normalize(IN.normal);
 				float3 lightDir = _WorldSpaceLightPos0.xyz;
 				float3 lightColor = _LightColor0.rgb * shadow;
-				c.rgb *= lightColor * DotClamped(lightDir, IN.normal);
+				c.rgb *= lightColor * saturate(dot(lightDir, IN.normal)) + UNITY_LIGHTMODEL_AMBIENT * .25;
 
 				c.rgb *= c.a;
 				return c;
@@ -140,7 +139,6 @@
 
 		Tags
 		{ 
-			//"Queue"="Geometry" 
 			"LightMode" = "ForwardAdd"
 		}
 
@@ -244,7 +242,7 @@
 				IN.normal = normalize(IN.normal);
 				float3 lightDir = _WorldSpaceLightPos0.xyz;
 				float3 lightColor = _LightColor0.rgb * shadow;
-				c.rgb *= lightColor * DotClamped(lightDir, IN.normal);
+				c.rgb *= lightColor * saturate(dot(lightDir, IN.normal)) + UNITY_LIGHTMODEL_AMBIENT * .25;
 
 				c.rgb *= c.a;
 				return c;

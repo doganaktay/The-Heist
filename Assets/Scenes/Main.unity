@@ -542,8 +542,8 @@ Light:
   serializedVersion: 10
   m_Type: 1
   m_Shape: 0
-  m_Color: {r: 0.7137255, g: 0.880376, b: 1, a: 1}
-  m_Intensity: 0.8
+  m_Color: {r: 0.30980393, g: 0.4117647, b: 0.53333336, a: 1}
+  m_Intensity: 1
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -759,7 +759,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2014201892}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -50}
+  m_LocalPosition: {x: 0, y: 0, z: -100}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 1729686379}
@@ -776,7 +776,7 @@ Light:
   serializedVersion: 10
   m_Type: 1
   m_Shape: 0
-  m_Color: {r: 1, g: 0.8897666, b: 0.7122642, a: 1}
+  m_Color: {r: 0.94509804, g: 0.85490197, b: 0.6431373, a: 1}
   m_Intensity: 1
   m_Range: 10
   m_SpotAngle: 30
@@ -890,7 +890,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: af0858e7099494b2f895e79ac7150fd6, type: 2}
+  - {fileID: 2100000, guid: e88309582086e4034b6a9ecbc1c81dc5, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -968,6 +968,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb7e0c9303d164566b81b8e18ca168af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  lights: {fileID: 1729686380}
   pathfinder: {fileID: 798157646}
   aStar: {fileID: 1620038531}
   areafinder: {fileID: 600934097}

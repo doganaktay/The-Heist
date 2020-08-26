@@ -84,7 +84,7 @@ public class Player : MonoBehaviour
         float posX = Mathf.Clamp(rb.position.x, -clampX, clampX);
         float posY = Mathf.Clamp(rb.position.y, -clampY, clampY);
 
-        transform.position = new Vector2(posX, posY);
+        transform.position = new Vector3(posX, posY, -3.5f);
 
         if (Input.GetMouseButton(0))
         {
