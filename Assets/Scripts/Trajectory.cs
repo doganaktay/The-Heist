@@ -77,7 +77,7 @@ public class Trajectory : MonoBehaviour
 
         // generate circles
         projMesh.Clear();
-        int projCount = lineCount; // this currently draws a circle at the end point as well, do -1 to not draw final connection point
+        int projCount = lineCount; // this currently draws a circle at the end point as well, do -1 to not draw final hit point
 
         Vector3[] circleVerts = new Vector3[projCount * circleVertCount];
         Vector3[] circleNormals = new Vector3[projCount * circleVertCount];
@@ -127,5 +127,26 @@ public class Trajectory : MonoBehaviour
         combine[1].transform = transform.localToWorldMatrix;
 
         GetComponent<MeshFilter>().sharedMesh.CombineMeshes(combine);
+    }
+
+    void OnDrawGizmos()
+    {
+        if (points.Count == 0 || points == null || dirs.Count == 0 || dirs == null) return;
+
+        float i = 0;
+        foreach(var p in points)
+        {
+            Gizmos.color = new Color(i / 10, i / 10, i / 10, 1);
+            Gizmos.DrawSphere(p, 1.5f);
+            i++;
+        }
+
+        int j = 0;
+        foreach(var d in dirs)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawRay(points[j], d);
+            j++;
+        }
     }
 }

@@ -9,6 +9,7 @@ public class AreaFinder : MonoBehaviour
 {
     MazeCell[,] grid;
     public Maze maze;
+    public PhysicsSim simulation;
 
     Dictionary<int, List<MazeCell>> lowCellAreas = new Dictionary<int, List<MazeCell>>();
     Dictionary<int, List<MazeCell>> highCellAreas = new Dictionary<int, List<MazeCell>>();
@@ -45,8 +46,12 @@ public class AreaFinder : MonoBehaviour
                 {
                     var wall = (MazeCellWall)cell.GetEdge((MazeDirection)i);
                     MazeDirections.RemoveWall(wall);
+                    maze.wallsInScene.Remove(wall.GetComponentInParent<MazeCellWall>());
+                    simulation.RemoveWallFromSimulation(wall.gameObject);
                     var otherWall = (MazeCellWall)neighbour.GetEdge(MazeDirections.GetOpposite((MazeDirection)i));
                     MazeDirections.RemoveWall(otherWall);
+                    maze.wallsInScene.Remove(otherWall.GetComponentInParent<MazeCellWall>());
+                    simulation.RemoveWallFromSimulation(otherWall.gameObject);
                 }
             }
         }

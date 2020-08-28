@@ -16,7 +16,7 @@ public class Maze : MonoBehaviour
     public MazeCellWall wallPrefab;
 
     // for use with physics simulation scene
-    public List<GameObject> wallsInScene = new List<GameObject>();
+    public List<MazeCellWall> wallsInScene = new List<MazeCellWall>();
 
     public void Generate()
     {
@@ -119,15 +119,17 @@ public class Maze : MonoBehaviour
     {
         MazeCellWall wall = Instantiate(wallPrefab);
         wall.Initialize(cell, otherCell, direction);
+        wall.gameObject.name = cell.pos.x + "," + cell.pos.y + ": " + direction;
 
-        wallsInScene.Add(wall.gameObject);
+        wallsInScene.Add(wall);
 
         if (otherCell != null)
         {
             wall = Instantiate(wallPrefab);
             wall.Initialize(otherCell, cell, direction.GetOpposite());
+            wall.gameObject.name = otherCell.pos.x + "," + otherCell.pos.y + ": " + direction.GetOpposite();
 
-            wallsInScene.Add(wall.gameObject);
+            wallsInScene.Add(wall);
         }
     }
 

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
+	public Trajectory trajectory;
 	public PhysicsSim physicsSim;
 	public Lights lights;
 	public Pathfinder pathfinder;
@@ -54,6 +55,7 @@ public class GameManager : MonoBehaviour
 
 		// pass references to areafinder
         areafinder.maze = mazeInstance;
+		areafinder.simulation = physicsSim;
 
 		// pass references to patrol manager
 		patrolManager.pathfinder = pathfinder;
@@ -82,7 +84,9 @@ public class GameManager : MonoBehaviour
 
 		// pass reference to PhysicsSimulation
 		physicsSim.maze = mazeInstance;
-		physicsSim.player = player.gameObject;
+		physicsSim.playerPrefab = playerPrefab;
+		physicsSim.player = player;
+		physicsSim.trajectory = trajectory;
 
 		// directional light reset
 		lights.StartRotation();

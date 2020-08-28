@@ -353,6 +353,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maze: {fileID: 0}
+  simulation: {fileID: 0}
   displayCellID: 0
 --- !u!4 &600934098
 Transform:
@@ -530,6 +531,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maze: {fileID: 0}
+  trajectory: {fileID: 0}
+  playerPrefab: {fileID: 0}
+  player: {fileID: 0}
+  simulationStepCount: 1000
 --- !u!4 &1322255336
 Transform:
   m_ObjectHideFlags: 0
@@ -1012,6 +1017,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb7e0c9303d164566b81b8e18ca168af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  trajectory: {fileID: 2020792567}
   physicsSim: {fileID: 1322255335}
   lights: {fileID: 1729686380}
   pathfinder: {fileID: 798157646}
