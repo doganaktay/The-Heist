@@ -5,6 +5,10 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
+    public GameObject projectilePrefab;
+    public ProjectileSO[] projectileSOs;
+
+    public PhysicsSim simulation;
     Trajectory trajectory;
     Rigidbody2D rb;
     public float speed;
@@ -16,6 +20,7 @@ public class Player : MonoBehaviour
     public int cellState;
     public MazeCell currentCell;
     public bool cellChanged = false;
+    public Maze maze;
 
     Collider2D[] hits;
     Collider2D previousHit;
@@ -88,13 +93,18 @@ public class Player : MonoBehaviour
 
         if (Input.GetMouseButton(0))
         {
-            // only draw line again if mouse position has moved
+            // only draw line again if mouse position or player has moved
             if(lastMousePos != mousePos || lastPos != transform.position)
             {
                 DrawTrajectory(true);
                 lineReset = false;
                 lastMousePos = mousePos;
                 lastPos = transform.position;
+            }
+
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                LaunchProjectile();
             }
         }
         else if (!lineReset)
@@ -112,6 +122,8 @@ public class Player : MonoBehaviour
                 for (int i = 0; i < hitCount; i++)
                 {
                     rayHits[i].transform.GetComponentInParent<MazeCellWall>().RemoveWall();
+                    maze.wallsInScene.Remove(rayHits[i].collider.gameObject);
+                    simulation.RemoveWallFromSimulation(rayHits[i].collider.gameObject);
                 }
 
                 MazeChange();
@@ -120,6 +132,13 @@ public class Player : MonoBehaviour
 
         TrackMouseLocation();
         FaceMouse();
+    }
+
+    void LaunchProjectile()
+    {
+        var proj = Instantiate(projectilePrefab, transform.position + aim.transform.up * (transform.localScale.x / 2f * 1.1f + projectileWidth / 2f),
+            Quaternion.identity);
+        proj.GetComponent<Projectile>().Launch(projectileSOs[0], transform, aim.transform.up);
     }
 
     // sends necessary variables and gets Trajectory class to draw a procedural mesh for projectile
@@ -134,11 +153,13 @@ public class Player : MonoBehaviour
             trajectory.points.Clear();
             trajectory.dirs.Clear();
 
+            bool wallTooClose = Vector2.Distance(ro, rayHits[0].point) < projectileWidth;
+
             for (int i = 1; i < maxLinePoints; i++)
             {
                 var hitCount = Physics2D.CircleCastNonAlloc(ro, projectileWidth / 2f, rd, results: rayHits, 500f, projectileLayerMask);
 
-                if (hitCount == 0)
+                if (hitCount == 0 || wallTooClose)
                     break;
 
                 if (i == 1)
@@ -150,7 +171,9 @@ public class Player : MonoBehaviour
                 var surfaceNormal = rayHits[0].normal;
                 var dot = Vector2.Dot(rd, surfaceNormal);
 
-                ro = ro + rd * rayHits[0].distance + surfaceNormal * 0.01f;
+                Debug.DrawRay(rayHits[0].point, rayHits[0].normal, Color.red, 10f);
+
+                ro = ro + rd * rayHits[0].distance + surfaceNormal * 0.005f;
                 rd = rd - 2f * dot * surfaceNormal;
 
                 trajectory.points.Add(new Vector3(ro.x, ro.y, zOffset));
@@ -161,14 +184,14 @@ public class Player : MonoBehaviour
                     break;
             }
 
-            trajectory.DrawTrajectory();
+            if (!wallTooClose)
+                trajectory.DrawTrajectory();
+            else
+                trajectory.sharedMesh.Clear();
         }
         else
-        {
-            trajectory.points.Clear();
-            trajectory.dirs.Clear();
             trajectory.sharedMesh.Clear();
-        }
+        
     }
 
     // old way of drawing trajectory with a line renderer

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
+	public PhysicsSim physicsSim;
 	public Lights lights;
 	public Pathfinder pathfinder;
 	public AStar aStar;
@@ -65,6 +66,8 @@ public class GameManager : MonoBehaviour
 		// instantiate player & AI (AI currently disabled)
 		player = Instantiate(playerPrefab, new Vector3(mazeInstance.cells[0, 0].transform.position.x,
 										   mazeInstance.cells[0, 0].transform.position.y, -3.5f), Quaternion.identity);
+		player.maze = mazeInstance;
+		player.simulation = physicsSim;
 
 		//ai = Instantiate(aiPrefab, new Vector3(mazeInstance.cells[0, 0].transform.position.x, mazeInstance.cells[0, 0].transform.position.y, -1f), Quaternion.identity);
 
@@ -76,6 +79,10 @@ public class GameManager : MonoBehaviour
 		//ai.pathfinder = pathfinder;
 		//ai.startPos = new IntVector2(0, 0);
 		//ai.endPos = new IntVector2(mazeInstance.size.x - 1, mazeInstance.size.y - 1);
+
+		// pass reference to PhysicsSimulation
+		physicsSim.maze = mazeInstance;
+		physicsSim.player = player.gameObject;
 
 		// directional light reset
 		lights.StartRotation();

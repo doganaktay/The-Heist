@@ -228,10 +228,10 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 512
   visibleTargets: []
-  meshResolution: 10
-  edgeResolveIterations: 5
+  meshResolution: 2
+  edgeResolveIterations: 1
   edgeDstThreshold: 0.1
-  maskCutawayDst: 0.1
+  maskCutawayDst: 0
   aim: {fileID: 928625601923451}
   playerZOffset: 0
 --- !u!23 &7403064084887006763
@@ -546,6 +546,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 77a463e92a4f845aea3f6a761697ebe7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  projectilePrefab: {fileID: 8123691502664594623, guid: 3f7dd9ebfb0ea4133bfb93dfe5f47185,
+    type: 3}
+  projectileSOs:
+  - {fileID: 11400000, guid: c78b87c9083484f789f2849b2f697eac, type: 2}
+  simulation: {fileID: 0}
   speed: 300
   brakeSpeed: 0.25
   areaIndex: 0
@@ -553,6 +558,7 @@ MonoBehaviour:
   cellState: 0
   currentCell: {fileID: 0}
   cellChanged: 0
+  maze: {fileID: 0}
   clampMarginX: 5
   clampMarginY: 5
   maxLinePoints: 20
