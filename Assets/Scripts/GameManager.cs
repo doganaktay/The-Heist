@@ -70,6 +70,7 @@ public class GameManager : MonoBehaviour
 										   mazeInstance.cells[0, 0].transform.position.y, -3.5f), Quaternion.identity);
 		player.maze = mazeInstance;
 		player.simulation = physicsSim;
+		player.trajectory = trajectory;
 
 		//ai = Instantiate(aiPrefab, new Vector3(mazeInstance.cells[0, 0].transform.position.x, mazeInstance.cells[0, 0].transform.position.y, -1f), Quaternion.identity);
 
@@ -99,7 +100,12 @@ public class GameManager : MonoBehaviour
 	{		
 		Destroy(mazeInstance.gameObject);
 		Destroy(player.gameObject);
-        //ai.StopAndDestroy();
+		//ai.StopAndDestroy();
+
+		// clearing material cache on projectiles
+		// not strictly necessary, but if random friction values start getting used
+		// uncomment if there's a danger of the dictionary growing too large
+		//Projectile.ClearMaterialCache();
 
         BeginGame();
 	}

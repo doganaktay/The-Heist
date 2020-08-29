@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Projectile1
   m_EditorClassIdentifier: 
   width: 3
-  launchForceMagnitude: 50
-  launchSpin: 0
+  launchForceMagnitude: 100
+  maxLaunchSpin: 10
   bounceLimit: 20
   impactLayers: 080000000b000000
+  frictionCoefficient: 1

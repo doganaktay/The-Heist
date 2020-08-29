@@ -93,6 +93,9 @@ public class PhysicsSim : MonoBehaviour
         projectileCopy.transform.parent = sceneHolder.transform;
         projectileCopy.name = "Simulated Projectile";
 
+        projectileCopy.isSimulated = true;
+        projectileCopy.trajectory = trajectory;
+
         // add walls to simulation
         foreach (var wall in maze.wallsInScene)
         {
@@ -123,12 +126,10 @@ public class PhysicsSim : MonoBehaviour
         objectPairs.Remove(wall);
     }
 
-    public void SimulateProjectile(ProjectileSO so, Vector2 dir, Vector3 pos)
+    public void SimulateProjectile(ProjectileSO so, Vector2 dir, Vector3 pos, float spin = 0)
     {
-        projectileCopy.isSimulated = true;
-        projectileCopy.trajectory = trajectory;
         projectileCopyRb.WakeUp();
-        projectileCopy.Launch(so, playerCopy.transform, dir, pos);
+        projectileCopy.Launch(so, playerCopy.transform, dir, pos, spin);
 
         for (int i=0; i < simulationStepCount; i++)
         {

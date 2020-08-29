@@ -7,9 +7,10 @@ public class Player : MonoBehaviour
 {
     public Projectile projectilePrefab;
     public ProjectileSO[] projectileSOs;
+    ProjectileSO currentProjectileSO; // currently being set manually to the first one in the array in start
 
     public PhysicsSim simulation;
-    Trajectory trajectory;
+    public Trajectory trajectory;
     Rigidbody2D rb;
     public float speed;
     [Range(0.001f, 0.999f)]
@@ -41,6 +42,10 @@ public class Player : MonoBehaviour
     Vector2 mousePos;
     Vector2 lastMousePos;
     Vector3 lastPos;
+    Vector3 aimUp;
+    float spinAmount = 0;
+    public float spinIncrement = 1;
+    float lastSpinAmount;
 
     bool lineReset = true;
     [SerializeField]
@@ -62,8 +67,7 @@ public class Player : MonoBehaviour
 
         aim = transform.GetChild(0).transform;
 
-        trajectory = FindObjectOfType<Trajectory>();
-
+        currentProjectileSO = projectileSOs[0];
     }
 
     void Update()
@@ -71,44 +75,49 @@ public class Player : MonoBehaviour
         // tracking mouse input pos for cell highlighting and player aim
         mousePos = cam.ScreenToWorldPoint(Input.mousePosition);
 
-        float x = Input.GetAxisRaw("Horizontal");
-        float y = Input.GetAxisRaw("Vertical");
-
-        Vector2 force = new Vector2(x, y);
-        Vector2 velocity = force.normalized * speed * Time.deltaTime;
-
-        rb.AddForce(velocity, ForceMode2D.Impulse);
-        //rb.velocity = velocity;
-
-        if (force.sqrMagnitude < 0.5f)
-            rb.velocity = Vector2.Lerp(rb.velocity, Vector2.zero, brakeSpeed);
-
-        // clamp to screen
-        float posX = Mathf.Clamp(rb.position.x, -clampX, clampX);
-        float posY = Mathf.Clamp(rb.position.y, -clampY, clampY);
-
-        transform.position = new Vector3(posX, posY, -3.5f);
+        TrackMouseLocation();
+        FaceMouse();
 
         if (Input.GetMouseButton(0))
         {
+            // stop rb if moving, (currently no movement allowed while acquiring projectile trajectory)
+            rb.velocity = Vector2.Lerp(rb.velocity, Vector2.zero, brakeSpeed);
+
+            if (Input.GetKey(KeyCode.Q) && spinAmount > -currentProjectileSO.maxLaunchSpin)
+            {
+                spinAmount -= spinIncrement;
+            }
+            else if (Input.GetKey(KeyCode.E) && spinAmount < currentProjectileSO.maxLaunchSpin)
+            {
+                spinAmount += spinIncrement;
+            }
+
             // only draw line again if mouse position or player has moved
-            if (lastMousePos != mousePos || lastPos != transform.position)
+            if (lastMousePos != mousePos || lastPos != transform.position || spinAmount != lastSpinAmount || lineReset)
             {
                 DrawTrajectory(true);
                 lineReset = false;
                 lastMousePos = mousePos;
                 lastPos = transform.position;
+                lastSpinAmount = spinAmount;
+                aimUp = aim.transform.up;
             }
 
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 LaunchProjectile();
+                //spinAmount = 0;
             }
+
+            // returning because we don't wont player movement when aiming projectile with trajectory
+            // this should become a conditional depending onn whether projectile type displays predetermined trajectory
+            return;
         }
         else if (!lineReset)
         {
             DrawTrajectory(false);
             lineReset = true;
+            spinAmount = 0;
         }
 
         if (Input.GetKeyDown(KeyCode.Space))
@@ -128,15 +137,30 @@ public class Player : MonoBehaviour
             }
         }
 
-        TrackMouseLocation();
-        FaceMouse();
+        // inputs
+        float x = Input.GetAxisRaw("Horizontal");
+        float y = Input.GetAxisRaw("Vertical");
+
+        Vector2 force = new Vector2(x, y);
+        Vector2 velocity = force.normalized * speed * Time.deltaTime;
+
+        rb.AddForce(velocity, ForceMode2D.Impulse);
+
+        if (force.sqrMagnitude < 0.5f)
+            rb.velocity = Vector2.Lerp(rb.velocity, Vector2.zero, brakeSpeed);
+
+        // clamp to screen
+        float posX = Mathf.Clamp(rb.position.x, -clampX, clampX);
+        float posY = Mathf.Clamp(rb.position.y, -clampY, clampY);
+
+        transform.position = new Vector3(posX, posY, -3.5f);
     }
 
     void LaunchProjectile()
     {
-        var proj = Instantiate(projectilePrefab, transform.position + aim.transform.up * (transform.localScale.x / 2f * 1.1f + projectileWidth / 2f),
+        var proj = Instantiate(projectilePrefab, transform.position + aimUp * (transform.localScale.x / 2f * 1.1f + projectileWidth / 2f),
             Quaternion.identity);
-        proj.GetComponent<Projectile>().Launch(projectileSOs[0], transform, aim.transform.up);
+        proj.GetComponent<Projectile>().Launch(projectileSOs[0], transform, aimUp, spinAmount);
     }
 
     void DrawTrajectory(bool draw)
@@ -158,7 +182,7 @@ public class Player : MonoBehaviour
 
             // the simulated projectile fills the trajectory lists for positions and directions
             var projPos = transform.position + aim.transform.up * (transform.localScale.x / 2f * 1.1f + projectileWidth / 2f);
-            simulation.SimulateProjectile(projectileSOs[0], aim.transform.up, projPos);
+            simulation.SimulateProjectile(projectileSOs[0], aim.transform.up, projPos, spinAmount);
 
             trajectory.DrawTrajectory();
             

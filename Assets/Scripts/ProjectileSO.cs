@@ -5,7 +5,9 @@ public class ProjectileSO : ScriptableObject
 {
     public float width;
     public float launchForceMagnitude;
-    public float launchSpin;
+    public float maxLaunchSpin;
     public int bounceLimit;
     public int[] impactLayers;
+    [Range(0f, 1f)]
+    public float frictionCoefficient;
 }
