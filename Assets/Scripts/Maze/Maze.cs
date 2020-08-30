@@ -111,8 +111,6 @@ public class Maze : MonoBehaviour
     {
         MazeCellPassage passage = Instantiate(passagePrefab);
         passage.Initialize(cell, otherCell, direction);
-        passage = Instantiate(passagePrefab);
-        passage.Initialize(otherCell, cell, direction.GetOpposite());
     }
 
     private void CreateWall(MazeCell cell, MazeCell otherCell, MazeDirection direction)
@@ -122,15 +120,6 @@ public class Maze : MonoBehaviour
         wall.gameObject.name = cell.pos.x + "," + cell.pos.y + ": " + direction;
 
         wallsInScene.Add(wall);
-
-        if (otherCell != null)
-        {
-            wall = Instantiate(wallPrefab);
-            wall.Initialize(otherCell, cell, direction.GetOpposite());
-            wall.gameObject.name = otherCell.pos.x + "," + otherCell.pos.y + ": " + direction.GetOpposite();
-
-            wallsInScene.Add(wall);
-        }
     }
 
     // for A* through interface

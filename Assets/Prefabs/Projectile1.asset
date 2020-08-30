@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   width: 3
   launchForceMagnitude: 100
-  maxLaunchSpin: 10
+  maxLaunchSpin: 1000
   bounceLimit: 20
   impactLayers: 080000000b000000
-  frictionCoefficient: 1
+  frictionCoefficient: 0

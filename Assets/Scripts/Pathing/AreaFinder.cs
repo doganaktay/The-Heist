@@ -48,10 +48,6 @@ public class AreaFinder : MonoBehaviour
                     MazeDirections.RemoveWall(wall);
                     maze.wallsInScene.Remove(wall.GetComponentInParent<MazeCellWall>());
                     simulation.RemoveWallFromSimulation(wall.gameObject);
-                    var otherWall = (MazeCellWall)neighbour.GetEdge(MazeDirections.GetOpposite((MazeDirection)i));
-                    MazeDirections.RemoveWall(otherWall);
-                    maze.wallsInScene.Remove(otherWall.GetComponentInParent<MazeCellWall>());
-                    simulation.RemoveWallFromSimulation(otherWall.gameObject);
                 }
             }
         }

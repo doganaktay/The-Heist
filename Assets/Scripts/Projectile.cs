@@ -11,7 +11,6 @@ public class Projectile : MonoBehaviour
     Rigidbody2D rb;
     PhysicsMaterial2D physicMaterial;
     Vector2 velocity;
-    bool hasCollided = false;
 
     public bool isSimulated = false;
 
@@ -58,27 +57,21 @@ public class Projectile : MonoBehaviour
 
         rb.sharedMaterial = GetPhysicsMaterial(so.frictionCoefficient);
 
-        trajectory.points.Add(pos);
-
         rb.AddForce(dir * so.launchForceMagnitude, ForceMode2D.Impulse);
         rb.AddTorque(spin, ForceMode2D.Impulse);
 
         velocity = rb.velocity;
 
-        trajectory.dirs.Add(velocity.normalized);
+        trajectory.points.Add(pos);
+        trajectory.dirs.Add(dir.normalized);
     }
 
     void OnCollisionEnter2D(Collision2D collision)
     {
-        if (velocity != rb.velocity)
-        {
-            hasCollided = false;
-            velocity = rb.velocity;
-        }
-
-        if (hasCollided) return;
-
-        hasCollided = true;
+        if (isSimulated)
+            Debug.Log("Simulated count: " + bounceCount);
+        else
+            Debug.Log("Actual count: " + bounceCount);
 
         bounceCount--;
         bool impact = false;

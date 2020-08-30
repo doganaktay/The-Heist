@@ -81,7 +81,8 @@ public class Player : MonoBehaviour
         if (Input.GetMouseButton(0))
         {
             // stop rb if moving, (currently no movement allowed while acquiring projectile trajectory)
-            rb.velocity = Vector2.Lerp(rb.velocity, Vector2.zero, brakeSpeed);
+            if(rb.velocity.sqrMagnitude > 0)
+                rb.velocity = Vector2.Lerp(rb.velocity, Vector2.zero, brakeSpeed);
 
             if (Input.GetKey(KeyCode.Q) && spinAmount > -currentProjectileSO.maxLaunchSpin)
             {
@@ -95,21 +96,22 @@ public class Player : MonoBehaviour
             // only draw line again if mouse position or player has moved
             if (lastMousePos != mousePos || lastPos != transform.position || spinAmount != lastSpinAmount || lineReset)
             {
-                DrawTrajectory(true);
                 lineReset = false;
                 lastMousePos = mousePos;
                 lastPos = transform.position;
                 lastSpinAmount = spinAmount;
-                aimUp = aim.transform.up;
+                aimUp = transform.TransformDirection(aim.transform.up);
+
+                DrawTrajectory(true);
             }
 
-            if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space))
             {
                 LaunchProjectile();
                 //spinAmount = 0;
             }
 
-            // returning because we don't wont player movement when aiming projectile with trajectory
+            // returning because we don't want player movement when aiming projectile with trajectory
             // this should become a conditional depending onn whether projectile type displays predetermined trajectory
             return;
         }
@@ -124,12 +126,13 @@ public class Player : MonoBehaviour
         {
             var hitCount = Physics2D.RaycastNonAlloc(transform.position, aim.transform.up, results: rayHits, 5f, wallLayerMask);
 
-            if (hitCount == 2)
+            if (hitCount > 0)
             {
                 for (int i = 0; i < hitCount; i++)
                 {
-                    rayHits[i].transform.GetComponentInParent<MazeCellWall>().RemoveWall();
-                    maze.wallsInScene.Remove(rayHits[i].transform.GetComponentInParent<MazeCellWall>());
+                    var wall = rayHits[i].transform.GetComponentInParent<MazeCellWall>();
+                    wall.RemoveWall();
+                    maze.wallsInScene.Remove(wall);
                     simulation.RemoveWallFromSimulation(rayHits[i].collider.transform.parent.gameObject);
                 }
 
@@ -137,7 +140,7 @@ public class Player : MonoBehaviour
             }
         }
 
-        // inputs
+        // movement inputs
         float x = Input.GetAxisRaw("Horizontal");
         float y = Input.GetAxisRaw("Vertical");
 
@@ -167,22 +170,20 @@ public class Player : MonoBehaviour
     {
         if (draw)
         {
-            Vector2 ro = transform.position + aim.transform.up * (transform.localScale.x / 2f * 1.1f + projectileWidth / 2f);
-            Vector2 rd = aim.transform.up;
+            Vector2 ro = transform.position + aimUp * (transform.localScale.x / 2f * 1.1f + currentProjectileSO.width / 2f);
 
-            trajectory.width = projectileWidth;
+            trajectory.width = currentProjectileSO.width;
             trajectory.points.Clear();
             trajectory.dirs.Clear();
 
-            Physics2D.CircleCastNonAlloc(ro, projectileWidth / 2f, rd, results: rayHits, 500f, projectileLayerMask);
-            bool wallTooClose = Vector2.Distance(ro, rayHits[0].point) < projectileWidth;
+            Physics2D.CircleCastNonAlloc(ro, currentProjectileSO.width / 2f, aimUp, results: rayHits, 500f, projectileLayerMask);
+            bool wallTooClose = Vector2.Distance(ro, rayHits[0].point) < currentProjectileSO.width;
 
             if (wallTooClose)
             { trajectory.sharedMesh.Clear(); return; }
 
             // the simulated projectile fills the trajectory lists for positions and directions
-            var projPos = transform.position + aim.transform.up * (transform.localScale.x / 2f * 1.1f + projectileWidth / 2f);
-            simulation.SimulateProjectile(projectileSOs[0], aim.transform.up, projPos, spinAmount);
+            simulation.SimulateProjectile(projectileSOs[0], aimUp, ro, spinAmount);
 
             trajectory.DrawTrajectory();
             

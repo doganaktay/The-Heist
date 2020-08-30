@@ -60,8 +60,8 @@ public static class MazeDirections
 	// MazeCellWall extension method, in here because this is currently the only static class
 	public static void RemoveWall(this MazeCellWall wall)
 	{
-		wall.cell.connectedCells.Add(wall.otherCell);
-		wall.otherCell.connectedCells.Add(wall.cell);
+		wall.cellA.connectedCells.Add(wall.cellB);
+		wall.cellB.connectedCells.Add(wall.cellA);
 
 		wall.gameObject.SetActive(false);
 	}

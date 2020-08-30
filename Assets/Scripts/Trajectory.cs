@@ -134,7 +134,7 @@ public class Trajectory : MonoBehaviour
         if (points.Count == 0 || points == null || dirs.Count == 0 || dirs == null) return;
 
         float i = 0;
-        foreach(var p in points)
+        foreach (var p in points)
         {
             Gizmos.color = new Color(i / 10, i / 10, i / 10, 1);
             Gizmos.DrawSphere(p, 1.5f);
@@ -142,10 +142,10 @@ public class Trajectory : MonoBehaviour
         }
 
         int j = 0;
-        foreach(var d in dirs)
+        foreach (var d in dirs)
         {
-            Gizmos.color = Color.red;
-            Gizmos.DrawRay(points[j], d);
+            Gizmos.color = Color.blue;
+            Gizmos.DrawRay(points[j], d * 10f);
             j++;
         }
     }
