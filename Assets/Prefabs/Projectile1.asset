@@ -17,4 +17,4 @@ MonoBehaviour:
   maxLaunchSpin: 1000
   bounceLimit: 20
   impactLayers: 080000000b000000
-  frictionCoefficient: 0
+  frictionCoefficient: 1

@@ -9,19 +9,16 @@ public class Projectile : MonoBehaviour
     public int bounceCount;
     public int[] impactLayers;
     Rigidbody2D rb;
-    PhysicsMaterial2D physicMaterial;
-    Vector2 velocity;
 
     public bool isSimulated = false;
 
     // private static dictionary for storing materials with different friction values
-    // gets cleared when game is restarted
+    // gets cleared when game is restarted by GameManager
     static Dictionary<float, PhysicsMaterial2D> materialCache = new Dictionary<float, PhysicsMaterial2D>();
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
-        physicMaterial = rb.sharedMaterial;
     }
 
     public void Launch(ProjectileSO so, Transform player, Vector2 dir, float spin = 0)
@@ -37,10 +34,10 @@ public class Projectile : MonoBehaviour
 
         rb.sharedMaterial = GetPhysicsMaterial(so.frictionCoefficient);
 
-        rb.AddForce(dir * so.launchForceMagnitude, ForceMode2D.Impulse);
-        rb.AddTorque(spin, ForceMode2D.Impulse);
-
-        velocity = rb.velocity;
+        //rb.AddForce(dir * so.launchForceMagnitude, ForceMode2D.Impulse);
+        //rb.AddTorque(spin, ForceMode2D.Impulse);
+        rb.velocity = dir * so.launchForceMagnitude;
+        rb.angularVelocity = spin;
     }
 
     public void Launch(ProjectileSO so, Transform playerCopy, Vector2 dir, Vector3 pos, float spin = 0)
@@ -50,29 +47,29 @@ public class Projectile : MonoBehaviour
         transform.position = pos;
         //transform.parent = playerCopy;
 
-        bounceCount = so.bounceLimit - 1;
+        bounceCount = so.bounceLimit;
 
         impactLayers = new int[so.impactLayers.Length];
         Array.Copy(so.impactLayers, impactLayers, so.impactLayers.Length);
 
         rb.sharedMaterial = GetPhysicsMaterial(so.frictionCoefficient);
 
-        rb.AddForce(dir * so.launchForceMagnitude, ForceMode2D.Impulse);
-        rb.AddTorque(spin, ForceMode2D.Impulse);
+        //rb.AddForce(dir * so.launchForceMagnitude, ForceMode2D.Impulse);
+        //rb.AddTorque(spin, ForceMode2D.Impulse);
+        rb.velocity = dir * so.launchForceMagnitude;
+        rb.angularVelocity = spin;
 
-        velocity = rb.velocity;
+        // reset trajectory
+        trajectory.width = so.width;
+        trajectory.points.Clear();
+        trajectory.dirs.Clear();
 
         trajectory.points.Add(pos);
-        trajectory.dirs.Add(dir.normalized);
+        trajectory.dirs.Add(dir);
     }
 
     void OnCollisionEnter2D(Collision2D collision)
     {
-        if (isSimulated)
-            Debug.Log("Simulated count: " + bounceCount);
-        else
-            Debug.Log("Actual count: " + bounceCount);
-
         bounceCount--;
         bool impact = false;
 

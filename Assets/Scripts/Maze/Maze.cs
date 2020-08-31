@@ -117,7 +117,9 @@ public class Maze : MonoBehaviour
     {
         MazeCellWall wall = Instantiate(wallPrefab);
         wall.Initialize(cell, otherCell, direction);
-        wall.gameObject.name = cell.pos.x + "," + cell.pos.y + ": " + direction;
+        wall.gameObject.name = otherCell == null ? cell.pos.x + "," + cell.pos.y + ": " + direction :
+                                                   cell.pos.x + "," + cell.pos.y
+                                                   + " to " + otherCell.pos.x + "," + otherCell.pos.y;
 
         wallsInScene.Add(wall);
     }

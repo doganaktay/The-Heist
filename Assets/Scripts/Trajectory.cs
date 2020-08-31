@@ -34,8 +34,8 @@ public class Trajectory : MonoBehaviour
 
         int lineCount = points.Count - 1;
 
-        Vector3[] vertices = new Vector3[lineCount * 2 * 2];
-        Vector3[] normals = new Vector3[lineCount * 2 * 2];
+        Vector3[] vertices = new Vector3[lineCount * 4];
+        Vector3[] normals = new Vector3[lineCount * 4];
         Vector2[] uv = new Vector2[vertices.Length];
 
         for (int i = 0, v = 0; i < lineCount; i++, v += 4)
@@ -136,7 +136,7 @@ public class Trajectory : MonoBehaviour
         float i = 0;
         foreach (var p in points)
         {
-            Gizmos.color = new Color(i / 10, i / 10, i / 10, 1);
+            Gizmos.color = new Color(i / 10f, i / 10f, i / 10f, 1);
             Gizmos.DrawSphere(p, 1.5f);
             i++;
         }

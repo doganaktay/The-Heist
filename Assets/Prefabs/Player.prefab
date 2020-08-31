@@ -192,7 +192,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &7267841342585475839
 Transform:
   m_ObjectHideFlags: 0
@@ -453,6 +453,7 @@ MonoBehaviour:
   projectileSOs:
   - {fileID: 11400000, guid: c78b87c9083484f789f2849b2f697eac, type: 2}
   simulation: {fileID: 0}
+  trajectory: {fileID: 0}
   speed: 300
   brakeSpeed: 0.25
   areaIndex: 0
@@ -463,6 +464,7 @@ MonoBehaviour:
   maze: {fileID: 0}
   clampMarginX: 5
   clampMarginY: 5
+  spinIncrement: 1
   maxLinePoints: 20
   projectileWidth: 3
   zOffset: -2
