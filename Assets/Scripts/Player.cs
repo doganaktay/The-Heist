@@ -162,7 +162,7 @@ public class Player : MonoBehaviour
         float y = Input.GetAxisRaw("Vertical");
 
         force = new Vector2(x, y);
-        velocity = force.normalized * speed * Time.deltaTime;
+        velocity = force.normalized * speed;
 
         // clamp to screen
         float posX = Mathf.Clamp(rb.position.x, -clampX, clampX);
@@ -175,7 +175,7 @@ public class Player : MonoBehaviour
     {
         var proj = Instantiate(projectilePrefab, transform.position + aimUp * (transform.localScale.x / 2f * 1.1f + projectileWidth / 2f),
             Quaternion.identity);
-        proj.GetComponent<Projectile>().Launch(projectileSOs[0], transform, aimUp, spinAmount);
+        proj.GetComponent<Projectile>().Launch(projectileSOs[0], aimUp, spinAmount);
     }
 
     void DrawTrajectory()
@@ -183,7 +183,7 @@ public class Player : MonoBehaviour
         Vector2 ro = transform.position + aimUp * (transform.localScale.x / 2f * 1.1f + currentProjectileSO.width / 2f);
 
         Physics2D.CircleCastNonAlloc(ro, currentProjectileSO.width / 2f, aimUp, results: rayHits, 500f, projectileLayerMask);
-        bool wallTooClose = Vector2.Distance(ro, rayHits[0].point) < currentProjectileSO.width;
+        bool wallTooClose = (rayHits[0].point - ro).sqrMagnitude < currentProjectileSO.width * currentProjectileSO.width;
 
         if (wallTooClose)
         { trajectory.sharedMesh.Clear(); return; }
@@ -193,59 +193,6 @@ public class Player : MonoBehaviour
 
         trajectory.DrawTrajectory();
     }
-
-    // sends necessary variables and gets Trajectory class to draw a procedural mesh for projectile
-    //void DrawTrajectory(bool draw)
-    //{
-    //    if (draw)
-    //    {
-    //        Vector2 ro = transform.position + aim.transform.up * (transform.localScale.x / 2f * 1.1f + projectileWidth / 2f);
-    //        Vector2 rd = aim.transform.up;
-
-    //        trajectory.width = projectileWidth;
-    //        trajectory.points.Clear();
-    //        trajectory.dirs.Clear();
-
-    //        bool wallTooClose = false;
-
-    //        for (int i = 1; i < maxLinePoints; i++)
-    //        {
-    //            var hitCount = Physics2D.CircleCastNonAlloc(ro, projectileWidth / 2f, rd, results: rayHits, 500f, projectileLayerMask);
-
-    //            wallTooClose = Vector2.Distance(ro, rayHits[0].point) < projectileWidth;
-
-    //            if (hitCount == 0 || wallTooClose)
-    //                break;
-
-    //            if (i == 1)
-    //            {
-    //                trajectory.points.Add(new Vector3(ro.x, ro.y, zOffset));
-    //                trajectory.dirs.Add(new Vector3(rd.x, rd.y, 0));
-    //            }
-
-    //            var surfaceNormal = rayHits[0].normal;
-    //            var dot = Vector2.Dot(rd, surfaceNormal);
-
-    //            ro = ro + rd * rayHits[0].distance + surfaceNormal * 0.005f;
-    //            rd = rd - 2f * dot * surfaceNormal;
-
-    //            trajectory.points.Add(new Vector3(ro.x, ro.y, zOffset));
-    //            trajectory.dirs.Add(new Vector3(rd.x, rd.y, 0));
-
-    //            // 9 is the wall layer
-    //            if (rayHits[0].collider.gameObject.layer != 9)
-    //                break;
-    //        }
-
-    //        if (!wallTooClose)
-    //            trajectory.DrawTrajectory();
-    //        else
-    //            trajectory.sharedMesh.Clear();
-    //    }
-    //    else
-    //        trajectory.sharedMesh.Clear();
-
-    //}
 
     // a holder object for the aim of equal scale with player parent object is rotated
     // the aim itself is a child of this aim holder so as the holder rotates on its own axis

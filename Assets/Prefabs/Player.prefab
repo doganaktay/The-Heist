@@ -411,7 +411,7 @@ Rigidbody2D:
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
-  m_Mass: 1
+  m_Mass: 10
   m_LinearDrag: 0
   m_AngularDrag: 0.05
   m_GravityScale: 1
@@ -454,7 +454,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: c78b87c9083484f789f2849b2f697eac, type: 2}
   simulation: {fileID: 0}
   trajectory: {fileID: 0}
-  speed: 300
+  speed: 80
   brakeSpeed: 0.25
   areaIndex: 0
   hitIndexChanged: 0
@@ -464,7 +464,7 @@ MonoBehaviour:
   maze: {fileID: 0}
   clampMarginX: 5
   clampMarginY: 5
-  spinIncrement: 1
+  spinIncrement: 10
   maxLinePoints: 20
   projectileWidth: 3
   zOffset: -2

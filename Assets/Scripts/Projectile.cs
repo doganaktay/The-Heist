@@ -21,11 +21,10 @@ public class Projectile : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
     }
 
-    public void Launch(ProjectileSO so, Transform player, Vector2 dir, float spin = 0)
+    public void Launch(ProjectileSO so, Vector2 dir, float spin = 0)
     {
         var scale = new Vector3(so.width, so.width, 1);
         transform.localScale = scale;
-        transform.parent = player;
 
         bounceCount = so.bounceLimit - 1;
 
@@ -34,18 +33,15 @@ public class Projectile : MonoBehaviour
 
         rb.sharedMaterial = GetPhysicsMaterial(so.frictionCoefficient);
 
-        //rb.AddForce(dir * so.launchForceMagnitude, ForceMode2D.Impulse);
-        //rb.AddTorque(spin, ForceMode2D.Impulse);
         rb.velocity = dir * so.launchForceMagnitude;
         rb.angularVelocity = spin;
     }
 
-    public void Launch(ProjectileSO so, Transform playerCopy, Vector2 dir, Vector3 pos, float spin = 0)
+    public void Launch(ProjectileSO so, Vector2 dir, Vector3 pos, float spin = 0)
     {
         var scale = new Vector3(so.width, so.width, 1);
         transform.localScale = scale;
         transform.position = pos;
-        //transform.parent = playerCopy;
 
         bounceCount = so.bounceLimit;
 
@@ -54,8 +50,6 @@ public class Projectile : MonoBehaviour
 
         rb.sharedMaterial = GetPhysicsMaterial(so.frictionCoefficient);
 
-        //rb.AddForce(dir * so.launchForceMagnitude, ForceMode2D.Impulse);
-        //rb.AddTorque(spin, ForceMode2D.Impulse);
         rb.velocity = dir * so.launchForceMagnitude;
         rb.angularVelocity = spin;
 

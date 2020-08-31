@@ -129,7 +129,7 @@ public class PhysicsSim : MonoBehaviour
     public void SimulateProjectile(ProjectileSO so, Vector2 dir, Vector3 pos, float spin = 0)
     {
         projectileCopyRb.WakeUp();
-        projectileCopy.Launch(so, playerCopy.transform, dir, pos, spin);
+        projectileCopy.Launch(so, dir, pos, spin);
 
         for (int i=0; i < simulationStepCount; i++)
         {
