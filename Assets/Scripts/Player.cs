@@ -100,6 +100,7 @@ public class Player : MonoBehaviour
         if (Input.GetMouseButton(0))
         {
             force = Vector2.zero;
+            velocity = Vector2.zero;
 
             if (Input.GetKey(KeyCode.Q) && spinAmount > -currentProjectileSO.maxLaunchSpin)
             {
@@ -111,7 +112,7 @@ public class Player : MonoBehaviour
             }
 
             // only redraw line if some condition changes
-            if (lastMousePos != mousePos || lastPos != transform.position || spinAmount != lastSpinAmount || lineReset)
+            if (lastMousePos != mousePos || (transform.position - lastPos).sqrMagnitude > 0.1f*0.1f || spinAmount != lastSpinAmount || lineReset)
             {
                 lineReset = false;
                 lastMousePos = mousePos;
@@ -175,7 +176,7 @@ public class Player : MonoBehaviour
     {
         var proj = Instantiate(projectilePrefab, transform.position + aimUp * (transform.localScale.x / 2f * 1.1f + projectileWidth / 2f),
             Quaternion.identity);
-        proj.GetComponent<Projectile>().Launch(projectileSOs[0], aimUp, spinAmount);
+        proj.GetComponent<Projectile>().Launch(currentProjectileSO, aimUp, spinAmount);
     }
 
     void DrawTrajectory()
@@ -189,7 +190,7 @@ public class Player : MonoBehaviour
         { trajectory.sharedMesh.Clear(); return; }
 
         // the simulated projectile fills the trajectory lists for positions and directions
-        simulation.SimulateProjectile(projectileSOs[0], aimUp, ro, spinAmount);
+        simulation.SimulateProjectile(currentProjectileSO, aimUp, ro, spinAmount);
 
         trajectory.DrawTrajectory();
     }

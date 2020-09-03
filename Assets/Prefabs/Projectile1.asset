@@ -15,6 +15,8 @@ MonoBehaviour:
   width: 3
   launchForceMagnitude: 100
   maxLaunchSpin: 1000
-  bounceLimit: 20
+  bounceLimit: 10
   impactLayers: 080000000b000000
-  frictionCoefficient: 1
+  physicsMaterial:
+    frictionCoefficient: 1
+    bounceCoefficient: 1

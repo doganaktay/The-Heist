@@ -8,6 +8,5 @@ public class ProjectileSO : ScriptableObject
     public float maxLaunchSpin;
     public int bounceLimit;
     public int[] impactLayers;
-    [Range(0f, 1f)]
-    public float frictionCoefficient;
+    public PhysMaterial physicsMaterial;
 }

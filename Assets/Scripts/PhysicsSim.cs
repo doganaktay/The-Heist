@@ -15,6 +15,8 @@ public class PhysicsSim : MonoBehaviour
     public Player player;
 
     public int simulationStepCount = 1000;
+    [HideInInspector]
+    public int currentStepCount = 0;
 
     Projectile projectileCopy;
     Player playerCopy;
@@ -95,6 +97,7 @@ public class PhysicsSim : MonoBehaviour
 
         projectileCopy.isSimulated = true;
         projectileCopy.trajectory = trajectory;
+        projectileCopy.simulation = this;
 
         // add walls to simulation
         foreach (var wall in maze.wallsInScene)
@@ -131,13 +134,15 @@ public class PhysicsSim : MonoBehaviour
         projectileCopyRb.WakeUp();
         projectileCopy.Launch(so, dir, pos, spin);
 
-        for (int i=0; i < simulationStepCount; i++)
+        for (; currentStepCount < simulationStepCount; currentStepCount++)
         {
             simulationPhysics.Simulate(Time.fixedDeltaTime);
 
-            if(projectileCopy.bounceCount < 0)
+            if (projectileCopy.bounceCount <= 0)
                 break;
         }
+
+        currentStepCount = 0;
     }
 
     void OnDestroy()

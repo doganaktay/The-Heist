@@ -10,11 +10,15 @@ public class Projectile : MonoBehaviour
     public int[] impactLayers;
     Rigidbody2D rb;
 
+    public PhysicsSim simulation;
+    int lastStepCount;
+    int lastFrameCount;
+
     public bool isSimulated = false;
 
     // private static dictionary for storing materials with different friction values
     // gets cleared when game is restarted by GameManager
-    static Dictionary<float, PhysicsMaterial2D> materialCache = new Dictionary<float, PhysicsMaterial2D>();
+    static Dictionary<PhysMaterial, PhysicsMaterial2D> materialCache = new Dictionary<PhysMaterial, PhysicsMaterial2D>();
 
     void Awake()
     {
@@ -26,12 +30,12 @@ public class Projectile : MonoBehaviour
         var scale = new Vector3(so.width, so.width, 1);
         transform.localScale = scale;
 
-        bounceCount = so.bounceLimit - 1;
+        bounceCount = so.bounceLimit;
 
         impactLayers = new int[so.impactLayers.Length];
         Array.Copy(so.impactLayers, impactLayers, so.impactLayers.Length);
 
-        rb.sharedMaterial = GetPhysicsMaterial(so.frictionCoefficient);
+        rb.sharedMaterial = GetPhysicsMaterial(so.physicsMaterial);
 
         rb.velocity = dir * so.launchForceMagnitude;
         rb.angularVelocity = spin;
@@ -48,7 +52,7 @@ public class Projectile : MonoBehaviour
         impactLayers = new int[so.impactLayers.Length];
         Array.Copy(so.impactLayers, impactLayers, so.impactLayers.Length);
 
-        rb.sharedMaterial = GetPhysicsMaterial(so.frictionCoefficient);
+        rb.sharedMaterial = GetPhysicsMaterial(so.physicsMaterial);
 
         rb.velocity = dir * so.launchForceMagnitude;
         rb.angularVelocity = spin;
@@ -64,6 +68,16 @@ public class Projectile : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D collision)
     {
+        if(isSimulated && lastStepCount == simulation.currentStepCount)
+            return;
+        else if(isSimulated)
+            lastStepCount = simulation.currentStepCount;
+
+        if (!isSimulated && lastFrameCount == Time.frameCount)
+            return;
+        else if(!isSimulated)
+            lastFrameCount = Time.frameCount;
+
         bounceCount--;
         bool impact = false;
 
@@ -81,7 +95,7 @@ public class Projectile : MonoBehaviour
 
         if (bounceCount <= 0 || impact)
         {
-            if(isSimulated)
+            if (isSimulated)
             {
                 transform.position = new Vector3(5000, 5000, 0);
                 rb.velocity = Vector2.zero;
@@ -89,20 +103,20 @@ public class Projectile : MonoBehaviour
             }
             else
                 Destroy(gameObject);
-        }
+        }        
     }
 
-    // generate, store and return physics materials as needed with new friction values
-    public static PhysicsMaterial2D GetPhysicsMaterial(float friction)
+    // generate, store and return physics materials as needed with new friction and bounce values
+    public static PhysicsMaterial2D GetPhysicsMaterial(PhysMaterial material)
     {
-        if (!materialCache.ContainsKey(friction))
+        if (!materialCache.ContainsKey(material))
         {
-            materialCache[friction] = Instantiate(new PhysicsMaterial2D());
-            materialCache[friction].friction = friction;
-            materialCache[friction].bounciness = 1;
+            materialCache[material] = Instantiate(new PhysicsMaterial2D());
+            materialCache[material].friction = material.frictionCoefficient;
+            materialCache[material].bounciness = material.bounceCoefficient;
         }
 
-        return materialCache[friction];
+        return materialCache[material];
     }
 
     public static void ClearMaterialCache()
