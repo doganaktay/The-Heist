@@ -68,15 +68,10 @@ public class Projectile : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D collision)
     {
-        if(isSimulated && lastStepCount == simulation.currentStepCount)
+        if((isSimulated && lastStepCount == simulation.currentStepCount) || (!isSimulated && lastStepCount == Time.frameCount))
             return;
-        else if(isSimulated)
-            lastStepCount = simulation.currentStepCount;
-
-        if (!isSimulated && lastFrameCount == Time.frameCount)
-            return;
-        else if(!isSimulated)
-            lastFrameCount = Time.frameCount;
+        else
+            lastStepCount = isSimulated? simulation.currentStepCount : Time.frameCount;
 
         bounceCount--;
         bool impact = false;

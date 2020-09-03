@@ -18,5 +18,5 @@ MonoBehaviour:
   bounceLimit: 10
   impactLayers: 080000000b000000
   physicsMaterial:
-    frictionCoefficient: 1
+    frictionCoefficient: 0.5
     bounceCoefficient: 1
