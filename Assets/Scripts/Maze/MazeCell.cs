@@ -20,6 +20,8 @@ public class MazeCell : FastPriorityQueueNode
 	public MazeCell[] exploredFrom;
 	public int[] distanceFromStart;
 
+	public int searchSize = 10; // should be same as search size in pathfinder script
+
 	// for A*
 	public int travelCost;
 
@@ -29,11 +31,11 @@ public class MazeCell : FastPriorityQueueNode
     {
 		mat = transform.GetChild(0).GetComponent<Renderer>().material;
 
-		visited = new bool[5];
+		visited = new bool[searchSize];
 		for(int i = 0; i < visited.Length; i++)
         { visited[i] = false; }
-		exploredFrom = new MazeCell[5];
-		distanceFromStart = new int[5];
+		exploredFrom = new MazeCell[searchSize];
+		distanceFromStart = new int[searchSize];
     }
 
     public MazeCellEdge GetEdge(MazeDirection direction)

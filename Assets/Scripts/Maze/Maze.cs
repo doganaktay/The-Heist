@@ -39,6 +39,8 @@ public class Maze : MonoBehaviour
         newCell.transform.parent = transform;
         float xPos = (location.x - size.x * 0.5f) * cellScaleX + cellScaleX / 2;
         float yPos = (location.y - size.y * 0.5f) * cellScaleY + cellScaleY / 2;
+        Vector3 scale = new Vector3(cellScaleX, cellScaleY, 1);
+        newCell.transform.localScale = scale;
         newCell.transform.position = new Vector3(xPos, yPos, 0f);
 
         newCell.row = location.x;
@@ -116,6 +118,8 @@ public class Maze : MonoBehaviour
     private void CreateWall(MazeCell cell, MazeCell otherCell, MazeDirection direction)
     {
         MazeCellWall wall = Instantiate(wallPrefab);
+        Vector3 scale = new Vector3(cellScaleX, cellScaleY, 1);
+        wall.transform.localScale = scale;
         wall.Initialize(cell, otherCell, direction);
         wall.gameObject.name = otherCell == null ? cell.pos.x + "," + cell.pos.y + ": " + direction :
                                                    cell.pos.x + "," + cell.pos.y

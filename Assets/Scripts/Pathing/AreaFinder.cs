@@ -77,11 +77,6 @@ public class AreaFinder : MonoBehaviour
                 destinationIndex = i;
         }
 
-        //Debug.Log("Key: " + lowCellAreas.ElementAt(destinationIndex).Key +
-        //          " Weight: " + string.Format("{0:0.000}", (destinationIndex - 1 >= 0 ?
-        //          (weights[destinationIndex] - weights[destinationIndex - 1]) / (float)weights[lowCellAreas.Count - 1]:
-        //          weights[destinationIndex] / (float)weights[lowCellAreas.Count - 1])));
-
         return lowCellAreas.ElementAt(destinationIndex).Value;
     }
 
