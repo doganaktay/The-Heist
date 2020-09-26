@@ -31,6 +31,9 @@ public class FieldOfView : MonoBehaviour
 	public Transform aim;
 	public float playerZOffset;
 
+	public bool canDraw = true;
+	bool meshCleared = false;
+
 	void Start()
 	{
 		viewMeshFilter = GetComponent<MeshFilter>();
@@ -57,7 +60,16 @@ public class FieldOfView : MonoBehaviour
 
 	void LateUpdate()
 	{
-		DrawFieldOfView();
+		if (canDraw)
+		{
+			DrawFieldOfView();
+			meshCleared = false;
+		}
+		else if (!meshCleared)
+		{
+			viewMesh.Clear();
+			meshCleared = true;
+		}
 	}
 
 	void FindVisibleTargets()

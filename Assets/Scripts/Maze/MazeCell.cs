@@ -22,6 +22,10 @@ public class MazeCell : FastPriorityQueueNode
 
 	public int searchSize = 10; // should be same as search size in pathfinder script
 
+	public bool isPlaceable = false; // used by spotfinder to find available placement spots
+	public int placeableNeighbourCount = 0;
+	public bool isWalkable = true; // used to remove cell from pathfinding
+
 	// for A*
 	public int travelCost;
 

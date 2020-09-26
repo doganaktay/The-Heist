@@ -11,6 +11,7 @@ public class GameManager : MonoBehaviour
 	public Pathfinder pathfinder;
 	public AStar aStar;
     public AreaFinder areafinder;
+	public Spotfinder spotfinder;
     public PatrolManager patrolManager;
 	public TextOverlay textOverlay;
 	public Player playerPrefab;
@@ -29,7 +30,7 @@ public class GameManager : MonoBehaviour
 
 	private void Update()
 	{
-		if (Input.GetKeyDown(KeyCode.Alpha1))
+		if (Input.GetKeyDown(KeyCode.Alpha0))
 		{
 			RestartGame();
 		}
@@ -56,6 +57,10 @@ public class GameManager : MonoBehaviour
 		// pass references to areafinder
         areafinder.maze = mazeInstance;
 		areafinder.simulation = physicsSim;
+
+		// pass references to spotfinder
+		spotfinder.maze = mazeInstance;
+		spotfinder.simulation = physicsSim;
 
 		// pass references to patrol manager
 		patrolManager.pathfinder = pathfinder;

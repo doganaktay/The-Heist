@@ -192,7 +192,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &7267841342585475839
 Transform:
   m_ObjectHideFlags: 0
@@ -219,8 +219,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 475180fc1d97a4659baa95e3c6c9471d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  viewRadius: 40
-  viewAngle: 360
+  viewRadius: 60
+  viewAngle: 120
   targetMask:
     serializedVersion: 2
     m_Bits: 3072
@@ -234,6 +234,7 @@ MonoBehaviour:
   maskCutawayDst: 0
   aim: {fileID: 928625601923451}
   playerZOffset: 0
+  canDraw: 1
 --- !u!23 &7403064084887006763
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -325,6 +326,7 @@ GameObject:
   - component: {fileID: 3559934821376139114}
   - component: {fileID: 447034769133315995}
   - component: {fileID: 7925979547997160563}
+  - component: {fileID: 1492204798581725389}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -450,8 +452,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   projectilePrefab: {fileID: 372506298171578869, guid: 3f7dd9ebfb0ea4133bfb93dfe5f47185,
     type: 3}
-  projectileSOs:
-  - {fileID: 11400000, guid: c78b87c9083484f789f2849b2f697eac, type: 2}
   simulation: {fileID: 0}
   trajectory: {fileID: 0}
   speed: 80
@@ -465,6 +465,21 @@ MonoBehaviour:
   clampMarginX: 5
   clampMarginY: 5
   spinIncrement: 10
-  maxLinePoints: 20
-  projectileWidth: 3
-  zOffset: -2
+--- !u!114 &1492204798581725389
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7495380814707733899}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a0410ddb9788423e8a9d4cbe461795b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  projectiles:
+  - {fileID: 11400000, guid: c78b87c9083484f789f2849b2f697eac, type: 2}
+  - {fileID: 11400000, guid: e16d49e462d63437ab1998be8847857d, type: 2}
+  - {fileID: 11400000, guid: fd7093b563e4e4c78a88549709054feb, type: 2}
+  currentProjectile: {fileID: 0}
+  selectionChanged: 0

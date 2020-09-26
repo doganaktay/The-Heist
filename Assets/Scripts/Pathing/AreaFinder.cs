@@ -25,29 +25,60 @@ public class AreaFinder : MonoBehaviour
     public bool displayCellID = false;
     #endif
 
-    public void MakeRoom(float percent = 1f)
+    public void MakeRooms()
     {
-        var room = GetRandomAreaWeighted();
-
-        foreach(var cell in room)
+        foreach (var room in lowCellAreas)
         {
-            for (int i = 0; i < MazeDirections.vectors.Length; i++)
+            foreach (var cell in room.Value)
             {
-                var xpos = cell.pos.x + MazeDirections.vectors[i].x;
-                var ypos = cell.pos.y + MazeDirections.vectors[i].y;
-
-                if (xpos < 0 || ypos < 0 || xpos > maze.size.x - 1 || ypos > maze.size.y - 1)
-                    continue;
-
-                var neighbour = maze.cells[xpos, ypos];
-
-                if (!cell.connectedCells.Contains(neighbour) && cell.state == neighbour.state
-                    && cell.areaIndex == neighbour.areaIndex && UnityEngine.Random.Range(0f,1f) < percent)
+                for (int i = 0; i < MazeDirections.vectors.Length; i++)
                 {
-                    var wall = (MazeCellWall)cell.GetEdge((MazeDirection)i);
-                    MazeDirections.RemoveWall(wall);
-                    maze.wallsInScene.Remove(wall.GetComponentInParent<MazeCellWall>());
-                    simulation.RemoveWallFromSimulation(wall.gameObject);
+                    var xpos = cell.pos.x + MazeDirections.vectors[i].x;
+                    var ypos = cell.pos.y + MazeDirections.vectors[i].y;
+
+                    if (xpos < 0 || ypos < 0 || xpos > maze.size.x - 1 || ypos > maze.size.y - 1)
+                        continue;
+
+                    var neighbour = maze.cells[xpos, ypos];
+
+                    if (!cell.connectedCells.Contains(neighbour) && cell.state == neighbour.state
+                        && cell.areaIndex == neighbour.areaIndex)
+                    {
+                        var wall = (MazeCellWall)cell.GetEdge((MazeDirection)i);
+                        MazeDirections.RemoveWall(wall);
+                        maze.wallsInScene.Remove(wall.GetComponentInParent<MazeCellWall>());
+                        simulation.RemoveWallFromSimulation(wall.gameObject);
+
+                        cell.connectedCells.Add(neighbour);
+                    }
+                }
+            }
+        }
+
+        foreach (var room in highCellAreas)
+        {
+            foreach (var cell in room.Value)
+            {
+                for (int i = 0; i < MazeDirections.vectors.Length; i++)
+                {
+                    var xpos = cell.pos.x + MazeDirections.vectors[i].x;
+                    var ypos = cell.pos.y + MazeDirections.vectors[i].y;
+
+                    if (xpos < 0 || ypos < 0 || xpos > maze.size.x - 1 || ypos > maze.size.y - 1)
+                        continue;
+
+                    var neighbour = maze.cells[xpos, ypos];
+
+                    if (!cell.connectedCells.Contains(neighbour) && cell.state == neighbour.state
+                        && cell.areaIndex == neighbour.areaIndex && Mathf.Abs(neighbour.distanceFromStart[0] - cell.distanceFromStart[0]) < 4)
+                    {
+                        var wall = (MazeCellWall)cell.GetEdge((MazeDirection)i);
+                        MazeDirections.RemoveWall(wall);
+                        maze.wallsInScene.Remove(wall.GetComponentInParent<MazeCellWall>());
+                        simulation.RemoveWallFromSimulation(wall.gameObject);
+
+                        cell.connectedCells.Add(neighbour);
+                    }
                 }
             }
         }
@@ -85,6 +116,7 @@ public class AreaFinder : MonoBehaviour
     {
         ResetGrid();
         NewDetermineAreas();
+        MakeRooms();
     }
 
     // resets local copy of grid to current maze
@@ -99,6 +131,25 @@ public class AreaFinder : MonoBehaviour
             {
                 grid[i, j] = maze.cells[i, j];
             }
+        }
+    }
+
+    public void DetermineSinglePaths()
+    {
+        foreach(var lowCellArea in lowCellAreas)
+        {
+            bool isCorridor = true;
+            foreach(var cell in lowCellArea.Value)
+            {
+                if (cell.connectedCells.Count > 2)
+                {
+                    isCorridor = false;
+                    break;
+                }
+            }
+
+            if(isCorridor)
+                Debug.Log("Corridor at index: " + lowCellArea.Key);
         }
     }
 
@@ -365,7 +416,9 @@ public class AreaFinder : MonoBehaviour
 
     private void OnGUI()
     {
-        if (GUI.Button(new Rect(10, 130, 80, 60), "Make Room"))
-            MakeRoom();
+        if (GUI.Button(new Rect(10, 130, 80, 60), "Make Rooms"))
+            MakeRooms();
+        if (GUI.Button(new Rect(10, 190, 80, 60), "Find Corridors"))
+            DetermineSinglePaths();
     }
 }

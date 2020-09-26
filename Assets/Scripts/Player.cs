@@ -3,11 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(ProjectileSelector))]
 public class Player : MonoBehaviour
 {
     public Projectile projectilePrefab;
-    public ProjectileSO[] projectileSOs;
-    ProjectileSO currentProjectileSO; // currently being set manually to the first one in the array in start
+    ProjectileSelector projectileSelector; // selects current projectile from an array of SOs
+    FieldOfView fov;
 
     public PhysicsSim simulation;
     public Trajectory trajectory;
@@ -23,7 +24,8 @@ public class Player : MonoBehaviour
     public bool cellChanged = false;
     public Maze maze;
 
-    Collider2D[] hits;
+    Collider2D[] posHits;
+    Collider2D[] mouseHits;
     Collider2D previousHit;
     RaycastHit2D[] rayHits;
     // mask currently includes walls and player
@@ -53,17 +55,12 @@ public class Player : MonoBehaviour
     bool canDrawTrajectory = false;
 
     bool lineReset = true;
-    [SerializeField]
-    int maxLinePoints = 20;
-    [SerializeField]
-    float projectileWidth = 3f;
-    [SerializeField]
-    float zOffset = -5f;
 
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        hits = new Collider2D[10];
+        posHits = new Collider2D[10];
+        mouseHits = new Collider2D[10];
         rayHits = new RaycastHit2D[10];
 
         cam = Camera.main;
@@ -72,7 +69,8 @@ public class Player : MonoBehaviour
 
         aim = transform.GetChild(0).transform;
 
-        currentProjectileSO = projectileSOs[0];
+        projectileSelector = GetComponent<ProjectileSelector>();
+        fov = GetComponentInChildren<FieldOfView>();
     }
 
     void FixedUpdate()
@@ -94,6 +92,7 @@ public class Player : MonoBehaviour
         // tracking mouse input pos for cell highlighting and player aim
         mousePos = cam.ScreenToWorldPoint(Input.mousePosition);
 
+        TrackPosition();
         TrackMouseLocation();
         FaceMouse();
 
@@ -102,19 +101,21 @@ public class Player : MonoBehaviour
             force = Vector2.zero;
             velocity = Vector2.zero;
 
-            if (Input.GetKey(KeyCode.Q) && spinAmount > -currentProjectileSO.maxLaunchSpin)
+            if (Input.GetKey(KeyCode.Q) && spinAmount > -projectileSelector.currentProjectile.maxLaunchSpin)
             {
                 spinAmount -= spinIncrement;
             }
-            else if (Input.GetKey(KeyCode.E) && spinAmount < currentProjectileSO.maxLaunchSpin)
+            else if (Input.GetKey(KeyCode.E) && spinAmount < projectileSelector.currentProjectile.maxLaunchSpin)
             {
                 spinAmount += spinIncrement;
             }
 
             // only redraw line if some condition changes
-            if (lastMousePos != mousePos || (transform.position - lastPos).sqrMagnitude > 0.1f*0.1f || spinAmount != lastSpinAmount || lineReset)
+            if (lastMousePos != mousePos || (transform.position - lastPos).sqrMagnitude > 0.1f*0.1f || spinAmount != lastSpinAmount
+                || projectileSelector.selectionChanged || lineReset)
             {
                 lineReset = false;
+                projectileSelector.selectionChanged = false;
                 lastMousePos = mousePos;
                 lastPos = transform.position;
                 lastSpinAmount = spinAmount;
@@ -174,23 +175,23 @@ public class Player : MonoBehaviour
 
     void LaunchProjectile()
     {
-        var proj = Instantiate(projectilePrefab, transform.position + aimUp * (transform.localScale.x / 2f * 1.1f + projectileWidth / 2f),
+        var proj = Instantiate(projectilePrefab, transform.position + aimUp * (transform.localScale.x / 2f * 1.1f + projectileSelector.currentProjectile.width / 2f),
             Quaternion.identity);
-        proj.GetComponent<Projectile>().Launch(currentProjectileSO, aimUp, spinAmount);
+        proj.GetComponent<Projectile>().Launch(projectileSelector.currentProjectile, aimUp, spinAmount);
     }
 
     void DrawTrajectory()
     {
-        Vector2 ro = transform.position + aimUp * (transform.localScale.x / 2f * 1.1f + currentProjectileSO.width / 2f);
+        Vector2 ro = transform.position + aimUp * (transform.localScale.x / 2f * 1.1f + projectileSelector.currentProjectile.width / 2f);
 
-        Physics2D.CircleCastNonAlloc(ro, currentProjectileSO.width / 2f, aimUp, results: rayHits, 500f, projectileLayerMask);
-        bool wallTooClose = (rayHits[0].point - ro).sqrMagnitude < currentProjectileSO.width * currentProjectileSO.width;
+        Physics2D.CircleCastNonAlloc(ro, projectileSelector.currentProjectile.width / 2f, aimUp, results: rayHits, 500f, projectileLayerMask);
+        bool wallTooClose = (rayHits[0].point - ro).sqrMagnitude < projectileSelector.currentProjectile.width * projectileSelector.currentProjectile.width;
 
         if (wallTooClose)
         { trajectory.sharedMesh.Clear(); return; }
 
         // the simulated projectile fills the trajectory lists for positions and directions
-        simulation.SimulateProjectile(currentProjectileSO, aimUp, ro, spinAmount);
+        simulation.SimulateProjectile(projectileSelector.currentProjectile, aimUp, ro, spinAmount);
 
         trajectory.DrawTrajectory();
     }
@@ -210,7 +211,7 @@ public class Player : MonoBehaviour
     // and set bools used by other scripts for updating
     void TrackMouseLocation()
     {
-        int hitCount = Physics2D.OverlapCircleNonAlloc(mousePos, 1f, results: hits, cellLayerMask);
+        int hitCount = Physics2D.OverlapCircleNonAlloc(mousePos, 1f, results: mouseHits, cellLayerMask);
 
         if (hitCount > 0)
         {
@@ -218,7 +219,7 @@ public class Player : MonoBehaviour
             int closestIndex = 0;
             for(int i = 0; i < hitCount; i++)
             {
-                var temp = Vector2.Distance(hits[i].transform.position, transform.position);
+                var temp = Vector2.Distance(mouseHits[i].transform.position, transform.position);
                 dist = temp < dist ? temp : dist;
                 if(temp < dist)
                 {
@@ -227,9 +228,9 @@ public class Player : MonoBehaviour
                 }
             }
 
-            if (hits[closestIndex] == previousHit) { return; }
+            if (mouseHits[closestIndex] == previousHit) { return; }
 
-            currentCell = hits[closestIndex].GetComponent<MazeCell>();
+            currentCell = mouseHits[closestIndex].GetComponent<MazeCell>();
             cellChanged = true;
 
             cellState = currentCell.state;
@@ -239,8 +240,33 @@ public class Player : MonoBehaviour
                 hitIndexChanged = true;
 
             lastAreaIndex = areaIndex;
-            previousHit = hits[closestIndex];
+            previousHit = mouseHits[closestIndex];
 
+        }
+    }
+
+    void TrackPosition()
+    {
+        int hitCount = Physics2D.OverlapCircleNonAlloc(transform.position, 1f, results: posHits, cellLayerMask);
+
+        if (hitCount > 0)
+        {
+            float dist = Mathf.Infinity;
+            int closestIndex = 0;
+            for (int i = 0; i < hitCount; i++)
+            {
+                var temp = Vector2.Distance(posHits[i].transform.position, transform.position);
+                dist = temp < dist ? temp : dist;
+                if (temp < dist)
+                {
+                    dist = temp;
+                    closestIndex = i;
+                }
+            }
+
+            if (posHits[closestIndex] == previousHit) { return; }
+
+            currentCell = posHits[closestIndex].GetComponent<MazeCell>();
         }
     }
     

@@ -12,7 +12,6 @@ public class Projectile : MonoBehaviour
 
     public PhysicsSim simulation;
     int lastStepCount;
-    int lastFrameCount;
 
     public bool isSimulated = false;
 
@@ -36,7 +35,7 @@ public class Projectile : MonoBehaviour
         Array.Copy(so.impactLayers, impactLayers, so.impactLayers.Length);
 
         rb.sharedMaterial = GetPhysicsMaterial(so.physicsMaterial);
-
+        rb.mass = so.mass;
         rb.velocity = dir * so.launchForceMagnitude;
         rb.angularVelocity = spin;
     }
@@ -53,7 +52,7 @@ public class Projectile : MonoBehaviour
         Array.Copy(so.impactLayers, impactLayers, so.impactLayers.Length);
 
         rb.sharedMaterial = GetPhysicsMaterial(so.physicsMaterial);
-
+        rb.mass = so.mass;
         rb.velocity = dir * so.launchForceMagnitude;
         rb.angularVelocity = spin;
 

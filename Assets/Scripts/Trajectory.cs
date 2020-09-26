@@ -59,10 +59,6 @@ public class Trajectory : MonoBehaviour
             uv[v + 3] = new Vector2(1, 1);
         }
 
-        lineMesh.vertices = vertices;
-        lineMesh.normals = normals;
-        lineMesh.SetUVs(0, uv);
-
         int[] triangles = new int[lineCount * 6];
 
         for (int line = 0, v = 0, t = 0; line < lineCount; line++, v += 4, t += 6)
@@ -73,7 +69,11 @@ public class Trajectory : MonoBehaviour
             triangles[t + 5] = v + 2;
         }
 
+        lineMesh.vertices = vertices;
+        lineMesh.normals = normals;
+        lineMesh.SetUVs(0, uv);
         lineMesh.SetTriangles(triangles, 0);
+        lineMesh.RecalculateNormals();
 
         // generate circles
         projMesh.Clear();
@@ -119,6 +119,7 @@ public class Trajectory : MonoBehaviour
         projMesh.normals = circleNormals;
         projMesh.SetUVs(0, circleUV);
         projMesh.SetTriangles(circleTriangles, 0);
+        projMesh.RecalculateNormals();
 
         CombineInstance[] combine = new CombineInstance[2];
         combine[0].mesh = lineMesh;
