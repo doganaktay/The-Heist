@@ -20,8 +20,7 @@ public class GameManager : MonoBehaviour
 	public PathFollow ai;
 	public Maze mazePrefab;
 	private Maze mazeInstance;
-
-	public static event Action MazeGenFinished;
+	public GameObject layout;
 
 	private void Start()
 	{
@@ -35,6 +34,8 @@ public class GameManager : MonoBehaviour
 			RestartGame();
 		}
 	}
+
+	public static Action MazeGenFinished;
 
 	private void BeginGame()
 	{
@@ -63,6 +64,7 @@ public class GameManager : MonoBehaviour
 		spotfinder.simulation = physicsSim;
 		spotfinder.pathfinder = pathfinder;
 		spotfinder.areafinder = areafinder;
+		spotfinder.layout = layout;
 
 		// pass references to patrol manager
 		patrolManager.pathfinder = pathfinder;
@@ -72,14 +74,12 @@ public class GameManager : MonoBehaviour
 		textOverlay.maze = mazeInstance;
 		textOverlay.InitializeDisplay();
 
-		// instantiate player & AI (AI currently disabled)
+		// instantiate and pass references to player
 		player = Instantiate(playerPrefab, new Vector3(mazeInstance.cells[0, 0].transform.position.x,
 										   mazeInstance.cells[0, 0].transform.position.y, -3.5f), Quaternion.identity);
 		player.maze = mazeInstance;
 		player.simulation = physicsSim;
 		player.trajectory = trajectory;
-
-		//ai = Instantiate(aiPrefab, new Vector3(mazeInstance.cells[0, 0].transform.position.x, mazeInstance.cells[0, 0].transform.position.y, -1f), Quaternion.identity);
 
 		// pass another reference to pathfinder
 		pathfinder.player = player;
@@ -90,23 +90,35 @@ public class GameManager : MonoBehaviour
 		//ai.startPos = new IntVector2(0, 0);
 		//ai.endPos = new IntVector2(mazeInstance.size.x - 1, mazeInstance.size.y - 1);
 
-		// pass reference to PhysicsSimulation
+		// pass references to PhysicsSimulation
 		physicsSim.maze = mazeInstance;
 		physicsSim.playerPrefab = playerPrefab;
 		physicsSim.player = player;
 		physicsSim.trajectory = trajectory;
+
+		// set up areas, placeable slots and simulation
+		pathfinder.NewPath();
+		areafinder.FindAreas();
+		physicsSim.ConstructSimulationScene();
+		areafinder.MakeRooms();
+		spotfinder.DeterminePlacement();
+		areafinder.FindAreas();
+		physicsSim.AddLayout();
 
 		// directional light reset
 		lights.StartRotation();
 
 		// call event
 		MazeGenFinished();
-	}
+    }
 
 	private void RestartGame()
 	{		
 		Destroy(mazeInstance.gameObject);
 		Destroy(player.gameObject);
+
+		ClearLayout();
+
 		//ai.StopAndDestroy();
 
 		// clearing material cache on projectiles
@@ -116,4 +128,17 @@ public class GameManager : MonoBehaviour
 
         BeginGame();
 	}
+
+	void ClearLayout()
+    {
+		for (int i=0; i < layout.transform.childCount; i++)
+        {
+			var t = layout.transform.GetChild(i);
+
+			if (t == layout.transform)
+				continue;
+
+			Destroy(t.gameObject);
+        }
+    }
 }

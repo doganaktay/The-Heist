@@ -30,6 +30,13 @@ public class AreaFinder : MonoBehaviour
     public bool displayCellID = false;
     #endif
 
+    // being called by pathfinder when the maze changes
+    public void FindAreas()
+    {
+        ResetGrid();
+        NewDetermineAreas();
+    }
+
     public void MakeRooms()
     {
         foreach (var room in lowCellAreas)
@@ -114,14 +121,6 @@ public class AreaFinder : MonoBehaviour
         }
 
         return lowCellAreas.ElementAt(destinationIndex).Value;
-    }
-
-    // being called by pathfinder when the maze changes
-    public void FindAreas()
-    {
-        ResetGrid();
-        NewDetermineAreas();
-        MakeRooms();
     }
 
     // resets local copy of grid to current maze
@@ -251,7 +250,7 @@ public class AreaFinder : MonoBehaviour
                     }
 
                 }
-                else if (grid[j, i].state == 2)
+                else if (grid[j, i].state == 2) // uses placedConnectedCells set to search
                 {
                     HashSet<int> neighbors = new HashSet<int>();
 

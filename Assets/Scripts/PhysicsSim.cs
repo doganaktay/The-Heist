@@ -29,11 +29,6 @@ public class PhysicsSim : MonoBehaviour
 
     Dictionary<GameObject, GameObject> objectPairs = new Dictionary<GameObject, GameObject>();
 
-    void Awake()
-    {
-        GameManager.MazeGenFinished += ConstructSimulationScene;
-    }
-
     void Start()
     {
         //create simulation scene
@@ -47,7 +42,7 @@ public class PhysicsSim : MonoBehaviour
         playerCopy.transform.position = player.transform.position;
     }
 
-    void ConstructSimulationScene()
+    public void ConstructSimulationScene()
     {
         if (sceneHolder != null)
             Destroy(sceneHolder);
@@ -123,6 +118,32 @@ public class PhysicsSim : MonoBehaviour
         }
     }
 
+    public void AddLayout()
+    {
+        // add placement to simulation
+        foreach (var placement in maze.placementInScene)
+        {
+            var holderCopy = Instantiate(maze.placeHolderPrefab);
+            SceneManager.MoveGameObjectToScene(holderCopy.gameObject, simulation);
+            holderCopy.transform.position = placement.transform.position;
+            holderCopy.transform.rotation = placement.transform.rotation;
+            var scale = new Vector3(maze.cellScaleX, maze.cellScaleY, 1f);
+            holderCopy.transform.localScale = scale;
+            holderCopy.transform.parent = sceneHolder.transform;
+
+            holderCopy.name = placement.name + " Copy";
+
+            //Destroy(holderCopy.transform.GetChild(1).gameObject);
+
+            foreach (var r in holderCopy.GetComponentsInChildren<Renderer>())
+            {
+                r.enabled = false;
+            }
+
+            objectPairs.Add(placement.gameObject, holderCopy.gameObject);
+        }
+    }
+
     public void RemoveWallFromSimulation(GameObject wall)
     {
         Destroy(objectPairs[wall]);
@@ -143,10 +164,5 @@ public class PhysicsSim : MonoBehaviour
         }
 
         currentStepCount = 0;
-    }
-
-    void OnDestroy()
-    {
-        GameManager.MazeGenFinished -= ConstructSimulationScene;
     }
 }

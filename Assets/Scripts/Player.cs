@@ -28,8 +28,8 @@ public class Player : MonoBehaviour
     Collider2D[] mouseHits;
     Collider2D previousHit;
     RaycastHit2D[] rayHits;
-    // mask currently includes walls and player
-    static int projectileLayerMask = 1 << 9 | 1<<8;
+    // mask currently includes walls, placements and player
+    static int projectileLayerMask = 1 << 9 | 1<<8 | 1<<13;
     static int wallLayerMask = 1 << 9;
     static int cellLayerMask = 1 << 10;
 

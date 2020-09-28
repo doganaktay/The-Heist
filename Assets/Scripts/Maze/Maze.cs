@@ -14,9 +14,11 @@ public class Maze : MonoBehaviour
 
     public MazeCellPassage passagePrefab;
     public MazeCellWall wallPrefab;
+    public GameObject placeHolderPrefab; // placeholder prefab, to be replaced by placement objects
 
     // for use with physics simulation scene
     public List<MazeCellWall> wallsInScene = new List<MazeCellWall>();
+    public List<GameObject> placementInScene = new List<GameObject>();
 
     public void Generate()
     {

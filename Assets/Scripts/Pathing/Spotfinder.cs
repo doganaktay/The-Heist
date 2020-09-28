@@ -8,15 +8,23 @@ public class Spotfinder : MonoBehaviour
     public PhysicsSim simulation;
     public Pathfinder pathfinder;
     public AreaFinder areafinder;
+    public GameObject layout;
 
-    [SerializeField] GameObject placeHolder;
     [SerializeField] int placeCount = 1;
     List<MazeCell> availableSpots = new List<MazeCell>();
 
     float spotHeight = 3f;
 
+    public void DeterminePlacement()
+    {
+        FindAvailableSpots();
+        PlaceRandom();
+    }
+
     void FindAvailableSpots()
     {
+        availableSpots.Clear();
+
         for (int i = 0; i < maze.size.x; i++)
         {
             for (int j = 0; j < maze.size.y; j++)
@@ -120,19 +128,20 @@ public class Spotfinder : MonoBehaviour
             {
                 availableSpots[random].state = 2;
 
-                var go = Instantiate(placeHolder);
-                Vector3 scale = new Vector3(maze.cellScaleX, maze.cellScaleY, spotHeight);
-                go.transform.localScale = scale;
+                var go = Instantiate(maze.placeHolderPrefab);
                 go.transform.position = new Vector3(availableSpots[random].transform.position.x, availableSpots[random].transform.position.y,
                                                     availableSpots[random].transform.position.z - spotHeight / 2);
+                Vector3 scale = new Vector3(maze.cellScaleX, maze.cellScaleY, spotHeight);
+                go.transform.localScale = scale;
+                go.transform.parent = layout.transform;
 
-                availableSpots[random].isWalkable = false;
+                maze.placementInScene.Add(go); // adding placement to maze to then be copied over to physics sim
 
                 HashSet<MazeCell> temp = new HashSet<MazeCell>();
 
                 foreach (var cell in availableSpots[random].connectedCells)
                 {
-                    if (!cell.isWalkable)
+                    if (cell.state > 1)
                     {
                         cell.connectedCells.Remove(availableSpots[random]);
                         cell.placedConnectedCells.Add(availableSpots[random]);
@@ -144,7 +153,7 @@ public class Spotfinder : MonoBehaviour
                 {
                     availableSpots[random].connectedCells.Remove(t);
 
-                    if(!t.isWalkable)
+                    if(t.state > 1)
                         availableSpots[random].placedConnectedCells.Add(t);
                 }
 
@@ -153,8 +162,6 @@ public class Spotfinder : MonoBehaviour
 
             availableSpots[random].isPlaceable = false;
             availableSpots.Remove(availableSpots[random]);
-
-            areafinder.NewDetermineAreas();
         }
     }
 

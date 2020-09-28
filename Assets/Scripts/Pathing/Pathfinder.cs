@@ -32,7 +32,7 @@ public class Pathfinder : MonoBehaviour
 
     private void Start()
     {
-        GameManager.MazeGenFinished += NewPath;
+        //GameManager.MazeGenFinished += NewPath;
         Player.MazeChange += NewPath;
 
         pathFound = new bool[searchSize];
@@ -61,7 +61,7 @@ public class Pathfinder : MonoBehaviour
 
     private void OnDestroy()
     {
-        GameManager.MazeGenFinished -= NewPath;
+        //GameManager.MazeGenFinished -= NewPath;
         Player.MazeChange -= NewPath;
     }
 
@@ -70,9 +70,6 @@ public class Pathfinder : MonoBehaviour
     {
         SetNewPath(startPos, endPos);
     }
-
-    // keeps track of the used indices of secondary paths
-    int highestIndex = 1000;
 
     // check neighbours for placement
     public bool TryNeighbourPaths(MazeCell candidate)
@@ -85,7 +82,7 @@ public class Pathfinder : MonoBehaviour
         {
             if (connected.connectedCells.Count == 1)
                 return false;
-            if (!connected.isWalkable)
+            if (connected.state > 1)
                 continue;   
 
             int pathIndex = 1;
@@ -122,7 +119,7 @@ public class Pathfinder : MonoBehaviour
 
                     foreach (MazeCell cell in currentCell.connectedCells)
                     {
-                        if(cell == candidate || !cell.isWalkable) { continue; }
+                        if(cell == candidate || cell.state > 1) { continue; }
 
                         if (!cell.visited[pathIndex] && cell.state == 1)
                         {
@@ -181,7 +178,7 @@ public class Pathfinder : MonoBehaviour
 
                         foreach (MazeCell cell in currentCell.connectedCells)
                         {
-                            if (cell == candidate || !cell.isWalkable) { continue; }
+                            if (cell == candidate || cell.state > 1) { continue; }
 
                             if (!cell.visited[pathIndex] && cell.state == 0)
                             {
@@ -209,6 +206,9 @@ public class Pathfinder : MonoBehaviour
 
         return true;
     }
+
+    // keeps track of the used indices of secondary paths
+    int highestIndex = 1000;
 
     // get path with start and end points supplied
     public List<MazeCell> SetHighlightPath(IntVector2 pos, int areaIndex)
@@ -372,8 +372,6 @@ public class Pathfinder : MonoBehaviour
         }
 
         DisplayPath(path[pathIndex], 1, pathIndex);
-
-        areafinder.FindAreas();
 
         return path[pathIndex];
     }
