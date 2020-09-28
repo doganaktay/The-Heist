@@ -17,8 +17,13 @@ public class AreaFinder : MonoBehaviour
     Dictionary<int, List<MazeCell>> lowCellConnected = new Dictionary<int, List<MazeCell>>();
     Dictionary<int, List<MazeCell>> highCellConnected = new Dictionary<int, List<MazeCell>>();
 
+    Dictionary<int, List<MazeCell>> placedAreas = new Dictionary<int, List<MazeCell>>();
+
+    public List<MazeCell> GetLowCellArea (int areaIndex) { return lowCellAreas[areaIndex]; }
+    public List<MazeCell> GetHighCellArea(int areaIndex) { return highCellAreas[areaIndex]; }
+
     public List<MazeCell> GetPatrolAreaByIndex(int areaIndex){ return lowCellAreas[areaIndex]; }
-    public List<MazeCell> GetConnectionPoints(int areaIndex){ return lowCellConnected[areaIndex]; }
+    public List<MazeCell> GetLowConnectionPoints(int areaIndex){ return lowCellConnected[areaIndex]; }
     public List<MazeCell> GetRandomArea(){ return lowCellAreas.ElementAt(UnityEngine.Random.Range(0, lowCellAreas.Count)).Value; }
 
     #if UNITY_EDITOR
@@ -163,11 +168,15 @@ public class AreaFinder : MonoBehaviour
         lowCellConnected.Clear();
         highCellConnected.Clear();
 
+        placedAreas.Clear();
+
         int[,] labels = new int[maze.size.x, maze.size.y];
         List<HashSet<int>> linkedLow = new List<HashSet<int>>();
         int nextLabelLow = 0;
         List<HashSet<int>> linkedHigh = new List<HashSet<int>>();
         int nextLabelHigh = 0;
+        List<HashSet<int>> linkedPlaced = new List<HashSet<int>>();
+        int nextLabelPlaced = 0;
 
         for (int j = 0; j < maze.size.x; j++)
         {
@@ -210,7 +219,7 @@ public class AreaFinder : MonoBehaviour
                     }
 
                 }
-                else
+                else if (grid[j, i].state == 1)
                 {
                     HashSet<int> neighbors = new HashSet<int>();
 
@@ -242,6 +251,38 @@ public class AreaFinder : MonoBehaviour
                     }
 
                 }
+                else if (grid[j, i].state == 2)
+                {
+                    HashSet<int> neighbors = new HashSet<int>();
+
+                    if (k >= 0 && grid[j, k].state == 2 && grid[j, k].placedConnectedCells.Contains(grid[j, i]))
+                        neighbors.Add(labels[j, k]);
+                    if (h >= 0 && grid[h, i].state == 2 && grid[h, i].placedConnectedCells.Contains(grid[j, i]))
+                        neighbors.Add(labels[h, i]);
+
+                    if (neighbors.Count == 0)
+                    {
+                        linkedPlaced.Add(new HashSet<int> { nextLabelPlaced });
+                        labels[j, i] = nextLabelPlaced;
+                        nextLabelPlaced++;
+                    }
+                    else
+                    {
+                        HashSet<int> neighborLabels = new HashSet<int>();
+                        foreach (int n in neighbors)
+                        {
+                            foreach (int a in linkedPlaced[n])
+                            { neighborLabels.Add(a); }
+                        }
+
+                        labels[j, i] = neighborLabels.Min();
+                        foreach (int label in neighborLabels)
+                        {
+                            linkedPlaced[label].UnionWith(neighborLabels);
+                        }
+                    }
+
+                }
             }
         }
 
@@ -267,7 +308,7 @@ public class AreaFinder : MonoBehaviour
                     else
                         lowCellAreas[labels[j, i]].Add(grid[j, i]);
                 }
-                else
+                else if(grid[j, i].state == 1)
                 {
                     labels[j, i] = linkedHigh[labels[j, i]].Min();
                     grid[j, i].areaIndex = labels[j, i];
@@ -284,6 +325,24 @@ public class AreaFinder : MonoBehaviour
                     }
                     else
                         highCellAreas[labels[j, i]].Add(grid[j, i]);
+                }
+                else if (grid[j, i].state == 2)
+                {
+                    labels[j, i] = linkedPlaced[labels[j, i]].Min();
+                    grid[j, i].areaIndex = labels[j, i];
+
+                    #if UNITY_EDITOR
+                    if (displayCellID)
+                        grid[j, i].cellText.text = labels[j, i].ToString();
+                    #endif
+
+                    if (!placedAreas.ContainsKey(labels[j, i]))
+                    {
+                        placedAreas.Add(labels[j, i], new List<MazeCell>());
+                        placedAreas[labels[j, i]].Add(grid[j, i]);
+                    }
+                    else
+                        placedAreas[labels[j, i]].Add(grid[j, i]);
                 }
             }
         }
@@ -328,6 +387,8 @@ public class AreaFinder : MonoBehaviour
         }   
     }
 
+    // search is only performed on cells with state < 2
+    // state > 1 means placement
     void SearchNeighbours(MazeCell point)
     {
         int k = point.row - 1;
@@ -341,7 +402,7 @@ public class AreaFinder : MonoBehaviour
         {
             if (grid[point.row, point.col].state == grid[point.row, m].state)
                 SearchNeighbours(grid[point.row, m]);
-            else
+            else if (grid[point.row, m].state < 2)
             {
                 highCellConnected[grid[point.row, point.col].areaIndex].Add(grid[point.row, m]);
                 lowCellConnected[grid[point.row, m].areaIndex].Add(grid[point.row, point.col]);
@@ -360,7 +421,7 @@ public class AreaFinder : MonoBehaviour
         {
             if (grid[point.row, point.col].state == grid[l, point.col].state)
                 SearchNeighbours(grid[l, point.col]);
-            else
+            else if (grid[l, point.col].state < 2)
             {
                 highCellConnected[grid[point.row, point.col].areaIndex].Add(grid[l, point.col]);
                 lowCellConnected[grid[l, point.col].areaIndex].Add(grid[point.row, point.col]);
@@ -379,7 +440,7 @@ public class AreaFinder : MonoBehaviour
         {
             if (grid[point.row, point.col].state == grid[point.row, h].state)
                 SearchNeighbours(grid[point.row, h]);
-            else
+            else if (grid[point.row, h].state < 2)
             {
                 highCellConnected[grid[point.row, point.col].areaIndex].Add(grid[point.row, h]);
                 lowCellConnected[grid[point.row, h].areaIndex].Add(grid[point.row, point.col]);
@@ -398,7 +459,7 @@ public class AreaFinder : MonoBehaviour
 
             if (grid[point.row, point.col].state == grid[k, point.col].state)
                 SearchNeighbours(grid[k, point.col]);
-            else
+            else if (grid[k, point.col].state < 2)
             {
                 highCellConnected[grid[point.row, point.col].areaIndex].Add(grid[k, point.col]);
                 lowCellConnected[grid[k, point.col].areaIndex].Add(grid[point.row, point.col]);

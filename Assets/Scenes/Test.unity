@@ -326,8 +326,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maze: {fileID: 0}
   simulation: {fileID: 0}
+  pathfinder: {fileID: 0}
+  areafinder: {fileID: 0}
   placeHolder: {fileID: 8959571457460703452, guid: 97a39d37b31f44f67839bfbbcae6e212,
     type: 3}
+  placeCount: 1
 --- !u!4 &613073251
 Transform:
   m_ObjectHideFlags: 0

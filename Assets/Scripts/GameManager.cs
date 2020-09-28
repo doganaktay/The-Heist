@@ -61,6 +61,8 @@ public class GameManager : MonoBehaviour
 		// pass references to spotfinder
 		spotfinder.maze = mazeInstance;
 		spotfinder.simulation = physicsSim;
+		spotfinder.pathfinder = pathfinder;
+		spotfinder.areafinder = areafinder;
 
 		// pass references to patrol manager
 		patrolManager.pathfinder = pathfinder;

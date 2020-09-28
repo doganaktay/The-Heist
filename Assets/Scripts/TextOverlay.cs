@@ -26,7 +26,7 @@ public class TextOverlay : MonoBehaviour
                     cellTexts[k, j].name = "cellText " + k + "," + j;
                     var rect = cellTexts[k, j].GetComponent<RectTransform>();
                     rect.sizeDelta = new Vector2(maze.cellScaleX, maze.cellScaleY);
-                    rect.position = new Vector3(rect.position.x, rect.position.y - 1f, rect.position.z);
+                    rect.position = new Vector3(rect.position.x, rect.position.y - 1f, rect.position.z - 20f);
                 }
                 maze.cells[k, j].cellText = cellTexts[k, j];
             }

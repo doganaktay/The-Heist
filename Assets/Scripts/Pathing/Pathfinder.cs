@@ -73,6 +73,143 @@ public class Pathfinder : MonoBehaviour
 
     // keeps track of the used indices of secondary paths
     int highestIndex = 1000;
+
+    // check neighbours for placement
+    public bool TryNeighbourPaths(MazeCell candidate)
+    {
+        // place if it is a low cell area with count of 1
+        if (candidate.state == 0 && areafinder.GetLowCellArea(candidate.areaIndex).Count == 1)
+            return true;
+
+        foreach(var connected in candidate.connectedCells)
+        {
+            if (connected.connectedCells.Count == 1)
+                return false;
+            if (!connected.isWalkable)
+                continue;   
+
+            int pathIndex = 1;
+
+            if(candidate.state == 1)
+            {
+                if (path[pathIndex] == null)
+                    path[pathIndex] = new List<MazeCell>();
+
+                if (queue[pathIndex] == null)
+                    queue[pathIndex] = new Queue<MazeCell>();
+
+                if (explored[pathIndex] == null)
+                    explored[pathIndex] = new List<MazeCell>();
+                else
+                    ResetCells(explored[pathIndex], pathIndex);
+
+                explored[pathIndex].Clear();
+
+                path[pathIndex].Clear();
+                pathFound[pathIndex] = false;
+
+                startCell[pathIndex] = maze.cells[startPos.x, startPos.y];
+                queue[pathIndex].Enqueue(startCell[pathIndex]);
+                startCell[pathIndex].visited[pathIndex] = true;
+                endCell[pathIndex] = maze.cells[connected.pos.x, connected.pos.y];
+
+                MazeCell currentCell;
+
+                while (queue[pathIndex].Count > 0)
+                {
+                    currentCell = queue[pathIndex].Dequeue();
+                    explored[pathIndex].Add(currentCell);
+
+                    foreach (MazeCell cell in currentCell.connectedCells)
+                    {
+                        if(cell == candidate || !cell.isWalkable) { continue; }
+
+                        if (!cell.visited[pathIndex] && cell.state == 1)
+                        {
+                            queue[pathIndex].Enqueue(cell);
+                            cell.visited[pathIndex] = true;
+                            cell.exploredFrom[pathIndex] = currentCell;
+                            cell.distanceFromStart[pathIndex] = 1 + cell.exploredFrom[pathIndex].distanceFromStart[pathIndex];
+
+                            explored[pathIndex].Add(cell);
+
+                            if (cell == endCell[pathIndex])
+                            {
+                                pathFound[pathIndex] = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (!pathFound[pathIndex])
+                { return false; }
+            }
+            else
+            {
+                var connectionPoints = areafinder.GetLowConnectionPoints(connected.areaIndex);
+
+                for (int j = 0; j < connectionPoints.Count; j++)
+                {
+                    if (path[pathIndex] == null)
+                        path[pathIndex] = new List<MazeCell>();
+
+                    if (queue[pathIndex] == null)
+                        queue[pathIndex] = new Queue<MazeCell>();
+
+                    if (explored[pathIndex] == null)
+                        explored[pathIndex] = new List<MazeCell>();
+                    else
+                        ResetCells(explored[pathIndex], pathIndex);
+
+                    explored[pathIndex].Clear();
+
+                    path[pathIndex].Clear();
+                    pathFound[pathIndex] = false;
+
+                    startCell[pathIndex] = connectionPoints[j];
+                    queue[pathIndex].Enqueue(startCell[pathIndex]);
+                    startCell[pathIndex].visited[pathIndex] = true;
+                    endCell[pathIndex] = maze.cells[connected.pos.x, connected.pos.y];
+
+                    MazeCell currentCell;
+
+                    while (queue[pathIndex].Count > 0)
+                    {
+                        currentCell = queue[pathIndex].Dequeue();
+                        explored[pathIndex].Add(currentCell);
+
+                        foreach (MazeCell cell in currentCell.connectedCells)
+                        {
+                            if (cell == candidate || !cell.isWalkable) { continue; }
+
+                            if (!cell.visited[pathIndex] && cell.state == 0)
+                            {
+                                queue[pathIndex].Enqueue(cell);
+                                cell.visited[pathIndex] = true;
+                                cell.exploredFrom[pathIndex] = currentCell;
+                                cell.distanceFromStart[pathIndex] = 1 + cell.exploredFrom[pathIndex].distanceFromStart[pathIndex];
+
+                                explored[pathIndex].Add(cell);
+
+                                if (cell == endCell[pathIndex])
+                                {
+                                    pathFound[pathIndex] = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (!pathFound[pathIndex])
+                    { return false; }
+                }
+            }
+        }
+
+        return true;
+    }
+
     // get path with start and end points supplied
     public List<MazeCell> SetHighlightPath(IntVector2 pos, int areaIndex)
     {
@@ -80,7 +217,7 @@ public class Pathfinder : MonoBehaviour
         int shortestIndex = 1000;
         int shortestCount = 1000;
 
-        var connectionPoints = areafinder.GetConnectionPoints(areaIndex);
+        var connectionPoints = areafinder.GetLowConnectionPoints(areaIndex);
 
         for (int j = 0; j < connectionPoints.Count; j++)
         {
@@ -243,7 +380,7 @@ public class Pathfinder : MonoBehaviour
 
     public List<MazeCell> GetPatrolPath(IntVector2 start, IntVector2 end, int areaIndex)
     {
-        var linkPoints = areafinder.GetConnectionPoints(areaIndex);
+        var linkPoints = areafinder.GetLowConnectionPoints(areaIndex);
         var patrolArea = areafinder.GetPatrolAreaByIndex(areaIndex);
 
         return patrolArea;

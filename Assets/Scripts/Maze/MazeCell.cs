@@ -19,6 +19,7 @@ public class MazeCell : FastPriorityQueueNode
 	public HashSet<MazeCell> connectedCells = new HashSet<MazeCell>();
 	public MazeCell[] exploredFrom;
 	public int[] distanceFromStart;
+	public HashSet<MazeCell> placedConnectedCells = new HashSet<MazeCell>();
 
 	public int searchSize = 10; // should be same as search size in pathfinder script
 
