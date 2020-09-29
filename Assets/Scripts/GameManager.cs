@@ -58,6 +58,7 @@ public class GameManager : MonoBehaviour
 		// pass references to areafinder
         areafinder.maze = mazeInstance;
 		areafinder.simulation = physicsSim;
+		areafinder.pathfinder = pathfinder;
 
 		// pass references to spotfinder
 		spotfinder.maze = mazeInstance;
@@ -97,15 +98,7 @@ public class GameManager : MonoBehaviour
 		physicsSim.trajectory = trajectory;
 
 		// set up areas, placeable slots and simulation
-		pathfinder.NewPath();
-		areafinder.FindAreas();
-		physicsSim.ConstructSimulationScene();
-		areafinder.MakeRooms();
-		spotfinder.DeterminePlacement();
-		areafinder.FindAreas();
-		physicsSim.AddLayout();
-		pathfinder.NewPath();
-		areafinder.FindAreas();
+		ConstructLayout();
 
 		// directional light reset
 		lights.StartRotation();
@@ -113,6 +106,20 @@ public class GameManager : MonoBehaviour
 		// call event
 		MazeGenFinished();
     }
+
+	private void ConstructLayout()
+    {
+		pathfinder.NewPath();
+		areafinder.FindAreas();
+		physicsSim.ConstructSimulationScene();
+		areafinder.MakeRooms();
+		spotfinder.DeterminePlacement();
+		areafinder.FindAreas();
+		areafinder.DropWalls(0.1f);
+		physicsSim.AddLayout();
+		pathfinder.NewPath();
+		areafinder.FindAreas();
+	}
 
 	private void RestartGame()
 	{		

@@ -10,6 +10,7 @@ public class AreaFinder : MonoBehaviour
     MazeCell[,] grid;
     public Maze maze;
     public PhysicsSim simulation;
+    public Pathfinder pathfinder;
 
     Dictionary<int, List<MazeCell>> lowCellAreas = new Dictionary<int, List<MazeCell>>();
     Dictionary<int, List<MazeCell>> highCellAreas = new Dictionary<int, List<MazeCell>>();
@@ -37,6 +38,33 @@ public class AreaFinder : MonoBehaviour
         NewDetermineAreas();
     }
 
+    public void DropWalls(float dropPercent)
+    {
+        List<MazeCellWall> availableWalls = new List<MazeCellWall>();
+
+        foreach(var wall in maze.wallsInScene)
+        {
+            if (wall.cellA.state < 2 && wall.cellB != null && wall.cellB.state < 2)
+                availableWalls.Add(wall);
+        }
+
+        int dropCount = Mathf.FloorToInt(availableWalls.Count * dropPercent);
+
+        for(int i = 0; i < dropCount; i++)
+        {
+            var ordered = availableWalls.OrderByDescending(x => Mathf.Abs(x.cellA.distanceFromStart[0] - x.cellB.distanceFromStart[0])).ToList();
+
+            MazeDirections.RemoveWall(ordered[0]);
+            maze.wallsInScene.Remove(ordered[0]);
+            //simulation.RemoveWallFromSimulation(ordered[0].gameObject);
+            availableWalls.Remove(ordered[0]);
+
+            pathfinder.NewPath();
+            FindAreas();
+        }
+    }
+
+    // used to turn maze paths into rooms after maze is constructed
     public void MakeRooms()
     {
         foreach (var room in lowCellAreas)
@@ -58,7 +86,7 @@ public class AreaFinder : MonoBehaviour
                     {
                         var wall = (MazeCellWall)cell.GetEdge((MazeDirection)i);
                         MazeDirections.RemoveWall(wall);
-                        maze.wallsInScene.Remove(wall.GetComponentInParent<MazeCellWall>());
+                        maze.wallsInScene.Remove(wall);
                         simulation.RemoveWallFromSimulation(wall.gameObject);
 
                         cell.connectedCells.Add(neighbour);
@@ -474,11 +502,13 @@ public class AreaFinder : MonoBehaviour
         }
     }
 
-    //private void OnGUI()
-    //{
-    //    if (GUI.Button(new Rect(10, 130, 80, 60), "Make Rooms"))
-    //        MakeRooms();
-    //    if (GUI.Button(new Rect(10, 190, 80, 60), "Find Corridors"))
-    //        DetermineSinglePaths();
-    //}
+    private void OnGUI()
+    {
+        if (GUI.Button(new Rect(10, 130, 80, 60), "Drop Walls"))
+            DropWalls(.1f);
+        //if (GUI.Button(new Rect(10, 130, 80, 60), "Make Rooms"))
+        //    MakeRooms();
+        //if (GUI.Button(new Rect(10, 190, 80, 60), "Find Corridors"))
+        //    DetermineSinglePaths();
+    }
 }

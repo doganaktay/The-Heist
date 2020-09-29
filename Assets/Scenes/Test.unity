@@ -280,7 +280,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maze: {fileID: 0}
   simulation: {fileID: 0}
-  displayCellID: 0
+  displayCellID: 1
 --- !u!4 &600934098
 Transform:
   m_ObjectHideFlags: 0
