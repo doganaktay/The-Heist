@@ -328,7 +328,8 @@ MonoBehaviour:
   simulation: {fileID: 0}
   pathfinder: {fileID: 0}
   areafinder: {fileID: 0}
-  placeCount: 40
+  layout: {fileID: 0}
+  placeCount: 50
 --- !u!4 &613073251
 Transform:
   m_ObjectHideFlags: 0

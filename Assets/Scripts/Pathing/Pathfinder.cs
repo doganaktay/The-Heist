@@ -324,7 +324,7 @@ public class Pathfinder : MonoBehaviour
 
             foreach (MazeCell cell in currentCell.connectedCells)
             {
-                if (!cell.visited[pathIndex])
+                if (!cell.visited[pathIndex] && cell.state < 2)
                 {
                     queue[pathIndex].Enqueue(cell);
                     cell.visited[pathIndex] = true;
@@ -425,7 +425,9 @@ public class Pathfinder : MonoBehaviour
             cell.distanceFromStart[index] = 0;
             cell.cellText.color = Color.red;
             cell.searched = false;
-            cell.state = 0;
+
+            if(cell.state < 2)
+                cell.state = 0;
 
             // setting material properties
             cell.mat.SetColorIndex(0);

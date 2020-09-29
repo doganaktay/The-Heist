@@ -20,4 +20,14 @@ public abstract class MazeCellEdge : MonoBehaviour
 		transform.localPosition = Vector3.zero;
         transform.localRotation = directionA.ToRotation();
     }
+
+	public MazeCell GetOppositeNeighbour(MazeCell cell)
+    {
+		if (cell == cellA && cellB != null)
+			return cellB;
+		else if (cell == cellB && cellA != null)
+			return cellA;
+
+		return null;
+    }
 }

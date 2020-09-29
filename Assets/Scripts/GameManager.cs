@@ -104,6 +104,8 @@ public class GameManager : MonoBehaviour
 		spotfinder.DeterminePlacement();
 		areafinder.FindAreas();
 		physicsSim.AddLayout();
+		pathfinder.NewPath();
+		areafinder.FindAreas();
 
 		// directional light reset
 		lights.StartRotation();

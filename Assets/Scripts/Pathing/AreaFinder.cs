@@ -30,7 +30,7 @@ public class AreaFinder : MonoBehaviour
     public bool displayCellID = false;
     #endif
 
-    // being called by pathfinder when the maze changes
+    // being called by GameManager when the maze changes
     public void FindAreas()
     {
         ResetGrid();
@@ -474,11 +474,11 @@ public class AreaFinder : MonoBehaviour
         }
     }
 
-    private void OnGUI()
-    {
-        if (GUI.Button(new Rect(10, 130, 80, 60), "Make Rooms"))
-            MakeRooms();
-        if (GUI.Button(new Rect(10, 190, 80, 60), "Find Corridors"))
-            DetermineSinglePaths();
-    }
+    //private void OnGUI()
+    //{
+    //    if (GUI.Button(new Rect(10, 130, 80, 60), "Make Rooms"))
+    //        MakeRooms();
+    //    if (GUI.Button(new Rect(10, 190, 80, 60), "Find Corridors"))
+    //        DetermineSinglePaths();
+    //}
 }

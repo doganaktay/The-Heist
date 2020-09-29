@@ -152,9 +152,7 @@ public class Spotfinder : MonoBehaviour
                 foreach(var t in temp)
                 {
                     availableSpots[random].connectedCells.Remove(t);
-
-                    if(t.state > 1)
-                        availableSpots[random].placedConnectedCells.Add(t);
+                    availableSpots[random].placedConnectedCells.Add(t);
                 }
 
                 count--;
@@ -165,13 +163,13 @@ public class Spotfinder : MonoBehaviour
         }
     }
 
-    private void OnGUI()
-    {
-        if (GUI.Button(new Rect(10, 250, 80, 60), "Find Spots"))
-            FindAvailableSpots();
-        if (GUI.Button(new Rect(10, 310, 80, 60), "Gen Random"))
-            PlaceRandom();
-    }
+    //private void OnGUI()
+    //{
+    //    if (GUI.Button(new Rect(10, 250, 80, 60), "Find Spots"))
+    //        FindAvailableSpots();
+    //    if (GUI.Button(new Rect(10, 310, 80, 60), "Gen Random"))
+    //        PlaceRandom();
+    //}
 
     private void OnDrawGizmos()
     {
