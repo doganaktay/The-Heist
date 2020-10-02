@@ -123,6 +123,8 @@ public class Spotfinder : MonoBehaviour
     {
         var count = placeCount;
 
+        placedSpots.Clear();
+
         while(availableSpots.Count > 0 && count > 0)
         {
             int random = Random.Range(0, availableSpots.Count);
@@ -179,6 +181,9 @@ public class Spotfinder : MonoBehaviour
 
     private void DetermineNeighbourBits(MazeCell cell)
     {
+        cell.cardinalBits = 0;
+        cell.diagonalBits = 0;
+
         for(int i = 0; i < MazeDirections.vectors.Length; i++)
         {
             var xpos = cell.pos.x + MazeDirections.vectors[i].x;
@@ -191,7 +196,7 @@ public class Spotfinder : MonoBehaviour
 
             if(i == 0 && cell.connectedCells.Contains(neighbour))
             {
-                cell.cardinalBits = 1;
+                cell.cardinalBits |= 1 << 0;
 
                 var xdiagonal = cell.pos.x + MazeDirections.diagonalVectors[i].x;
                 var ydiagonal = cell.pos.y + MazeDirections.diagonalVectors[i].y;
@@ -210,7 +215,7 @@ public class Spotfinder : MonoBehaviour
 
                 if (neighbour.connectedCells.Contains(diagonal) && diagonal.connectedCells.Contains(next)
                     && next.connectedCells.Contains(cell))
-                    cell.diagonalBits = 1;
+                    cell.diagonalBits |= 1 << 0;
             }
             else if (i == 1 && cell.connectedCells.Contains(neighbour))
             {
