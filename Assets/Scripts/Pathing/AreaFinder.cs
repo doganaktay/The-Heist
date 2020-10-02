@@ -61,7 +61,7 @@ public class AreaFinder : MonoBehaviour
             MazeDirections.RemoveWall(ordered[0]);
             maze.wallsInScene.Remove(ordered[0]);
             availableWalls.Remove(ordered[0]);
-            //simulation.RemoveWallFromSimulation(ordered[0].gameObject);
+            simulation.RemoveWallFromSimulation(ordered[0].gameObject);
 
             pathfinder.NewPath();
             FindAreas();
