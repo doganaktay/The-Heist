@@ -12,6 +12,9 @@ public class Spotfinder : MonoBehaviour
 
     [SerializeField] int placeCount = 1;
     List<MazeCell> availableSpots = new List<MazeCell>();
+    List<MazeCell> placedSpots = new List<MazeCell>();
+
+    public List<Tile> activeTileSet = new List<Tile>();
 
     float spotHeight = 3f;
 
@@ -128,6 +131,8 @@ public class Spotfinder : MonoBehaviour
             {
                 availableSpots[random].state = 2;
 
+                placedSpots.Add(availableSpots[random]);
+
                 var go = Instantiate(maze.placeHolderPrefab);
                 go.transform.position = new Vector3(availableSpots[random].transform.position.x, availableSpots[random].transform.position.y,
                                                     availableSpots[random].transform.position.z - spotHeight / 2);
@@ -163,13 +168,127 @@ public class Spotfinder : MonoBehaviour
         }
     }
 
-    //private void OnGUI()
-    //{
-    //    if (GUI.Button(new Rect(10, 250, 80, 60), "Find Spots"))
-    //        FindAvailableSpots();
-    //    if (GUI.Button(new Rect(10, 310, 80, 60), "Gen Random"))
-    //        PlaceRandom();
-    //}
+    private void DetermineTilePlacement()
+    {
+        foreach(var spot in placedSpots)
+        {
+            DetermineNeighbourBits(spot);
+            Debug.Log("Cell " + spot.gameObject.name + " cardinal bits " + spot.cardinalBits + " diagonal bits " + spot.diagonalBits);
+        }
+    }
+
+    private void DetermineNeighbourBits(MazeCell cell)
+    {
+        for(int i = 0; i < MazeDirections.vectors.Length; i++)
+        {
+            var xpos = cell.pos.x + MazeDirections.vectors[i].x;
+            var ypos = cell.pos.y + MazeDirections.vectors[i].y;
+
+            if (xpos < 0 || ypos < 0 || xpos > maze.size.x - 1 || ypos > maze.size.y - 1)
+                continue;
+
+            var neighbour = maze.cells[xpos, ypos];
+
+            if(i == 0 && cell.connectedCells.Contains(neighbour))
+            {
+                cell.cardinalBits = 1;
+
+                var xdiagonal = cell.pos.x + MazeDirections.diagonalVectors[i].x;
+                var ydiagonal = cell.pos.y + MazeDirections.diagonalVectors[i].y;
+
+                if (xdiagonal < 0 || ydiagonal < 0 || xdiagonal > maze.size.x - 1 || ydiagonal > maze.size.y - 1)
+                    continue;
+
+                var diagonal = maze.cells[xdiagonal, ydiagonal];
+
+                if (diagonal.state > 1)
+                    continue;
+
+                var xnext = cell.pos.x + MazeDirections.vectors[(i + 1) % MazeDirections.vectors.Length].x;
+                var ynext = cell.pos.y + MazeDirections.vectors[(i + 1) % MazeDirections.vectors.Length].y;
+                var next = maze.cells[xnext, ynext];
+
+                if (neighbour.connectedCells.Contains(diagonal) && diagonal.connectedCells.Contains(next)
+                    && next.connectedCells.Contains(cell))
+                    cell.diagonalBits = 1;
+            }
+            else if (i == 1 && cell.connectedCells.Contains(neighbour))
+            {
+                cell.cardinalBits |= 1 << 1;
+
+                var xdiagonal = cell.pos.x + MazeDirections.diagonalVectors[i].x;
+                var ydiagonal = cell.pos.y + MazeDirections.diagonalVectors[i].y;
+
+                if (xdiagonal < 0 || ydiagonal < 0 || xdiagonal > maze.size.x - 1 || ydiagonal > maze.size.y - 1)
+                    continue;
+
+                var diagonal = maze.cells[xdiagonal, ydiagonal];
+
+                if (diagonal.state > 1)
+                    continue;
+
+                var xnext = cell.pos.x + MazeDirections.vectors[(i + 1) % MazeDirections.vectors.Length].x;
+                var ynext = cell.pos.y + MazeDirections.vectors[(i + 1) % MazeDirections.vectors.Length].y;
+                var next = maze.cells[xnext, ynext];
+
+                if (neighbour.connectedCells.Contains(diagonal) && diagonal.connectedCells.Contains(next)
+                    && next.connectedCells.Contains(cell))
+                    cell.diagonalBits |= 1 << 1;
+            }
+            else if (i == 2 && cell.connectedCells.Contains(neighbour))
+            {
+                cell.cardinalBits |= 1 << 2;
+
+                var xdiagonal = cell.pos.x + MazeDirections.diagonalVectors[i].x;
+                var ydiagonal = cell.pos.y + MazeDirections.diagonalVectors[i].y;
+
+                if (xdiagonal < 0 || ydiagonal < 0 || xdiagonal > maze.size.x - 1 || ydiagonal > maze.size.y - 1)
+                    continue;
+
+                var diagonal = maze.cells[xdiagonal, ydiagonal];
+
+                if (diagonal.state > 1)
+                    continue;
+
+                var xnext = cell.pos.x + MazeDirections.vectors[(i + 1) % MazeDirections.vectors.Length].x;
+                var ynext = cell.pos.y + MazeDirections.vectors[(i + 1) % MazeDirections.vectors.Length].y;
+                var next = maze.cells[xnext, ynext];
+
+                if (neighbour.connectedCells.Contains(diagonal) && diagonal.connectedCells.Contains(next)
+                    && next.connectedCells.Contains(cell))
+                    cell.diagonalBits |= 1 << 2;
+            }
+            else if (i == 3 && cell.connectedCells.Contains(neighbour))
+            {
+                cell.cardinalBits |= 1 << 3;
+
+                var xdiagonal = cell.pos.x + MazeDirections.diagonalVectors[i].x;
+                var ydiagonal = cell.pos.y + MazeDirections.diagonalVectors[i].y;
+
+                if (xdiagonal < 0 || ydiagonal < 0 || xdiagonal > maze.size.x - 1 || ydiagonal > maze.size.y - 1)
+                    continue;
+
+                var diagonal = maze.cells[xdiagonal, ydiagonal];
+
+                if (diagonal.state > 1)
+                    continue;
+
+                var xnext = cell.pos.x + MazeDirections.vectors[(i + 1) % MazeDirections.vectors.Length].x;
+                var ynext = cell.pos.y + MazeDirections.vectors[(i + 1) % MazeDirections.vectors.Length].y;
+                var next = maze.cells[xnext, ynext];
+
+                if (neighbour.connectedCells.Contains(diagonal) && diagonal.connectedCells.Contains(next)
+                    && next.connectedCells.Contains(cell))
+                    cell.diagonalBits |= 1 << 3;
+            }
+        }
+    }
+
+    private void OnGUI()
+    {
+        if (GUI.Button(new Rect(10, 250, 80, 60), "Determine Tiles"))
+            DetermineTilePlacement();
+    }
 
     private void OnDrawGizmos()
     {

@@ -21,6 +21,7 @@ public static class MazeDirections
 		}
 	}
 
+	// clockwise from top
 	public static IntVector2[] vectors = {
 		new IntVector2(0, 1),
 		new IntVector2(1, 0),
@@ -28,14 +29,11 @@ public static class MazeDirections
 		new IntVector2(-1, 0)
 	};
 
-	public static IntVector2[] allDirections = {
-		new IntVector2(0, 1),
+	// clockwise from top right
+	public static IntVector2[] diagonalVectors = {
 		new IntVector2(1, 1),
-		new IntVector2(1, 0),
 		new IntVector2(1, -1),
-		new IntVector2(0, -1),
 		new IntVector2(-1, -1),
-		new IntVector2(-1, 0),
 		new IntVector2(-1, 1)
 	};
 

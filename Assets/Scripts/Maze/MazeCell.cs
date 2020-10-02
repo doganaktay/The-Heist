@@ -26,6 +26,10 @@ public class MazeCell : FastPriorityQueueNode
 	public bool isPlaceable = false; // used by spotfinder to find available placement spots
 	public int placeableNeighbourCount = 0;
 
+	// used for bit ops for spot placement
+	public int cardinalBits = 0;
+	public int diagonalBits = 0;
+
 	// for A*
 	public int travelCost;
 

@@ -280,6 +280,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maze: {fileID: 0}
   simulation: {fileID: 0}
+  pathfinder: {fileID: 0}
+  wallDropPercent: 0.1
   displayCellID: 1
 --- !u!4 &600934098
 Transform:
@@ -330,6 +332,76 @@ MonoBehaviour:
   areafinder: {fileID: 0}
   layout: {fileID: 0}
   placeCount: 50
+  activeTileSet:
+  - tile: {fileID: 8386142516564089489, guid: d04209405199f426a907890238cd12ef, type: 3}
+    rules:
+    - cardinal: 1
+      diagonal: 0
+      rotation: 0
+    - cardinal: 2
+      diagonal: 0
+      rotation: -90
+    - cardinal: 4
+      diagonal: 0
+      rotation: -180
+    - cardinal: 8
+      diagonal: 0
+      rotation: -270
+  - tile: {fileID: 5418070689121393971, guid: 9cf2ab0777c7e499db5f547a2ccb9ad1, type: 3}
+    rules:
+    - cardinal: 10
+      diagonal: 0
+      rotation: 0
+    - cardinal: 5
+      diagonal: 0
+      rotation: -90
+  - tile: {fileID: 1266099347500614937, guid: 5c55350123081419eb478147b799c27d, type: 3}
+    rules:
+    - cardinal: 3
+      diagonal: 0
+      rotation: 0
+    - cardinal: 6
+      diagonal: 0
+      rotation: -90
+    - cardinal: 12
+      diagonal: 0
+      rotation: -180
+    - cardinal: 9
+      diagonal: 0
+      rotation: -270
+  - tile: {fileID: 6361590413068345997, guid: 6e7645e0f3360479a8e4a2fa0af47ecc, type: 3}
+    rules:
+    - cardinal: 3
+      diagonal: 4
+      rotation: 0
+    - cardinal: 6
+      diagonal: 8
+      rotation: -90
+    - cardinal: 12
+      diagonal: 1
+      rotation: -180
+    - cardinal: 9
+      diagonal: 2
+      rotation: -270
+  - tile: {fileID: 3066039119260314292, guid: 967a8195d39684f32b2ea1d15ce0b192, type: 3}
+    rules:
+    - cardinal: 11
+      diagonal: 0
+      rotation: 0
+    - cardinal: 7
+      diagonal: 0
+      rotation: -90
+    - cardinal: 14
+      diagonal: 0
+      rotation: -180
+    - cardinal: 13
+      diagonal: 0
+      rotation: -270
+  - tile: {fileID: 63519084999773793, guid: 489d332e3932c40b8bd249be15229870, type: 3}
+    rules:
+    - cardinal: 15
+      diagonal: 0
+      rotation: 0
 --- !u!4 &613073251
 Transform:
   m_ObjectHideFlags: 0

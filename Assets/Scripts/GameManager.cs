@@ -115,7 +115,7 @@ public class GameManager : MonoBehaviour
 		areafinder.MakeRooms();
 		spotfinder.DeterminePlacement();
 		areafinder.FindAreas();
-		areafinder.DropWalls(0.1f);
+		areafinder.DropWalls();
 		physicsSim.AddLayout();
 		pathfinder.NewPath();
 		areafinder.FindAreas();

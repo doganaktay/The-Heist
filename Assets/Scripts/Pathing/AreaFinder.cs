@@ -12,6 +12,10 @@ public class AreaFinder : MonoBehaviour
     public PhysicsSim simulation;
     public Pathfinder pathfinder;
 
+    [SerializeField]
+    [Tooltip("Percentage from 0 to 1 to be used when deciding how many walls to drop")]
+    float wallDropPercent = 0.1f;
+
     Dictionary<int, List<MazeCell>> lowCellAreas = new Dictionary<int, List<MazeCell>>();
     Dictionary<int, List<MazeCell>> highCellAreas = new Dictionary<int, List<MazeCell>>();
 
@@ -38,7 +42,7 @@ public class AreaFinder : MonoBehaviour
         NewDetermineAreas();
     }
 
-    public void DropWalls(float dropPercent)
+    public void DropWalls()
     {
         List<MazeCellWall> availableWalls = new List<MazeCellWall>();
 
@@ -48,7 +52,7 @@ public class AreaFinder : MonoBehaviour
                 availableWalls.Add(wall);
         }
 
-        int dropCount = Mathf.FloorToInt(availableWalls.Count * dropPercent);
+        int dropCount = Mathf.FloorToInt(availableWalls.Count * wallDropPercent);
 
         for(int i = 0; i < dropCount; i++)
         {
@@ -56,8 +60,8 @@ public class AreaFinder : MonoBehaviour
 
             MazeDirections.RemoveWall(ordered[0]);
             maze.wallsInScene.Remove(ordered[0]);
-            //simulation.RemoveWallFromSimulation(ordered[0].gameObject);
             availableWalls.Remove(ordered[0]);
+            //simulation.RemoveWallFromSimulation(ordered[0].gameObject);
 
             pathfinder.NewPath();
             FindAreas();
@@ -505,7 +509,7 @@ public class AreaFinder : MonoBehaviour
     private void OnGUI()
     {
         if (GUI.Button(new Rect(10, 130, 80, 60), "Drop Walls"))
-            DropWalls(.1f);
+            DropWalls();
         //if (GUI.Button(new Rect(10, 130, 80, 60), "Make Rooms"))
         //    MakeRooms();
         //if (GUI.Button(new Rect(10, 190, 80, 60), "Find Corridors"))
