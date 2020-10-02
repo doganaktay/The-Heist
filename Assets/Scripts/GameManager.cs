@@ -116,7 +116,7 @@ public class GameManager : MonoBehaviour
 		spotfinder.DeterminePlacement();
 		areafinder.FindAreas();
 		areafinder.DropWalls();
-		physicsSim.AddLayout();
+		//physicsSim.AddLayout(); // enable to include placement in physics sim
 		pathfinder.NewPath();
 		areafinder.FindAreas();
 	}

@@ -16,12 +16,13 @@ public class Spotfinder : MonoBehaviour
 
     public List<Tile> activeTileSet = new List<Tile>();
 
-    float spotHeight = 3f;
+    float spotHeight = 3f; // used to scale height (in z axis) for placed tiles
 
     public void DeterminePlacement()
     {
         FindAvailableSpots();
         PlaceRandom();
+        DetermineTilePlacement();
     }
 
     void FindAvailableSpots()
@@ -135,15 +136,6 @@ public class Spotfinder : MonoBehaviour
 
                 placedSpots.Add(availableSpots[random]);
 
-                var go = Instantiate(maze.placeHolderPrefab);
-                go.transform.position = new Vector3(availableSpots[random].transform.position.x, availableSpots[random].transform.position.y,
-                                                    availableSpots[random].transform.position.z - spotHeight / 2);
-                Vector3 scale = new Vector3(maze.cellScaleX, maze.cellScaleY, spotHeight);
-                go.transform.localScale = scale;
-                go.transform.parent = layout.transform;
-
-                maze.placementInScene.Add(go); // adding placement to maze to then be copied over to physics sim
-
                 HashSet<MazeCell> temp = new HashSet<MazeCell>();
 
                 foreach (var cell in availableSpots[random].connectedCells)
@@ -175,15 +167,72 @@ public class Spotfinder : MonoBehaviour
         foreach(var spot in placedSpots)
         {
             DetermineNeighbourBits(spot);
-            Debug.Log("Cell " + spot.gameObject.name + " cardinal bits " + spot.cardinalBits + " diagonal bits " + spot.diagonalBits);
+            Tile tileToPlace = SetTile(spot);
+
+            //Debug.Log("Cell:" + spot.gameObject.name + " cardinal bits: " + spot.cardinalBits + " diagonal bits: " + spot.diagonalBits
+            //    + " selected rule cardinal: " + tileToPlace.selectedRule.cardinal + " diagonal: " + tileToPlace.selectedRule.diagonal);
+
+            Debug.Log("Cell:" + spot.gameObject.name + " cardinal bits: " + spot.cardinalBits + " diagonal bits: " + spot.diagonalBits);
+
+            if (tileToPlace != null)
+            {
+                var tile = (Tile)tileToPlace;
+                var go = Instantiate(tile.tile);
+                go.transform.position = new Vector3(spot.transform.position.x, spot.transform.position.y,
+                                                    spot.transform.position.z - spotHeight / 2);
+                go.transform.rotation = Quaternion.Euler(go.transform.rotation.x, go.transform.rotation.y, go.transform.rotation.z + tile.selectedRule.rotation);
+                Vector3 scale = new Vector3(maze.cellScaleX, maze.cellScaleY, spotHeight);
+                go.transform.localScale = scale;
+                go.transform.parent = layout.transform;
+
+                maze.placementInScene.Add(go); // adding placement to maze to then be copied over to physics sim
+            }
         }
+    }
+
+    private Tile SetTile(MazeCell spot)
+    {
+        List<Tile> candidates = new List<Tile>();
+
+        foreach(var potentialTile in activeTileSet)
+        {
+            foreach(var rule in potentialTile.rules)
+            {
+                if (rule.cardinal == spot.cardinalBits)
+                {
+                    candidates.Add(potentialTile);
+                    potentialTile.selectedRule = rule;
+                }
+            }
+        }
+
+        if(candidates.Count == 1)
+        {
+            return candidates[0];
+        }
+        else
+        {
+            foreach(var candidate in candidates)
+            {
+                int test = candidate.selectedRule.diagonal & spot.diagonalBits;
+
+                if (test != 0 && candidate.selectedRule.diagonal != 0)
+                    return candidate;
+            }
+
+            foreach(var candidate in candidates)
+            {
+                if (candidate.selectedRule.diagonal == 0)
+                    return candidate;
+            }
+        }
+
+        Debug.Log("No candidate found for: " + spot.gameObject.name + " with candidate count of: " + candidates.Count);
+        return null;
     }
 
     private void DetermineNeighbourBits(MazeCell cell)
     {
-        cell.cardinalBits = 0;
-        cell.diagonalBits = 0;
-
         for(int i = 0; i < MazeDirections.vectors.Length; i++)
         {
             var xpos = cell.pos.x + MazeDirections.vectors[i].x;
@@ -194,9 +243,10 @@ public class Spotfinder : MonoBehaviour
 
             var neighbour = maze.cells[xpos, ypos];
 
-            if(i == 0 && cell.connectedCells.Contains(neighbour))
+            if(i == 0 && (cell.connectedCells.Contains(neighbour) || cell.placedConnectedCells.Contains(neighbour)))
             {
-                cell.cardinalBits |= 1 << 0;
+                if (cell.connectedCells.Contains(neighbour))
+                    cell.cardinalBits |= 1 << 0;
 
                 var xdiagonal = cell.pos.x + MazeDirections.diagonalVectors[i].x;
                 var ydiagonal = cell.pos.y + MazeDirections.diagonalVectors[i].y;
@@ -217,9 +267,10 @@ public class Spotfinder : MonoBehaviour
                     && next.connectedCells.Contains(cell))
                     cell.diagonalBits |= 1 << 0;
             }
-            else if (i == 1 && cell.connectedCells.Contains(neighbour))
+            else if (i == 1 && (cell.connectedCells.Contains(neighbour) || cell.placedConnectedCells.Contains(neighbour)))
             {
-                cell.cardinalBits |= 1 << 1;
+                if(cell.connectedCells.Contains(neighbour))
+                    cell.cardinalBits |= 1 << 1;
 
                 var xdiagonal = cell.pos.x + MazeDirections.diagonalVectors[i].x;
                 var ydiagonal = cell.pos.y + MazeDirections.diagonalVectors[i].y;
@@ -240,9 +291,10 @@ public class Spotfinder : MonoBehaviour
                     && next.connectedCells.Contains(cell))
                     cell.diagonalBits |= 1 << 1;
             }
-            else if (i == 2 && cell.connectedCells.Contains(neighbour))
+            else if (i == 2 && (cell.connectedCells.Contains(neighbour) || cell.placedConnectedCells.Contains(neighbour)))
             {
-                cell.cardinalBits |= 1 << 2;
+                if (cell.connectedCells.Contains(neighbour))
+                    cell.cardinalBits |= 1 << 2;
 
                 var xdiagonal = cell.pos.x + MazeDirections.diagonalVectors[i].x;
                 var ydiagonal = cell.pos.y + MazeDirections.diagonalVectors[i].y;
@@ -263,9 +315,10 @@ public class Spotfinder : MonoBehaviour
                     && next.connectedCells.Contains(cell))
                     cell.diagonalBits |= 1 << 2;
             }
-            else if (i == 3 && cell.connectedCells.Contains(neighbour))
+            else if (i == 3 && (cell.connectedCells.Contains(neighbour) || cell.placedConnectedCells.Contains(neighbour)))
             {
-                cell.cardinalBits |= 1 << 3;
+                if (cell.connectedCells.Contains(neighbour))
+                    cell.cardinalBits |= 1 << 3;
 
                 var xdiagonal = cell.pos.x + MazeDirections.diagonalVectors[i].x;
                 var ydiagonal = cell.pos.y + MazeDirections.diagonalVectors[i].y;
@@ -299,10 +352,15 @@ public class Spotfinder : MonoBehaviour
     {
         if (maze != null && maze.cells.Length != 0)
         {
-            foreach (var cell in availableSpots)
+            //foreach (var cell in availableSpots)
+            //{
+            //    if (cell.isPlaceable)
+            //        Gizmos.DrawCube(cell.transform.position, new Vector3(5,5,5));
+            //}
+
+            foreach (var cell in placedSpots)
             {
-                if (cell.isPlaceable)
-                    Gizmos.DrawCube(cell.transform.position, new Vector3(5,5,5));
+               Gizmos.DrawCube(cell.transform.position, new Vector3(5, 5, 5));
             }
         }
     }

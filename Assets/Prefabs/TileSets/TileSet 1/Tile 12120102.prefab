@@ -1,5 +1,40 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!60 &4320993237039037892
+PolygonCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3128037810827806626}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0, y: 0}
+    oldSize: {x: 0, y: 0}
+    newSize: {x: 0, y: 0}
+    adaptiveTilingThreshold: 0
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Points:
+    m_Paths:
+    - - {x: 0.014122309, y: 0.014102133}
+      - {x: 0.0110865105, y: 0.016693033}
+      - {x: 0.0074894857, y: 0.018448362}
+      - {x: 0.0037275788, y: 0.019704148}
+      - {x: 0.000007897616, y: 0.01991342}
+      - {x: -0.000020027172, y: 0.000075431475}
+      - {x: 0.020020016, y: 0.000016255379}
+      - {x: 0.019530099, y: 0.0040455507}
+      - {x: 0.01848649, y: 0.007712662}
+      - {x: 0.016611062, y: 0.011196615}
 --- !u!1 &6361590413068345997
 GameObject:
   m_ObjectHideFlags: 0
@@ -31,32 +66,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!61 &8011242158574038766
-BoxCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3128037810827806626}
-  m_Enabled: 1
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_UsedByComposite: 0
-  m_Offset: {x: 0.0099999895, y: 0.009999999}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0, y: 0}
-    oldSize: {x: 0, y: 0}
-    newSize: {x: 0, y: 0}
-    adaptiveTilingThreshold: 0
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  serializedVersion: 2
-  m_Size: {x: 0.020000031, y: 0.020000013}
-  m_EdgeRadius: 0
 --- !u!1001 &6361590413722033835
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -134,6 +143,11 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 0e49a6d31ffc348ebb109a3c0681cc80, type: 2}
+    - target: {fileID: -1504981713932161579, guid: 6df94d4a5b6814328af6774a4a5ea597,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: -927199367670048503, guid: 6df94d4a5b6814328af6774a4a5ea597,
         type: 3}
       propertyPath: m_Name
