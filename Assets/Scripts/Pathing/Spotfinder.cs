@@ -233,6 +233,9 @@ public class Spotfinder : MonoBehaviour
 
     private void DetermineNeighbourBits(MazeCell cell)
     {
+        cell.cardinalBits = 0;
+        cell.diagonalBits = 0;
+
         for(int i = 0; i < MazeDirections.vectors.Length; i++)
         {
             var xpos = cell.pos.x + MazeDirections.vectors[i].x;
@@ -264,7 +267,7 @@ public class Spotfinder : MonoBehaviour
                 var next = maze.cells[xnext, ynext];
 
                 if (neighbour.connectedCells.Contains(diagonal) && diagonal.connectedCells.Contains(next)
-                    && next.connectedCells.Contains(cell))
+                    && (next.connectedCells.Contains(cell) || next.placedConnectedCells.Contains(cell)))
                     cell.diagonalBits |= 1 << 0;
             }
             else if (i == 1 && (cell.connectedCells.Contains(neighbour) || cell.placedConnectedCells.Contains(neighbour)))
@@ -288,7 +291,7 @@ public class Spotfinder : MonoBehaviour
                 var next = maze.cells[xnext, ynext];
 
                 if (neighbour.connectedCells.Contains(diagonal) && diagonal.connectedCells.Contains(next)
-                    && next.connectedCells.Contains(cell))
+                    && (next.connectedCells.Contains(cell) || next.placedConnectedCells.Contains(cell)))
                     cell.diagonalBits |= 1 << 1;
             }
             else if (i == 2 && (cell.connectedCells.Contains(neighbour) || cell.placedConnectedCells.Contains(neighbour)))
@@ -312,7 +315,7 @@ public class Spotfinder : MonoBehaviour
                 var next = maze.cells[xnext, ynext];
 
                 if (neighbour.connectedCells.Contains(diagonal) && diagonal.connectedCells.Contains(next)
-                    && next.connectedCells.Contains(cell))
+                    && (next.connectedCells.Contains(cell) || next.placedConnectedCells.Contains(cell)))
                     cell.diagonalBits |= 1 << 2;
             }
             else if (i == 3 && (cell.connectedCells.Contains(neighbour) || cell.placedConnectedCells.Contains(neighbour)))
@@ -336,7 +339,7 @@ public class Spotfinder : MonoBehaviour
                 var next = maze.cells[xnext, ynext];
 
                 if (neighbour.connectedCells.Contains(diagonal) && diagonal.connectedCells.Contains(next)
-                    && next.connectedCells.Contains(cell))
+                    && (next.connectedCells.Contains(cell) || next.placedConnectedCells.Contains(cell)))
                     cell.diagonalBits |= 1 << 3;
             }
         }
