@@ -169,18 +169,14 @@ public class Spotfinder : MonoBehaviour
             DetermineNeighbourBits(spot);
             Tile tileToPlace = SetTile(spot);
 
-            //Debug.Log("Cell:" + spot.gameObject.name + " cardinal bits: " + spot.cardinalBits + " diagonal bits: " + spot.diagonalBits
-            //    + " selected rule cardinal: " + tileToPlace.selectedRule.cardinal + " diagonal: " + tileToPlace.selectedRule.diagonal);
-
-            Debug.Log("Cell:" + spot.gameObject.name + " cardinal bits: " + spot.cardinalBits + " diagonal bits: " + spot.diagonalBits);
+            //Debug.Log("Cell:" + spot.gameObject.name + " cardinal bits: " + spot.cardinalBits + " diagonal bits: " + spot.diagonalBits);
 
             if (tileToPlace != null)
             {
-                var tile = (Tile)tileToPlace;
-                var go = Instantiate(tile.tile);
+                var go = Instantiate(tileToPlace.tile);
                 go.transform.position = new Vector3(spot.transform.position.x, spot.transform.position.y,
                                                     spot.transform.position.z - spotHeight / 2);
-                go.transform.rotation = Quaternion.Euler(go.transform.rotation.x, go.transform.rotation.y, go.transform.rotation.z + tile.selectedRule.rotation);
+                go.transform.rotation = Quaternion.Euler(go.transform.rotation.x, go.transform.rotation.y, go.transform.rotation.z + tileToPlace.selectedRule.rotation);
                 Vector3 scale = new Vector3(maze.cellScaleX, maze.cellScaleY, spotHeight);
                 go.transform.localScale = scale;
                 go.transform.parent = layout.transform;

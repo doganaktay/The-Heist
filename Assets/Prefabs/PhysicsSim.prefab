@@ -47,4 +47,5 @@ MonoBehaviour:
   trajectory: {fileID: 0}
   playerPrefab: {fileID: 0}
   player: {fileID: 0}
-  simulationStepCount: 5000
+  simulationStepCount: 1000
+  currentStepCount: 0

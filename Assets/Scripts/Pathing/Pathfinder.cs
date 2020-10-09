@@ -294,7 +294,7 @@ public class Pathfinder : MonoBehaviour
             highestIndex = pathIndex;
         }
 
-        DisplayPath(path[shortestIndex], 2, shortestIndex, true);
+        //DisplayPath(path[shortestIndex], 2, shortestIndex, true);
 
         return path[pathIndex];
     }
@@ -368,10 +368,9 @@ public class Pathfinder : MonoBehaviour
             distanceCut += currentDistance - newDist - distanceTravelled;
             currentDistance = newDist;
             distanceTravelled = 0;
-            Debug.Log("Start distance: " + startDistance + " Current distance: " + currentDistance + " Distance cut: " + distanceCut);
         }
 
-        DisplayPath(path[pathIndex], 1, pathIndex);
+        //DisplayPath(path[pathIndex], 1, pathIndex);
 
         return path[pathIndex];
     }
@@ -391,7 +390,7 @@ public class Pathfinder : MonoBehaviour
         return endCell[pathIndex];
     }
 
-    // tracking last start and end cellfor timer reset
+    // tracking last start and end cell for timer reset
     MazeCell lastStartCell, lastEndCell;
     // Display path
     void DisplayPath(List<MazeCell> path, int colorIndex, int pathIndex, bool resetTime = false)
@@ -430,10 +429,10 @@ public class Pathfinder : MonoBehaviour
                 cell.state = 0;
 
             // setting material properties
-            cell.mat.SetColorIndex(0);
-            cell.mat.SetPathIndex(0);
-            cell.mat.SetPathCount(0);
-            cell.mat.SetRestartTime(Time.time);
+            //cell.mat.SetColorIndex(0);
+            //cell.mat.SetPathIndex(0);
+            //cell.mat.SetPathCount(0);
+            //cell.mat.SetRestartTime(Time.time);
 
             // manually resetting secondary path variables
             if (highestIndex > 10) continue; // this is in case we haven't searched any secondary paths yet
@@ -470,17 +469,17 @@ public class Pathfinder : MonoBehaviour
 
                 var state = cell.state == 1;
 
-                if (state)
-                {
-                    cell.mat.SetPathIndex(cell.distanceFromStart[0]);
-                    cell.mat.SetColorIndex(1);
-                    cell.mat.SetPathCount(endCell[0].distanceFromStart[0]);
-                    cell.mat.SetRestartTime(lastRestartTime);
-                }
-                else
-                {
-                    cell.mat.SetColorIndex(0);
-                }
+                //if (state)
+                //{
+                //    cell.mat.SetPathIndex(cell.distanceFromStart[0]);
+                //    cell.mat.SetColorIndex(1);
+                //    cell.mat.SetPathCount(endCell[0].distanceFromStart[0]);
+                //    cell.mat.SetRestartTime(lastRestartTime);
+                //}
+                //else
+                //{
+                //    cell.mat.SetColorIndex(0);
+                //}
 
             }  
     }

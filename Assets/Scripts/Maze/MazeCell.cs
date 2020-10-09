@@ -37,7 +37,7 @@ public class MazeCell : FastPriorityQueueNode
 
     void Awake()
     {
-		mat = transform.GetChild(0).GetComponent<Renderer>().material;
+		//mat = transform.GetChild(0).GetComponent<Renderer>().material;
 
 		visited = new bool[searchSize];
 		for(int i = 0; i < visited.Length; i++)
