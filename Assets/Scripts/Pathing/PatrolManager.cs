@@ -6,9 +6,8 @@ public class PatrolManager : MonoBehaviour
 {
     public Pathfinder pathfinder;
     public AreaFinder areafinder;
-    public PathPatrol patrolPrefab;
-    public List<PathPatrol> patrols = new List<PathPatrol>();
-    public List<MazeCell> activePath = new List<MazeCell>();
+    public Patrol patrolPrefab;
+    public List<Patrol> patrols = new List<Patrol>();
 
     public int patrolCount = 3;
 
@@ -21,12 +20,11 @@ public class PatrolManager : MonoBehaviour
     {
         for (int i = 0; i < patrolCount; i++)
         {
-            List<MazeCell> currentPath = areafinder.GetRandomAreaWeighted();
-
-            MazeCell randomCell = currentPath[Random.Range(0, currentPath.Count)];
-
+            var randomCell = areafinder.WalkableArea[Random.Range(0, areafinder.WalkableArea.Count)];
             var patrol = Instantiate(patrolPrefab, randomCell.transform.position, Quaternion.identity);
-            patrol.patrolArea = currentPath;
+
+            patrol.name = "Patrol " + (patrols.Count + i);
+            patrol.pathfinder = pathfinder;
             patrol.currentCell = randomCell;
             patrol.transform.parent = transform;
 

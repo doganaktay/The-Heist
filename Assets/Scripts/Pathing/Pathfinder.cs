@@ -30,6 +30,9 @@ public class Pathfinder : MonoBehaviour
     // last level reset time
     public float lastRestartTime;
 
+    // astar
+    public AStar aStar;
+
     private void Start()
     {
         //GameManager.MazeGenFinished += NewPath;
@@ -69,6 +72,15 @@ public class Pathfinder : MonoBehaviour
     public void NewPath()
     {
         SetNewPath(startPos, endPos);
+    }
+
+    // get aStar path
+    public List<MazeCell> GetRandomAStarPath(MazeCell start)
+    {
+        // random endpoint assignment
+        var end = areafinder.WalkableArea[Random.Range(0, areafinder.WalkableArea.Count - 1)];
+
+        return new List<MazeCell>(aStar.GetPath(start, end));
     }
 
     // check neighbours for placement

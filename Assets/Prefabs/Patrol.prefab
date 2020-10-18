@@ -12,9 +12,9 @@ GameObject:
   - component: {fileID: 5284805516819639898}
   - component: {fileID: 5284805516819639899}
   - component: {fileID: 5284805516819639900}
-  - component: {fileID: -1478150257375008109}
+  - component: {fileID: -8045927754576532818}
   m_Layer: 11
-  m_Name: Patroller
+  m_Name: Patrol
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -121,7 +121,7 @@ CircleCollider2D:
   m_Offset: {x: 0, y: 0}
   serializedVersion: 2
   m_Radius: 0.49999997
---- !u!114 &-1478150257375008109
+--- !u!114 &-8045927754576532818
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -130,11 +130,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 5284805516819639902}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 24513a8233e1f44ec9d6f39172cded68, type: 3}
+  m_Script: {fileID: 11500000, guid: 1ad7c8c03e1514fa08e0b4f4b359ef09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  patrolArea: []
+  pathfinder: {fileID: 0}
+  maxSpeed: 40
+  bufferDistance: 0.01
+  maxWaitTime: 3
   currentCell: {fileID: 0}
-  nextCell: {fileID: 0}
-  patrolRandom: 1
-  moveLerpSpeed: 0.1

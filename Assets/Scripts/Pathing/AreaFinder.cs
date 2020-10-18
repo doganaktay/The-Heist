@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using TMPro;
 
 public class AreaFinder : MonoBehaviour
 {
@@ -23,13 +22,14 @@ public class AreaFinder : MonoBehaviour
     Dictionary<int, List<MazeCell>> highCellConnected = new Dictionary<int, List<MazeCell>>();
 
     Dictionary<int, List<MazeCell>> placedAreas = new Dictionary<int, List<MazeCell>>();
+    List<MazeCell> walkableArea = new List<MazeCell>();
 
     public List<MazeCell> GetLowCellArea (int areaIndex) { return lowCellAreas[areaIndex]; }
     public List<MazeCell> GetHighCellArea(int areaIndex) { return highCellAreas[areaIndex]; }
-
     public List<MazeCell> GetPatrolAreaByIndex(int areaIndex){ return lowCellAreas[areaIndex]; }
     public List<MazeCell> GetLowConnectionPoints(int areaIndex){ return lowCellConnected[areaIndex]; }
     public List<MazeCell> GetRandomArea(){ return lowCellAreas.ElementAt(UnityEngine.Random.Range(0, lowCellAreas.Count)).Value; }
+    public List<MazeCell> WalkableArea { get { return walkableArea; } }
 
     #if UNITY_EDITOR
     public bool displayCellID = false;
@@ -398,10 +398,17 @@ public class AreaFinder : MonoBehaviour
 
     void SetPaths()
     {
+        walkableArea.Clear();
+
         for (int j = 0; j < maze.size.x; j++)
         {
             for (int i = 0; i < maze.size.y; i++)
             {
+                if(grid[j,i].state < 2 && !walkableArea.Contains(grid[j, i]))
+                {
+                    walkableArea.Add(grid[j, i]);
+                }
+
                 if (grid[j, i].state == 1)
                 {
                     var d = grid[j, i].distanceFromStart[0];

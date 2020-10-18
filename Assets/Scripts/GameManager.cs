@@ -9,10 +9,9 @@ public class GameManager : MonoBehaviour
 	public PhysicsSim physicsSim;
 	public Lights lights;
 	public Pathfinder pathfinder;
-	public AStar aStar;
-    public AreaFinder areafinder;
+	public AreaFinder areafinder;
 	public Spotfinder spotfinder;
-    public PatrolManager patrolManager;
+	public PatrolManager patrolManager;
 	public TextOverlay textOverlay;
 	public Player playerPrefab;
 	public Player player;
@@ -49,11 +48,7 @@ public class GameManager : MonoBehaviour
 		pathfinder.initialized = false;
 		pathfinder.startPos = new IntVector2(0, 0);
 		pathfinder.endPos = new IntVector2(mazeInstance.size.x - 1, mazeInstance.size.y - 1);
-
-		// pass references to AStar
-		aStar.maze = mazeInstance;
-		aStar.pathfinder = pathfinder;
-		aStar.areafinder = areafinder;
+		pathfinder.aStar = new AStar(mazeInstance);
 
 		// pass references to areafinder
         areafinder.maze = mazeInstance;

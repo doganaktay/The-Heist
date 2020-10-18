@@ -29,7 +29,7 @@
 
 			//#pragma multi_compile _ SHADOWS_SCREEN
 			#pragma multi_compile_fwdbase_fullshadows
-
+			#pragma multi_compile_instancing
 			#pragma vertex vert
 			#pragma fragment frag
 			#include "UnityStandardBRDF.cginc" // already includes UnityCG.cginc

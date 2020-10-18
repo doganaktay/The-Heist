@@ -2,14 +2,17 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AStar : MonoBehaviour
+public class AStar
 {
     public Maze maze;
-    public Pathfinder pathfinder;
-    public AreaFinder areafinder;
 
     public static Dictionary<MazeCell, MazeCell> cameFrom = new Dictionary<MazeCell, MazeCell>();
     public static Dictionary<MazeCell, float> costSoFar = new Dictionary<MazeCell, float>();
+
+    public AStar(Maze maze)
+    {
+        this.maze = maze;
+    }
 
     static public float Heuristic(MazeCell a, MazeCell b)
     {
@@ -20,7 +23,7 @@ public class AStar : MonoBehaviour
     public List<MazeCell> aStarPath = new List<MazeCell>();
     FastPriorityQueue<MazeCell> frontier;
 
-    public List<MazeCell> GetAStarPath(MazeCell start, MazeCell end)
+    public List<MazeCell> GetPath(MazeCell start, MazeCell end)
     {
         // clearing dictionaries for re-use
         cameFrom.Clear();
@@ -45,6 +48,9 @@ public class AStar : MonoBehaviour
 
             foreach(var next in current.connectedCells)
             {
+                if (next.state > 1)
+                    continue;
+
                 float newCost = costSoFar[current] + maze.Cost(current, next);
 
                 if (!costSoFar.ContainsKey(next) || newCost < costSoFar[next])
@@ -91,23 +97,5 @@ public class AStar : MonoBehaviour
         }
 
         return aStarPath;
-    }
-
-    private void OnGUI()
-    {
-        if (GUI.Button(new Rect(10, 70, 80, 60), "AStar Test"))
-        {
-            var l = areafinder.GetRandomAreaWeighted();
-
-            var a = l[Random.Range(0, l.Count)];
-            var b = l[Random.Range(0, l.Count)];
-
-            var list = GetAStarPath(a, b);
-
-            foreach(var item in list)
-            {
-                item.mat.SetColorIndex(1);
-            }
-        }
     }
 }

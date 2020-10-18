@@ -233,7 +233,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 9
+  m_RootOrder: 8
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &595692259
 MonoBehaviour:
@@ -661,7 +661,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 8
+  m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1571564959
 MonoBehaviour:
@@ -677,58 +677,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   pathfinder: {fileID: 0}
   areafinder: {fileID: 0}
-  patrolPrefab: {fileID: -1478150257375008109, guid: aaab0ca4958f545f492213de7b26129a,
+  patrolPrefab: {fileID: -8045927754576532818, guid: aaab0ca4958f545f492213de7b26129a,
     type: 3}
   patrols: []
-  activePath: []
-  patrolCount: 100
---- !u!1 &1620038530
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1620038532}
-  - component: {fileID: 1620038531}
-  m_Layer: 0
-  m_Name: AStar
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1620038531
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1620038530}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e5b222f7cbe6e46a99948738c21fa017, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  maze: {fileID: 0}
-  pathfinder: {fileID: 0}
-  areafinder: {fileID: 0}
-  aStarPath: []
---- !u!4 &1620038532
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1620038530}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 7
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  patrolCount: 1
 --- !u!1 &1729686378
 GameObject:
   m_ObjectHideFlags: 0
@@ -963,7 +915,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 10
+  m_RootOrder: 9
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2057357533
 GameObject:
@@ -1012,7 +964,6 @@ MonoBehaviour:
   physicsSim: {fileID: 1322255335}
   lights: {fileID: 1729686380}
   pathfinder: {fileID: 798157646}
-  aStar: {fileID: 1620038531}
   areafinder: {fileID: 600934097}
   spotfinder: {fileID: 613073250}
   patrolManager: {fileID: 1571564959}
@@ -1071,7 +1022,7 @@ PrefabInstance:
     - target: {fileID: 8897029964841267824, guid: 4efdbdb319f7d4ce48ea82e65f7e2826,
         type: 3}
       propertyPath: m_RootOrder
-      value: 11
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 8897029964841267824, guid: 4efdbdb319f7d4ce48ea82e65f7e2826,
         type: 3}
