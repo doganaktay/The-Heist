@@ -680,7 +680,7 @@ MonoBehaviour:
   patrolPrefab: {fileID: -8045927754576532818, guid: aaab0ca4958f545f492213de7b26129a,
     type: 3}
   patrols: []
-  patrolCount: 1
+  patrolCount: 3
 --- !u!1 &1729686378
 GameObject:
   m_ObjectHideFlags: 0

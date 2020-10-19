@@ -62,4 +62,9 @@ public static class Extensions
 
         return intersectionPoint;
     }
+
+    public static void LookAt2D(this Transform transform, Transform target, float turnSpeed)
+    {
+        transform.up = Vector2.Lerp(transform.up, target.position - transform.position, turnSpeed * Time.deltaTime);
+    }
 }

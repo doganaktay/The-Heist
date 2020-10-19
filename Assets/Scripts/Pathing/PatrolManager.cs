@@ -21,7 +21,7 @@ public class PatrolManager : MonoBehaviour
         for (int i = 0; i < patrolCount; i++)
         {
             var randomCell = areafinder.WalkableArea[Random.Range(0, areafinder.WalkableArea.Count)];
-            var patrol = Instantiate(patrolPrefab, randomCell.transform.position, Quaternion.identity);
+            var patrol = Instantiate(patrolPrefab, new Vector3(randomCell.transform.position.x, randomCell.transform.position.y, -1f), Quaternion.identity);
 
             patrol.name = "Patrol " + (patrols.Count + i);
             patrol.pathfinder = pathfinder;
