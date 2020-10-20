@@ -74,6 +74,7 @@ public class GameManager : MonoBehaviour
 		player = Instantiate(playerPrefab, new Vector3(mazeInstance.cells[0, 0].transform.position.x,
 										   mazeInstance.cells[0, 0].transform.position.y, -3.5f), Quaternion.identity);
 		player.maze = mazeInstance;
+		player.pathfinder = pathfinder;
 		player.simulation = physicsSim;
 		player.trajectory = trajectory;
 

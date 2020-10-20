@@ -50,11 +50,11 @@ public class Pathfinder : MonoBehaviour
     {
         if (player.cellChanged)
         {
-            if (player.currentCell.state == 0)
-                SetHighlightPath(player.currentCell.pos, player.areaIndex);
+            if (player.currentPlayerCell.state == 0)
+                SetHighlightPath(player.currentPlayerCell.pos, player.areaIndex);
             else
             {
-                if(highestIndex<1000)
+                if (highestIndex < 1000)
                     ResetCells(explored[highestIndex], highestIndex, true);
             }
 
@@ -83,6 +83,11 @@ public class Pathfinder : MonoBehaviour
         return new List<MazeCell>(aStar.GetPath(start, end));
     }
 
+    public List<MazeCell> GetAStarPath(MazeCell start, MazeCell end)
+    {
+        return new List<MazeCell>(aStar.GetPath(start, end));
+    }
+
     // check neighbours for placement
     public bool TryNeighbourPaths(MazeCell candidate)
     {
@@ -90,16 +95,16 @@ public class Pathfinder : MonoBehaviour
         if (candidate.state == 0 && areafinder.GetLowCellArea(candidate.areaIndex).Count == 1)
             return true;
 
-        foreach(var connected in candidate.connectedCells)
+        foreach (var connected in candidate.connectedCells)
         {
             if (connected.connectedCells.Count == 1)
                 return false;
             if (connected.state > 1)
-                continue;   
+                continue;
 
             int pathIndex = 1;
 
-            if(candidate.state == 1)
+            if (candidate.state == 1)
             {
                 if (path[pathIndex] == null)
                     path[pathIndex] = new List<MazeCell>();
@@ -131,7 +136,7 @@ public class Pathfinder : MonoBehaviour
 
                     foreach (MazeCell cell in currentCell.connectedCells)
                     {
-                        if(cell == candidate || cell.state > 1) { continue; }
+                        if (cell == candidate || cell.state > 1) { continue; }
 
                         if (!cell.visited[pathIndex] && cell.state == 1)
                         {
@@ -419,8 +424,8 @@ public class Pathfinder : MonoBehaviour
             { cell.mat.SetRestartTime(Time.time); }
         }
 
-        if(!reset)
-        path.ElementAt(path.Count - 1).mat.SetRestartTime(lastEndCell.mat.GetRestartTime());
+        if (!reset)
+            path.ElementAt(path.Count - 1).mat.SetRestartTime(lastEndCell.mat.GetRestartTime());
 
         lastStartCell = startCell[pathIndex];
         lastEndCell = endCell[pathIndex];
@@ -437,7 +442,7 @@ public class Pathfinder : MonoBehaviour
             cell.cellText.color = Color.red;
             cell.searched = false;
 
-            if(cell.state < 2)
+            if (cell.state < 2)
                 cell.state = 0;
 
             // setting material properties
@@ -461,39 +466,39 @@ public class Pathfinder : MonoBehaviour
 
     void ResetCells(List<MazeCell> explored, int index, bool resetAll = false)
     {
-            foreach (MazeCell cell in explored)
+        foreach (MazeCell cell in explored)
+        {
+            if (resetAll)
             {
-                if (resetAll)
+                for (int i = 1; i <= index; i++)
                 {
-                    for(int i=1; i<=index; i++)
-                    {
-                        cell.visited[i] = false;
-                        cell.exploredFrom[i] = null;
-                        cell.distanceFromStart[i] = 0;
-                    }
+                    cell.visited[i] = false;
+                    cell.exploredFrom[i] = null;
+                    cell.distanceFromStart[i] = 0;
                 }
-                else
-                {
-                    cell.visited[index] = false;
-                    cell.exploredFrom[index] = null;
-                    cell.distanceFromStart[index] = 0;
-                }
+            }
+            else
+            {
+                cell.visited[index] = false;
+                cell.exploredFrom[index] = null;
+                cell.distanceFromStart[index] = 0;
+            }
 
-                var state = cell.state == 1;
+            var state = cell.state == 1;
 
-                //if (state)
-                //{
-                //    cell.mat.SetPathIndex(cell.distanceFromStart[0]);
-                //    cell.mat.SetColorIndex(1);
-                //    cell.mat.SetPathCount(endCell[0].distanceFromStart[0]);
-                //    cell.mat.SetRestartTime(lastRestartTime);
-                //}
-                //else
-                //{
-                //    cell.mat.SetColorIndex(0);
-                //}
+            //if (state)
+            //{
+            //    cell.mat.SetPathIndex(cell.distanceFromStart[0]);
+            //    cell.mat.SetColorIndex(1);
+            //    cell.mat.SetPathCount(endCell[0].distanceFromStart[0]);
+            //    cell.mat.SetRestartTime(lastRestartTime);
+            //}
+            //else
+            //{
+            //    cell.mat.SetColorIndex(0);
+            //}
 
-            }  
+        }
     }
 
 }
