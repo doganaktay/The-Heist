@@ -25,7 +25,7 @@ public class Player : MonoBehaviour
     public Maze maze;
 
     Collider2D[] posHits;
-    Collider2D[] touchHits;
+    Collider2D[] touchHits1, touchHits2;
     Collider2D previousHit;
     RaycastHit2D[] rayHits;
     // mask currently includes walls, placements and player
@@ -49,6 +49,8 @@ public class Player : MonoBehaviour
     List<MazeCell> currentPath = new List<MazeCell>();
     public MazeCell currentPlayerCell;
     public MazeCell lastPlayerCell;
+    bool touchedPlayer = false;
+    bool walkablePosition = false;
 
     public static event Action MazeChange;
 
@@ -62,21 +64,7 @@ public class Player : MonoBehaviour
     public float spinIncrement = 1;
     float lastSpinAmount;
 
-    public struct TouchInfo
-    {
-        public Touch touch;
-        public Vector3 worldPos;
-        public int id;
-
-        public TouchInfo(Touch touch, Vector3 worldPos, int id)
-        {
-            this.touch = touch;
-            this.worldPos = worldPos;
-            this.id = id;
-        }
-    }
-
-    TouchInfo[] touches;
+    Touch[] touches;
 
     // input variables
     bool canDrawTrajectory = false;
@@ -87,7 +75,8 @@ public class Player : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         posHits = new Collider2D[10];
-        touchHits = new Collider2D[10];
+        touchHits1 = new Collider2D[10];
+        touchHits2 = new Collider2D[10];
         rayHits = new RaycastHit2D[10];
 
         cam = Camera.main;
@@ -96,7 +85,7 @@ public class Player : MonoBehaviour
         projectileSelector = GetComponent<ProjectileSelector>();
 
         // initialise touch info struct array with max allowed finger count
-        touches = new TouchInfo[5];
+        touches = new Touch[5];
     }
 
     void Update()
@@ -162,49 +151,69 @@ public class Player : MonoBehaviour
 
             for (int i = 0; i < count; i++)
             {
-                var touch = Input.GetTouch(i);
-                touches[i] = new TouchInfo(touch, cam.ScreenToWorldPoint(touch.position), touch.fingerId);
+                touches[i] = Input.GetTouch(i);
             }
 
-            if (count == 1)
+            if (touches[0].phase == TouchPhase.Began
+                && Physics2D.OverlapCircleNonAlloc(cam.ScreenToWorldPoint(touches[0].position), 1f, results: touchHits1, cellLayerMask) > 0)
             {
-                if (Physics2D.OverlapCircleNonAlloc(touches[0].worldPos, 1f, results: touchHits, cellLayerMask) > 0)
-                {
-                    currentCellHit = touchHits[0].GetComponent<MazeCell>();
+                // cell at first touch input
+                currentCellHit = touchHits1[0].GetComponent<MazeCell>();
 
-                    if (touches[0].touch.phase == TouchPhase.Ended)
+                if(currentCellHit.state < 2)
+                {
+                    walkablePosition = true;
+                    touchedPlayer = currentCellHit == currentPlayerCell ? true : false;
+                }
+                else
+                {
+                    walkablePosition = false;
+                    touchedPlayer = false;
+                }
+            }
+
+            if(touches[0].phase == TouchPhase.Ended)
+            {
+                if (walkablePosition)
+                {
+                    if (!touchedPlayer)
                     {
                         var timeSinceLastTap = Time.time - lastTapTime;
+                        currentPath = pathfinder.GetAStarPath(currentPlayerCell, currentCellHit);
 
-                        if (currentCellHit != currentPlayerCell && currentCellHit.state < 2)
+                        if (currentCellHit != lastCellHit)
                         {
-                            currentPath = pathfinder.GetAStarPath(currentPlayerCell, currentCellHit);
-
-                            if (currentCellHit != lastCellHit)
-                            {
-                                tapCount = 1;
-                                lastCellHit = currentCellHit;
-                            }
-                            else
+                            tapCount = 1;
+                            lastCellHit = currentCellHit;
+                        }
+                        else
+                        {
+                            if (timeSinceLastTap <= DoubleTapTime)
                                 tapCount++;
-
-                            if(tapCount == 1)
-                            {
-                                RestartGoToDestination(currentPath, walkSpeed);
-                            }
                             else
-                            {
-                                if (timeSinceLastTap <= DoubleTapTime)
-                                    RestartGoToDestination(currentPath, runSpeed);
-                                else
-                                    RestartGoToDestination(currentPath, walkSpeed);
-                            }
+                                tapCount = 1;
                         }
 
-                        lastTapTime = Time.time;
+                        if (tapCount == 1)
+                        {
+                            RestartGoToDestination(currentPath, walkSpeed);
+                        }
+                        else if (tapCount == 2)
+                        {
+                            RestartGoToDestination(currentPath, runSpeed);   
+                        }
+                    }
+                    else
+                    {
+                        StopGoToDestination();
                     }
                 }
+                else
+                {
+                    StopGoToDestination();
+                }
 
+                lastTapTime = Time.time;
             }
         }
     }
@@ -256,7 +265,7 @@ public class Player : MonoBehaviour
     // and set bools used by other scripts for updating
     void TrackMouseLocation()
     {
-        int hitCount = Physics2D.OverlapCircleNonAlloc(mousePos, 1f, results: touchHits, cellLayerMask);
+        int hitCount = Physics2D.OverlapCircleNonAlloc(mousePos, 1f, results: touchHits1, cellLayerMask);
 
         if (hitCount > 0)
         {
@@ -264,7 +273,7 @@ public class Player : MonoBehaviour
             int closestIndex = 0;
             for(int i = 0; i < hitCount; i++)
             {
-                var temp = Vector2.Distance(touchHits[i].transform.position, transform.position);
+                var temp = Vector2.Distance(touchHits1[i].transform.position, transform.position);
                 dist = temp < dist ? temp : dist;
                 if(temp < dist)
                 {
@@ -273,9 +282,9 @@ public class Player : MonoBehaviour
                 }
             }
 
-            if (touchHits[closestIndex] == previousHit) { return; }
+            if (touchHits1[closestIndex] == previousHit) { return; }
 
-            currentPlayerCell = touchHits[closestIndex].GetComponent<MazeCell>();
+            currentPlayerCell = touchHits1[closestIndex].GetComponent<MazeCell>();
             cellChanged = true;
 
             cellState = currentPlayerCell.state;
@@ -285,7 +294,7 @@ public class Player : MonoBehaviour
                 hitIndexChanged = true;
 
             lastAreaIndex = areaIndex;
-            previousHit = touchHits[closestIndex];
+            previousHit = touchHits1[closestIndex];
 
         }
     }
@@ -318,11 +327,20 @@ public class Player : MonoBehaviour
 
     void RestartGoToDestination(List<MazeCell> path, float speed)
     {
-        if (moving)
-        { moving = false; StopCoroutine(currentAction); }
-        moving = true;
-
+        StopGoToDestination();
         currentAction = StartCoroutine(GoToDestination(path, speed));
+    }
+
+    void StopGoToDestination()
+    {
+        if (moving)
+        {
+            moving = false;
+
+            if(currentAction != null)
+                StopCoroutine(currentAction);
+        }
+        moving = true;
     }
 
     IEnumerator GoToDestination(List<MazeCell> path, float speed)

@@ -455,19 +455,20 @@ MonoBehaviour:
   pathfinder: {fileID: 0}
   simulation: {fileID: 0}
   trajectory: {fileID: 0}
-  walkSpeed: 100
-  runSpeed: 500
+  walkSpeed: 25
+  runSpeed: 100
   brakeSpeed: 0.25
   areaIndex: 0
   hitIndexChanged: 0
   cellState: 0
-  playerCell: {fileID: 0}
   cellChanged: 0
   maze: {fileID: 0}
   touchMask:
     serializedVersion: 2
     m_Bits: 1024
   doubleTapDelay: 0.2
+  currentPlayerCell: {fileID: 0}
+  lastPlayerCell: {fileID: 0}
   spinIncrement: 10
 --- !u!114 &1492204798581725389
 MonoBehaviour:
