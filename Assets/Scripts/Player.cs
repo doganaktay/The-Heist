@@ -51,10 +51,15 @@ public class Player : MonoBehaviour
     public MazeCell lastPlayerCell;
     bool touchedPlayer = false;
     bool walkablePosition = false;
+    bool aiming = false;
+    Vector3 aimTouchPivot;
+    Vector3 aimTouchTarget;
+    Vector3 aimTouchTargetLast;
+    int moveTouchId, aimTouchId;
 
     public static event Action MazeChange;
 
-    Camera cam;
+    public Camera cam;
     Transform aim;
     Vector2 mousePos;
     Vector2 lastMousePos;
@@ -91,7 +96,7 @@ public class Player : MonoBehaviour
     void Update()
     {
         TrackPosition();
-        ProcessTouchInput();
+        //ProcessTouchInput();
 
         //// tracking mouse input pos for cell highlighting and player aim
         //mousePos = cam.ScreenToWorldPoint(Input.mousePosition);
@@ -111,19 +116,19 @@ public class Player : MonoBehaviour
         //        spinAmount += spinIncrement;
         //    }
 
-        //    // only redraw line if some condition changes
-        //    if (lastMousePos != mousePos || (transform.position - lastPos).sqrMagnitude > 0.1f * 0.1f || spinAmount != lastSpinAmount
-        //        || projectileSelector.selectionChanged || lineReset)
-        //    {
-        //        lineReset = false;
-        //        projectileSelector.selectionChanged = false;
-        //        lastMousePos = mousePos;
-        //        lastPos = transform.position;
-        //        lastSpinAmount = spinAmount;
-        //        aimUp = aim.transform.up;
+        //// only redraw line if some condition changes
+        //if (lastMousePos != mousePos || (transform.position - lastPos).sqrMagnitude > 0.1f * 0.1f || spinAmount != lastSpinAmount
+        //    || projectileSelector.selectionChanged || lineReset)
+        //{
+        //    lineReset = false;
+        //    projectileSelector.selectionChanged = false;
+        //    lastMousePos = mousePos;
+        //    lastPos = transform.position;
+        //    lastSpinAmount = spinAmount;
+        //    aimUp = aim.transform.up;
 
-        //        canDrawTrajectory = true;
-        //    }
+        //    canDrawTrajectory = true;
+        //}
 
         //    if (Input.GetKeyDown(KeyCode.Space))
         //    {
@@ -154,53 +159,108 @@ public class Player : MonoBehaviour
                 touches[i] = Input.GetTouch(i);
             }
 
-            if (touches[0].phase == TouchPhase.Began
-                && Physics2D.OverlapCircleNonAlloc(cam.ScreenToWorldPoint(touches[0].position), 1f, results: touchHits1, cellLayerMask) > 0)
+            if (Input.GetTouch(0).phase == TouchPhase.Began)
             {
-                // cell at first touch input
-                currentCellHit = touchHits1[0].GetComponent<MazeCell>();
-
-                if(currentCellHit.state < 2)
+                if (!aiming && Physics2D.OverlapCircleNonAlloc(cam.ScreenToWorldPoint(Input.GetTouch(0).position), 1f, results: touchHits1, cellLayerMask) > 0)
                 {
-                    walkablePosition = true;
-                    touchedPlayer = currentCellHit == currentPlayerCell ? true : false;
+                    moveTouchId = Input.GetTouch(0).fingerId;
+
+                    // cell at first touch input
+                    currentCellHit = touchHits1[0].GetComponent<MazeCell>();
+
+                    if (currentCellHit.state < 2)
+                    {
+                        walkablePosition = true;
+                        touchedPlayer = currentCellHit == currentPlayerCell ? true : false;
+                    }
+                    else
+                    {
+                        walkablePosition = false;
+                        touchedPlayer = false;
+                    }
                 }
                 else
                 {
-                    walkablePosition = false;
-                    touchedPlayer = false;
+                    LaunchProjectile();
                 }
             }
 
-            if(touches[0].phase == TouchPhase.Ended)
+            if((count == 2 || aiming) && touchedPlayer)
             {
-                if (walkablePosition)
+                if (Input.GetTouch(1).phase == TouchPhase.Began)
                 {
-                    if (!touchedPlayer)
-                    {
-                        var timeSinceLastTap = Time.time - lastTapTime;
-                        currentPath = pathfinder.GetAStarPath(currentPlayerCell, currentCellHit);
+                    aimTouchId = Input.GetTouch(1).fingerId;
+                    aimTouchPivot = cam.ScreenToWorldPoint(Input.GetTouch(1).position);
+                }
+                else if (Input.GetTouch(1).phase == TouchPhase.Moved)
+                {
+                    aiming = true;
+                    aimTouchTarget = cam.ScreenToWorldPoint(Input.GetTouch(1).position);
+                    Vector2 diff = aimTouchTarget - aimTouchPivot;
+                    diff = diff.normalized;
+                    float rot = Mathf.Atan2(diff.y, diff.x) * Mathf.Rad2Deg;
+                    aim.transform.localRotation = Quaternion.Euler(0f, 0f, rot - 90f);
 
-                        if (currentCellHit != lastCellHit)
+                    // only redraw line if some condition changes
+                    if ((aimTouchTarget - aimTouchTargetLast).sqrMagnitude > 0.1f || lineReset)
+                    {
+                        lineReset = false;
+                        projectileSelector.selectionChanged = false;
+                        lastMousePos = mousePos;
+                        lastPos = transform.position;
+                        lastSpinAmount = spinAmount;
+                        aimUp = aim.transform.up;
+
+                        canDrawTrajectory = true;
+                    }
+
+                    aimTouchTargetLast = aimTouchTarget;
+                }
+                else if (Input.GetTouch(1).phase == TouchPhase.Ended)
+                {
+                    trajectory.sharedMesh.Clear();
+                    lineReset = true;
+                    aiming = false;
+                }
+
+            }
+
+            if (Input.GetTouch(0).phase == TouchPhase.Ended)
+            {
+                if (Input.GetTouch(0).fingerId == moveTouchId)
+                {
+                    if (walkablePosition)
+                    {
+                        if (!touchedPlayer)
                         {
-                            tapCount = 1;
-                            lastCellHit = currentCellHit;
+                            var timeSinceLastTap = Time.time - lastTapTime;
+                            currentPath = pathfinder.GetAStarPath(currentPlayerCell, currentCellHit);
+
+                            if (currentCellHit != lastCellHit)
+                            {
+                                tapCount = 1;
+                                lastCellHit = currentCellHit;
+                            }
+                            else
+                            {
+                                if (timeSinceLastTap <= DoubleTapTime)
+                                    tapCount++;
+                                else
+                                    tapCount = 1;
+                            }
+
+                            if (tapCount == 1)
+                            {
+                                RestartGoToDestination(currentPath, walkSpeed);
+                            }
+                            else if (tapCount == 2)
+                            {
+                                RestartGoToDestination(currentPath, runSpeed);
+                            }
                         }
                         else
                         {
-                            if (timeSinceLastTap <= DoubleTapTime)
-                                tapCount++;
-                            else
-                                tapCount = 1;
-                        }
-
-                        if (tapCount == 1)
-                        {
-                            RestartGoToDestination(currentPath, walkSpeed);
-                        }
-                        else if (tapCount == 2)
-                        {
-                            RestartGoToDestination(currentPath, runSpeed);   
+                            StopGoToDestination();
                         }
                     }
                     else
@@ -208,11 +268,12 @@ public class Player : MonoBehaviour
                         StopGoToDestination();
                     }
                 }
-                else
+                else if(Input.GetTouch(0).fingerId == aimTouchId)
                 {
-                    StopGoToDestination();
+                    trajectory.sharedMesh.Clear();
+                    lineReset = true;
+                    aiming = false;
                 }
-
                 lastTapTime = Time.time;
             }
         }
@@ -325,6 +386,24 @@ public class Player : MonoBehaviour
         }
     }
 
+    public MazeCell CurrentPlayerCell
+    {
+        get
+        {
+            return currentPlayerCell;
+        }
+    }
+
+    public void Move(MazeCell destination, bool run = false)
+    {
+        currentPath = pathfinder.GetAStarPath(currentPlayerCell, destination);
+
+        if (!run)
+            RestartGoToDestination(currentPath, walkSpeed);
+        else
+            RestartGoToDestination(currentPath, runSpeed);
+    }
+
     void RestartGoToDestination(List<MazeCell> path, float speed)
     {
         StopGoToDestination();
@@ -350,7 +429,7 @@ public class Player : MonoBehaviour
         while (i < path.Count && moving)
         {
             nextCell = path[i];
-            transform.LookAt2D(nextCell.transform, turnSpeed);
+            aim.LookAt2D(nextCell.transform, turnSpeed);
             transform.position = Vector2.MoveTowards(transform.position, nextCell.transform.position, speed * Time.deltaTime);
 
             if (((Vector2)nextCell.transform.position - (Vector2)transform.position).magnitude < bufferDistance)

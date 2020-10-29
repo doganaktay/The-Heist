@@ -67,4 +67,9 @@ public static class Extensions
     {
         transform.up = Vector2.Lerp(transform.up, target.position - transform.position, turnSpeed * Time.deltaTime);
     }
+
+    public static bool IsWalkable(this MazeCell cell)
+    {
+        return cell.state < 2;
+    }
 }

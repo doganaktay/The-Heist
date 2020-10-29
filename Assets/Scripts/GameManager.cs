@@ -3,6 +3,8 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
+using TMPro;
+
 public class GameManager : MonoBehaviour
 {
 	public Trajectory trajectory;
@@ -26,7 +28,7 @@ public class GameManager : MonoBehaviour
 		BeginGame();
 	}
 
-	private void Update()
+    private void Update()
 	{
 		if (Input.GetKeyDown(KeyCode.Alpha0))
 		{
