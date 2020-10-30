@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Archi.Touch;
 
 public class PhysicsSim : MonoBehaviour
 {
@@ -21,6 +22,7 @@ public class PhysicsSim : MonoBehaviour
     Projectile projectileCopy;
     Player playerCopy;
     Rigidbody2D playerCopyRb;
+    Transform playerCopyTransform;
     Rigidbody2D projectileCopyRb;
 
     GameObject sceneHolder;
@@ -37,9 +39,9 @@ public class PhysicsSim : MonoBehaviour
         simulationPhysics = simulation.GetPhysicsScene2D();
     }
 
-    void FixedUpdate()
+    void Update()
     {
-        playerCopy.transform.position = player.transform.position;
+        playerCopyTransform.position = player.transform.position;
     }
 
     public void ConstructSimulationScene()
@@ -55,14 +57,17 @@ public class PhysicsSim : MonoBehaviour
         // add player to simulation
         playerCopy = Instantiate(playerPrefab);
         SceneManager.MoveGameObjectToScene(playerCopy.gameObject, simulation);
-        playerCopy.transform.position = player.transform.position;
-        playerCopy.transform.rotation = player.transform.rotation;
-        playerCopy.transform.localScale = player.transform.localScale;
-        playerCopy.transform.parent = sceneHolder.transform;
+        playerCopyTransform = playerCopy.transform;
+        playerCopyTransform.position = player.transform.position;
+        playerCopyTransform.rotation = player.transform.rotation;
+        playerCopyTransform.localScale = player.transform.localScale;
+        playerCopyTransform.parent = sceneHolder.transform;
         playerCopy.name = "Player Copy";
 
-        // disable script
-        playerCopy.GetComponent<Player>().enabled = false;
+        // disable scripts
+        //playerCopy.GetComponent<Player>().enabled = false;
+        Destroy(playerCopy.GetComponent<DControl>());
+        Destroy(playerCopy.GetComponent<Player>());
 
         // cache and set up simulation rigidbody
         playerCopyRb = playerCopy.GetComponent<Rigidbody2D>();

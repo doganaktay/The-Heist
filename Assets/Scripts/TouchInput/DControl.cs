@@ -17,7 +17,6 @@ namespace Archi.Touch
         bool isWalkable, isPlayer;
         Camera cam;
         MazeCell currentCellHit;
-        List<MazeCell> currentPath;
 
         private void Start()
         {
@@ -40,10 +39,14 @@ namespace Archi.Touch
 
         private void FingerTap(DFinger finger)
         {
-            if(finger.index == 0  && CheckFingerPosition(finger))
+            if(finger.index == 0 && CheckFingerPosition(finger))
             {
                 if (isPlayer)
+                {
                     Debug.Log("On player");
+                    if (player.IsMoving)
+                        player.StopGoToDestination();
+                }
                 else
                 {
                     if (finger.tapCount == 1)
@@ -71,12 +74,9 @@ namespace Archi.Touch
                     isPlayer = currentCellHit == player.CurrentPlayerCell;
                     return true;
                 }
-                else
-                {
-                    isWalkable = isPlayer = false;
-                    return false;
-                }
             }
+
+            isWalkable = isPlayer = false;
 
             return false;
         }

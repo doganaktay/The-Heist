@@ -457,7 +457,7 @@ MonoBehaviour:
   simulation: {fileID: 0}
   trajectory: {fileID: 0}
   walkSpeed: 25
-  runSpeed: 100
+  runSpeed: 50
   brakeSpeed: 0.25
   areaIndex: 0
   hitIndexChanged: 0
@@ -470,6 +470,7 @@ MonoBehaviour:
   doubleTapDelay: 0.2
   currentPlayerCell: {fileID: 0}
   lastPlayerCell: {fileID: 0}
+  cam: {fileID: 0}
   spinIncrement: 10
 --- !u!114 &1492204798581725389
 MonoBehaviour:
@@ -501,3 +502,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1c36032a168f7462796ce49283420bcc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  overlapCircleRadius: 3

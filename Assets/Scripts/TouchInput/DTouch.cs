@@ -368,7 +368,7 @@ namespace Archi.Touch
             {
                 var finger = fingers[i];
 
-                if (finger.tap   && OnFingerTap != null) OnFingerTap(finger);
+                if (finger.tap && OnFingerTap != null) OnFingerTap(finger);
                 if (finger.swipe && OnFingerSwipe != null) OnFingerSwipe(finger);
                 if (finger.Down  && OnFingerDown != null) OnFingerDown(finger);
                 if (OnFingerUpdate != null) OnFingerUpdate(finger);

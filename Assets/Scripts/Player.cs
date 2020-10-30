@@ -51,6 +51,7 @@ public class Player : MonoBehaviour
     public MazeCell lastPlayerCell;
     bool touchedPlayer = false;
     bool walkablePosition = false;
+    bool isMoving = false;
     bool aiming = false;
     Vector3 aimTouchPivot;
     Vector3 aimTouchTarget;
@@ -362,6 +363,9 @@ public class Player : MonoBehaviour
 
     void TrackPosition()
     {
+        if (currentAction != null)
+            return;
+
         int hitCount = Physics2D.OverlapCircleNonAlloc(transform.position, 1f, results: posHits, cellLayerMask);
 
         if (hitCount > 0)
@@ -386,13 +390,9 @@ public class Player : MonoBehaviour
         }
     }
 
-    public MazeCell CurrentPlayerCell
-    {
-        get
-        {
-            return currentPlayerCell;
-        }
-    }
+    public MazeCell CurrentPlayerCell { get { return currentPlayerCell; } }
+
+    public bool IsMoving { get { return isMoving; } }
 
     public void Move(MazeCell destination, bool run = false)
     {
@@ -410,23 +410,22 @@ public class Player : MonoBehaviour
         currentAction = StartCoroutine(GoToDestination(path, speed));
     }
 
-    void StopGoToDestination()
+    public void StopGoToDestination()
     {
-        if (moving)
+        if (currentAction != null)
         {
-            moving = false;
-
-            if(currentAction != null)
-                StopCoroutine(currentAction);
+            isMoving = false;
+            StopCoroutine(currentAction);
         }
-        moving = true;
     }
 
     IEnumerator GoToDestination(List<MazeCell> path, float speed)
     {
+        isMoving = true;
+
         // starting at 1 because index 0 is the cell it is already on
         int i = 1;
-        while (i < path.Count && moving)
+        while (i < path.Count)
         {
             nextCell = path[i];
             aim.LookAt2D(nextCell.transform, turnSpeed);
@@ -441,6 +440,6 @@ public class Player : MonoBehaviour
             yield return null;
         }
 
-        moving = false;
+        isMoving = false;
     }
 }
