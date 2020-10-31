@@ -99,6 +99,9 @@ namespace Archi.Touch
             {
                 aimTouchPivot = cam.ScreenToWorldPoint(finger.screenPos);
                 aiming = true;
+
+                if (player.IsMoving)
+                    player.StopGoToDestination();
             }
         }
 
@@ -121,7 +124,7 @@ namespace Archi.Touch
 
         private void FingerUp(DFinger finger)
         {
-            if(finger.index == 1 && DTouch.instances[0].FindFinger(0) == null)
+            if(finger.index == 1)
             {
                 player.ResetTrajectory();
                 aiming = false;
