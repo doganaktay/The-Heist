@@ -458,7 +458,7 @@ namespace Archi.Touch
             return finger;
         }
 
-        private DFinger FindFinger(int index)
+        public DFinger FindFinger(int index)
         {
             for(int i = fingers.Count - 1; i >= 0; i--)
             {
@@ -471,7 +471,7 @@ namespace Archi.Touch
             return null;
         }
 
-        private int FindInactiveFingerIndex(int index)
+        public int FindInactiveFingerIndex(int index)
         {
             for(int i = inactiveFingers.Count - 1; i >= 0; i--)
             {

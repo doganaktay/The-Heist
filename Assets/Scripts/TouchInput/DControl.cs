@@ -7,6 +7,11 @@ namespace Archi.Touch
     [RequireComponent(typeof(Player))]
     public class DControl : MonoBehaviour
     {
+        // this is used so that only the first instance of the object
+        // (in this case the player) registers for events
+        // this is needed to avoid registering w physics sim duplicates
+        static List<DControl> instances = new List<DControl>();
+
         static int cellLayerMask = 1 << 10;
 
         Player player;
@@ -14,9 +19,11 @@ namespace Archi.Touch
         uint colliderBufferCounter = 0;
         [SerializeField]
         float overlapCircleRadius = 1f;
-        bool isWalkable, isPlayer;
+        bool cellIsWalkable, cellIsPlayer;
         Camera cam;
         MazeCell currentCellHit;
+        private Vector3 aimTouchPivot, aimTouchTarget;
+        private bool aiming = false;
 
         private void Start()
         {
@@ -29,33 +36,99 @@ namespace Archi.Touch
 
         private void OnEnable()
         {
-            DTouch.OnFingerTap += FingerTap;
+            instances.Add(this);
+
+            if(instances[0] == this)
+            {
+                DTouch.OnFingerTap += FingerTap;
+                DTouch.OnFingerDown += FingerDown;
+                DTouch.OnFingerUpdate += FingerUpdate;
+                DTouch.OnFingerUp += FingerUp;
+            }
         }
 
         private void OnDisable()
         {
-            DTouch.OnFingerTap -= FingerTap;
+            if(instances[0] == this)
+            {
+                DTouch.OnFingerTap -= FingerTap;
+                DTouch.OnFingerDown -= FingerDown;
+                DTouch.OnFingerUpdate -= FingerUpdate;
+                DTouch.OnFingerUp -= FingerUp;
+            }
+
+            instances.Remove(this);
         }
+
+        #region Finger Handlers
 
         private void FingerTap(DFinger finger)
         {
-            if(finger.index == 0 && CheckFingerPosition(finger))
+            if(finger.index == 0)
             {
-                if (isPlayer)
+                if (DTouch.instances[0].FindFinger(1) == null && cellIsWalkable)
                 {
-                    Debug.Log("On player");
-                    if (player.IsMoving)
-                        player.StopGoToDestination();
+                    if (cellIsPlayer)
+                    {
+                        if (player.IsMoving)
+                            player.StopGoToDestination();
+                    }
+                    else
+                    {
+                        if (finger.tapCount == 1)
+                            player.Move(currentCellHit);
+                        else if (finger.tapCount == 2)
+                            player.Move(currentCellHit, true);
+                    }
                 }
-                else
+                else if (DTouch.instances[0].FindFinger(1) != null)
                 {
-                    if (finger.tapCount == 1)
-                        player.Move(currentCellHit);
-                    else if (finger.tapCount == 2)
-                        player.Move(currentCellHit, true);
+                    player.LaunchProjectile();
                 }
             }
         }
+
+        private void FingerDown(DFinger finger)
+        {
+            if(finger.index == 0)
+            {
+                CheckFingerPosition(finger);
+            }
+
+            if(finger.index == 1 && cellIsPlayer)
+            {
+                aimTouchPivot = cam.ScreenToWorldPoint(finger.screenPos);
+                aiming = true;
+            }
+        }
+
+        private void FingerUpdate(DFinger finger)
+        {
+            if(finger.index == 1 && aiming)
+            {
+                aimTouchTarget = cam.ScreenToWorldPoint(finger.screenPos);
+                Vector2 diff = aimTouchTarget - aimTouchPivot;
+                diff = diff.normalized;
+                float rot = Mathf.Atan2(diff.y, diff.x) * Mathf.Rad2Deg;
+                player.aim.transform.localRotation = Quaternion.Euler(0f, 0f, rot - 90f);
+
+                if((finger.screenPos - finger.lastScreenPos).magnitude > 0.1f || player.lineReset)
+                {
+                    player.SetTrajectory();
+                }
+            }
+        }
+
+        private void FingerUp(DFinger finger)
+        {
+            if(finger.index == 1 && DTouch.instances[0].FindFinger(0) == null)
+            {
+                player.ResetTrajectory();
+                aiming = false;
+            }
+        }
+
+        #endregion Finger Handlers
 
         private bool CheckFingerPosition(DFinger finger)
         {
@@ -70,13 +143,13 @@ namespace Archi.Touch
 
                 if (currentCellHit.IsWalkable())
                 {
-                    isWalkable = true;
-                    isPlayer = currentCellHit == player.CurrentPlayerCell;
+                    cellIsWalkable = true;
+                    cellIsPlayer = currentCellHit == player.CurrentPlayerCell;
                     return true;
                 }
             }
 
-            isWalkable = isPlayer = false;
+            cellIsWalkable = cellIsPlayer = false;
 
             return false;
         }

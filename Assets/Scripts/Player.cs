@@ -61,11 +61,11 @@ public class Player : MonoBehaviour
     public static event Action MazeChange;
 
     public Camera cam;
-    Transform aim;
+    public Transform aim;
     Vector2 mousePos;
     Vector2 lastMousePos;
     Vector3 lastPos;
-    Vector3 aimUp;
+    public Vector3 aimUp;
     float spinAmount = 0;
     public float spinIncrement = 1;
     float lastSpinAmount;
@@ -73,9 +73,8 @@ public class Player : MonoBehaviour
     Touch[] touches;
 
     // input variables
-    bool canDrawTrajectory = false;
-
-    bool lineReset = true;
+    public bool canDrawTrajectory = false;
+    public bool lineReset = true;
 
     private void Start()
     {
@@ -280,6 +279,24 @@ public class Player : MonoBehaviour
         }
     }
 
+    public void SetTrajectory()
+    {
+        lineReset = false;
+        projectileSelector.selectionChanged = false;
+        lastMousePos = mousePos;
+        lastPos = transform.position;
+        lastSpinAmount = spinAmount;
+        aimUp = aim.transform.up;
+
+        canDrawTrajectory = true;
+    }
+
+    public void ResetTrajectory()
+    {
+        trajectory.sharedMesh.Clear();
+        lineReset = true;
+    }
+
     void LateUpdate()
     {
         if (canDrawTrajectory)
@@ -289,7 +306,7 @@ public class Player : MonoBehaviour
         }
     }
 
-    void LaunchProjectile()
+    public void LaunchProjectile()
     {
         var proj = Instantiate(projectilePrefab, transform.position + aimUp * (transform.localScale.x / 2f * 1.1f + projectileSelector.currentProjectile.width / 2f),
             Quaternion.identity);
