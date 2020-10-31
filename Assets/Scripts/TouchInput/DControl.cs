@@ -133,6 +133,8 @@ namespace Archi.Touch
 
         #endregion Finger Handlers
 
+        #region Utilities
+
         private bool CheckFingerPosition(DFinger finger)
         {
             return CheckFingerPosition(finger.screenPos, overlapCircleRadius, GetColliderBuffer(), cellLayerMask);
@@ -170,5 +172,7 @@ namespace Archi.Touch
 
             return buffer;
         }
+
+        #endregion Utilities
     }
 }

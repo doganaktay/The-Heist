@@ -16,6 +16,10 @@ public class Patrol : MonoBehaviour
     [SerializeField]
     float turnSpeed = 1f;
     [SerializeField]
+    float minLookSpeed = 2f;
+    [SerializeField]
+    float maxLookSpeed = 10f;
+    [SerializeField]
     float bufferDistance = 0.01f;
     [SerializeField]
     float minWaitTime = 1f;
@@ -66,20 +70,32 @@ public class Patrol : MonoBehaviour
         }
 
         var waitTime = Random.Range(minWaitTime, maxWaitTime);
-        var randomRot = Quaternion.Euler(new Vector3(0f, 0f, Random.Range(-180f, 180f)));
+        var randomRot = Quaternion.Euler(new Vector3(0f, 0f, Random.Range(25f, 180f) * Mathf.Sign(Random.Range(-1f, 1f))));
+        var currentRot = transform.rotation;
+        var targetRot = randomRot * currentRot;
+        var lookSpeed = Random.Range(minLookSpeed, maxLookSpeed);
+        var lookCurrent = 0f;
 
         while(waitTime > 0)
         {
-            transform.rotation = Quaternion.Slerp(transform.rotation, randomRot * transform.rotation, turnSpeed * Time.deltaTime);
+            lookCurrent += Time.deltaTime;
+            var ratio = lookCurrent / lookSpeed;
+            var t = ratio < 1f ? ratio : 1f;
 
-            if(transform.rotation == randomRot * transform.rotation)
-                randomRot = Quaternion.Euler(new Vector3(0f, 0f, Random.Range(-180f, 180f)));
+            transform.rotation = Quaternion.Slerp(currentRot, targetRot, t);
+
+            if (transform.rotation == targetRot)
+            {
+                currentRot = transform.rotation;
+                randomRot = Quaternion.Euler(new Vector3(0f, 0f, Random.Range(25f, 180f) * Mathf.Sign(Random.Range(-1f, 1f))));
+                targetRot = randomRot * currentRot;
+                lookSpeed = Random.Range(minLookSpeed, maxLookSpeed);
+                lookCurrent = 0f;
+            }
 
             waitTime -= Time.deltaTime;
             yield return null;
         }
-
-        //yield return new WaitForSeconds(Random.Range(0f, maxWaitTime));
 
         patrolling = false;
     }

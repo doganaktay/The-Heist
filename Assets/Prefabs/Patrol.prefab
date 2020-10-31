@@ -50,12 +50,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   pathfinder: {fileID: 0}
   body: {fileID: 5833953138234766926}
-  minSpeed: 2
+  minSpeed: 8
   maxSpeed: 20
-  turnSpeed: 0.5
+  turnSpeed: 0.6
+  minLookSpeed: 0.5
+  maxLookSpeed: 2
   bufferDistance: 0.01
-  minWaitTime: 2
-  maxWaitTime: 5
+  minWaitTime: 5
+  maxWaitTime: 10
   currentCell: {fileID: 0}
 --- !u!212 &4575945924325056854
 SpriteRenderer:

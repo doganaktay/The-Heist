@@ -29,7 +29,6 @@ public class Player : MonoBehaviour
     RaycastHit2D[] rayHits;
     // mask currently includes walls, placements and player
     static int projectileLayerMask = 1 << 9 | 1<<8 | 1<<13;
-    static int wallLayerMask = 1 << 9;
     static int cellLayerMask = 1 << 10;
 
     bool isMoving = false;
