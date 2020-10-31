@@ -36,6 +36,7 @@ public class Patrol : MonoBehaviour
     {
         speed = Random.Range(minSpeed, maxSpeed);
         patrolPath = pathfinder.GetRandomAStarPath(currentCell);
+        transform.LookAt2D(patrolPath[1].transform);
         patrol = StartCoroutine(DoPatrol(patrolPath));
     }
 
@@ -54,7 +55,8 @@ public class Patrol : MonoBehaviour
 
         // starting at 1 because index 0 is the cell it is already on
         int i = 1;
-        while(i < path.Count)
+
+        while (i < path.Count)
         {
             nextCell = path[i];
             transform.LookAt2D(nextCell.transform, turnSpeed);
@@ -79,7 +81,7 @@ public class Patrol : MonoBehaviour
         while(waitTime > 0)
         {
             lookCurrent += Time.deltaTime;
-            var ratio = lookCurrent / lookSpeed;
+            var ratio = lookCurrent / lookSpeed * (180f / randomRot.eulerAngles.z);
             var t = ratio < 1f ? ratio : 1f;
 
             transform.rotation = Quaternion.Slerp(currentRot, targetRot, t);

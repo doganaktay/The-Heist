@@ -68,6 +68,11 @@ public static class Extensions
         transform.up = Vector2.Lerp(transform.up, target.position - transform.position, turnSpeed * Time.deltaTime);
     }
 
+    public static void LookAt2D(this Transform transform, Transform target)
+    {
+        transform.up = (Vector2)(target.position - transform.position);
+    }
+
     public static bool IsWalkable(this MazeCell cell)
     {
         return cell.state < 2;
