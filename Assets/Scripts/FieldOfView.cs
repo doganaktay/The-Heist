@@ -6,7 +6,6 @@ using System.Collections.Generic;
 
 public class FieldOfView : MonoBehaviour
 {
-
 	public float viewRadius;
 	[Range(0, 360)]
 	public float viewAngle;
@@ -58,7 +57,13 @@ public class FieldOfView : MonoBehaviour
 		}
 	}
 
-	void LateUpdate()
+    private void Update()
+    {
+		if (CanSeePlayer())
+			Debug.Log(transform.parent.gameObject.name + " can see the player!");
+    }
+
+    private void LateUpdate()
 	{
 		if (canDraw)
 		{
@@ -72,7 +77,7 @@ public class FieldOfView : MonoBehaviour
 		}
 	}
 
-	void FindVisibleTargets()
+	private void FindVisibleTargets()
 	{
 		visibleTargets.Clear();
 		var count = Physics2D.OverlapCircleNonAlloc(transform.position, viewRadius, hits, targetMask);
@@ -91,6 +96,14 @@ public class FieldOfView : MonoBehaviour
 			}
 		}
 	}
+
+	private bool CanSeePlayer()
+    {
+		if (visibleTargets.Contains(GameManager.player.transform))
+			return true;
+
+		return false;
+    }
 
 	void DrawFieldOfView()
 	{

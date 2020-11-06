@@ -1088,7 +1088,6 @@ MonoBehaviour:
   textOverlay: {fileID: 595692259}
   playerPrefab: {fileID: 7925979547997160563, guid: b27354f4f377042c1953090e61a0d611,
     type: 3}
-  player: {fileID: 0}
   aiPrefab: {fileID: 5284805516819639901, guid: d8a48d35a40914c3b9f9d1fa4319cdba,
     type: 3}
   ai: {fileID: 0}

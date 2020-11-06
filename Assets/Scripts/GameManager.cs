@@ -16,7 +16,7 @@ public class GameManager : MonoBehaviour
 	public PatrolManager patrolManager;
 	public TextOverlay textOverlay;
 	public Player playerPrefab;
-	public Player player;
+	public static Player player;
 	public PathFollow aiPrefab;
 	public PathFollow ai;
 	public Maze mazePrefab;
