@@ -464,14 +464,14 @@ MonoBehaviour:
   cellState: 0
   cellChanged: 0
   maze: {fileID: 0}
-  touchMask:
-    serializedVersion: 2
-    m_Bits: 1024
-  doubleTapDelay: 0.2
   currentPlayerCell: {fileID: 0}
   lastPlayerCell: {fileID: 0}
   cam: {fileID: 0}
+  aim: {fileID: 0}
+  aimUp: {x: 0, y: 0, z: 0}
   spinIncrement: 10
+  canDrawTrajectory: 0
+  lineReset: 1
 --- !u!114 &1492204798581725389
 MonoBehaviour:
   m_ObjectHideFlags: 0

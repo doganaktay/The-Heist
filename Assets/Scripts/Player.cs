@@ -8,6 +8,7 @@ public class Player : MonoBehaviour
 {
     public Projectile projectilePrefab;
     ProjectileSelector projectileSelector; // selects current projectile from an array of SOs
+    public TouchUI touchUI;
     public Pathfinder pathfinder;
     public PhysicsSim simulation;
     public Trajectory trajectory;
@@ -17,7 +18,6 @@ public class Player : MonoBehaviour
     [Range(0.001f, 0.999f)]
     public float brakeSpeed = 0.1f;
     public int areaIndex = 0;
-    int lastAreaIndex;
     public bool hitIndexChanged = false;
     public int cellState;
     
@@ -96,6 +96,22 @@ public class Player : MonoBehaviour
         canDrawTrajectory = false;
         trajectory.sharedMesh.Clear();
         lineReset = true;
+
+        // reset touchUI canvas draw
+        touchUI.ShowAim = false;
+    }
+
+    public void DrawAimUI(Vector3 aimPos, bool isCenter = true)
+    {
+        if (isCenter)
+        {
+            touchUI.AimCenter = touchUI.AimPos = aimPos;
+            touchUI.ShowAim = true;
+        }
+        else
+        {
+            touchUI.AimPos = aimPos;
+        }
     }
 
 
@@ -166,6 +182,8 @@ public class Player : MonoBehaviour
             RestartGoToDestination(currentPath, walkSpeed);
         else
             RestartGoToDestination(currentPath, runSpeed);
+
+        touchUI.TouchPoint(destination.transform.position);
     }
 
     void RestartGoToDestination(List<MazeCell> path, float speed)

@@ -102,6 +102,8 @@ namespace Archi.Touch
 
                 if (player.IsMoving)
                     player.StopGoToDestination();
+
+                player.DrawAimUI(aimTouchPivot);
             }
         }
 
@@ -119,6 +121,8 @@ namespace Archi.Touch
                 {
                     player.SetTrajectory();
                 }
+
+                player.DrawAimUI(aimTouchTarget, false);
             }
         }
 

@@ -3,10 +3,9 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-using TMPro;
-
 public class GameManager : MonoBehaviour
 {
+	public TouchUI touchUI;
 	public Trajectory trajectory;
 	public PhysicsSim physicsSim;
 	public Lights lights;
@@ -79,6 +78,7 @@ public class GameManager : MonoBehaviour
 		player.pathfinder = pathfinder;
 		player.simulation = physicsSim;
 		player.trajectory = trajectory;
+		player.touchUI = touchUI;
 
 		// pass another reference to pathfinder
 		pathfinder.player = player;
