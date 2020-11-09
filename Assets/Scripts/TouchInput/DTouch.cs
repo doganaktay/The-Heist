@@ -140,9 +140,19 @@ namespace Archi.Touch
             return 1f - Mathf.Exp(-dampening * deltaTime);
         }
 
+        public static bool PointOverGUI(DFinger finger)
+        {
+            return PointOverGUI(finger.screenPos);
+        }
+
         public static bool PointOverGUI(Vector2 screenPos)
         {
             return RaycastGUI(screenPos).Count > 0;
+        }
+
+        public static List<RaycastResult> RaycastGUI(DFinger finger)
+        {
+            return RaycastGUI(finger.screenPos);
         }
 
         public static List<RaycastResult> RaycastGUI(Vector2 screenPos)

@@ -6,20 +6,25 @@ using UnityEngine.UI;
 public class TouchUI : MonoBehaviour
 {
     [SerializeField]
-    CanvasGroup touchPoint, touchAim;
+    CanvasGroup touchPoint, touchAim, touchPlace;
     [SerializeField]
     float touchTime = 0.5f;
     [SerializeField]
     float aimClampDistance = 10f;
+    [SerializeField]
+    float placementUIDistance = 10f;
 
     Camera cam;
     Coroutine fade;
 
-    private bool showAim = false;
-    public bool ShowAim { get { return showAim; }  set { showAim = value; } }
+    public bool ShowAimUI { get; set; }
     private Vector3 aimCenter, aimPos;
     public Vector3 AimCenter { get { return aimCenter; } set { aimCenter = value; } }
     public Vector3 AimPos { get { return aimPos; } set { aimPos = value; } }
+    public bool ShowPlacementUI { get; set; }
+    private Vector2 placementPos;
+    public Vector2 PlacementPos { get { return placementPos; } set { placementPos = value; } }
+    bool placementUISet = false;
 
     private void Awake()
     {
@@ -28,7 +33,7 @@ public class TouchUI : MonoBehaviour
 
     private void Update()
     {
-        if (showAim)
+        if (ShowAimUI)
         {
             Vector2 aimCenter = cam.WorldToScreenPoint(this.aimCenter);
             Vector2 aimPos = cam.WorldToScreenPoint(this.aimPos);
@@ -40,6 +45,28 @@ public class TouchUI : MonoBehaviour
         {
             touchAim.alpha = 0;
         }
+
+        if (ShowPlacementUI)
+        {
+            if (!placementUISet)
+            {
+                touchPlace.transform.position = DeterminePlacementUIPos(placementPos);
+                placementUISet = true;
+            }
+
+            touchPlace.alpha = 1f;
+        }
+        else
+        {
+            placementUISet = false;
+            touchPlace.alpha = 0;
+        }
+    }
+
+    private Vector2 DeterminePlacementUIPos(Vector2 point)
+    {
+        var displacement = (Vector2.up * placementUIDistance);
+        return (point + displacement * 1.5f).y < Screen.height ? point + displacement : point - displacement;
     }
 
     public void TouchPoint(Vector3 point)

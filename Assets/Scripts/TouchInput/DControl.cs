@@ -95,7 +95,7 @@ namespace Archi.Touch
                 CheckFingerPosition(finger);
             }
 
-            if(finger.index == 1 && cellIsPlayer)
+            else if(finger.index == 1 && cellIsPlayer)
             {
                 aimTouchPivot = cam.ScreenToWorldPoint(finger.screenPos);
                 aiming = true;
@@ -103,13 +103,18 @@ namespace Archi.Touch
                 if (player.IsMoving)
                     player.StopGoToDestination();
 
-                player.DrawAimUI(aimTouchPivot);
+                DrawAimUI(aimTouchPivot);
             }
         }
 
         private void FingerUpdate(DFinger finger)
         {
-            if(finger.index == 1 && aiming)
+            if(finger.index == 0 && cellIsWalkable && finger.tapCount == 0 && finger.age > 0.5f)
+            {
+                DrawPlacementUI(finger.screenPos);
+            }
+
+            else if(finger.index == 1 && aiming)
             {
                 aimTouchTarget = cam.ScreenToWorldPoint(finger.screenPos);
                 Vector2 diff = aimTouchTarget - aimTouchPivot;
@@ -122,20 +127,59 @@ namespace Archi.Touch
                     player.SetTrajectory();
                 }
 
-                player.DrawAimUI(aimTouchTarget, false);
+                DrawAimUI(aimTouchTarget, false);
             }
         }
 
         private void FingerUp(DFinger finger)
         {
-            if(finger.index == 1)
+            if (finger.index == 0 && player.touchUI.ShowPlacementUI)
+            {
+                var guiList = DTouch.RaycastGUI(finger);
+
+                if(guiList.Count > 0)
+                {
+                    foreach(var item in guiList)
+                    {
+                        Debug.Log(item.gameObject.name);
+                    }
+                }
+
+                player.touchUI.ShowPlacementUI = false;
+            }
+
+            else if (finger.index == 1)
             {
                 player.ResetTrajectory();
+                player.touchUI.ShowAimUI = false;
                 aiming = false;
             }
         }
 
         #endregion Finger Handlers
+
+        #region UI Methods
+
+        public void DrawAimUI(Vector3 aimPos, bool isCenter = true)
+        {
+            if (isCenter)
+            {
+                player.touchUI.AimCenter = player.touchUI.AimPos = aimPos;
+                player.touchUI.ShowAimUI = true;
+            }
+            else
+            {
+                player.touchUI.AimPos = aimPos;
+            }
+        }
+
+        public void DrawPlacementUI(Vector2 placementPos)
+        {
+            player.touchUI.PlacementPos = placementPos;
+            player.touchUI.ShowPlacementUI = true;
+        }
+
+        #endregion UI Methods
 
         #region Utilities
 

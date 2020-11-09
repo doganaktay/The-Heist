@@ -96,24 +96,7 @@ public class Player : MonoBehaviour
         canDrawTrajectory = false;
         trajectory.sharedMesh.Clear();
         lineReset = true;
-
-        // reset touchUI canvas draw
-        touchUI.ShowAim = false;
     }
-
-    public void DrawAimUI(Vector3 aimPos, bool isCenter = true)
-    {
-        if (isCenter)
-        {
-            touchUI.AimCenter = touchUI.AimPos = aimPos;
-            touchUI.ShowAim = true;
-        }
-        else
-        {
-            touchUI.AimPos = aimPos;
-        }
-    }
-
 
     public void LaunchProjectile()
     {
