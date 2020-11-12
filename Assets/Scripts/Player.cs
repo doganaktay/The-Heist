@@ -6,8 +6,12 @@ using UnityEngine;
 [RequireComponent(typeof(ProjectileSelector))]
 public class Player : MonoBehaviour
 {
+    // physics sim creates a copy so we need to keep track of instance count to determine signing up for events
+    public static List<Player> instances = new List<Player>();
+
     public Projectile projectilePrefab;
     ProjectileSelector projectileSelector; // selects current projectile from an array of SOs
+    public SoundBomb soundBombPrefab;
     public TouchUI touchUI;
     public Pathfinder pathfinder;
     public PhysicsSim simulation;
@@ -54,6 +58,8 @@ public class Player : MonoBehaviour
     public bool canDrawTrajectory = false;
     public bool lineReset = true;
 
+    #region MonoBehaviour
+
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -64,6 +70,13 @@ public class Player : MonoBehaviour
         aim = transform.GetChild(0).transform;
 
         projectileSelector = GetComponent<ProjectileSelector>();
+
+        // doing event subscription in start because reference is not available when OnEnable is called
+        instances.Add(this);
+        if (instances.Count > 0 && instances[0] == this)
+        {
+            touchUI.PlaceObject += PlaceObject;
+        }
     }
 
     void Update()
@@ -79,6 +92,31 @@ public class Player : MonoBehaviour
             canDrawTrajectory = false;
         }
     }
+
+    //private void OnEnable()
+    //{
+    //    instances.Add(this);
+
+    //    if(instances[0] == this)
+    //    {
+    //        touchUI.PlaceObject += PlaceObject;
+    //    }
+    //}
+
+    private void OnDisable()
+    {
+        if(instances.Count > 0 && instances[0] == this)
+        {
+            touchUI.PlaceObject -= PlaceObject;
+        }
+
+        if(instances.Contains(this))
+            instances.Remove(this);
+    }
+
+    #endregion MonoBehaviour
+
+    #region Projectile
 
     public void SetTrajectory()
     {
@@ -123,6 +161,25 @@ public class Player : MonoBehaviour
 
         trajectory.DrawTrajectory();
     }
+
+    #endregion Projectile
+
+    #region Object Placement
+
+    public void PlaceObject(PlacementObjectType placementObjectType)
+    {
+        switch (placementObjectType)
+        {
+            case PlacementObjectType.SoundBomb:
+                {
+                    Instantiate(soundBombPrefab, currentPlayerCell.transform.position, Quaternion.identity);
+                    currentPlayerCell.PlaceItem(soundBombPrefab);
+                }
+                break;
+        }
+    }
+
+    #endregion Object Placement
 
     void TrackPosition()
     {

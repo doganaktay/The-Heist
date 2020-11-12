@@ -109,9 +109,14 @@ namespace Archi.Touch
 
         private void FingerUpdate(DFinger finger)
         {
-            if(finger.index == 0 && cellIsWalkable && finger.tapCount == 0 && finger.age > 0.5f)
+            if(finger.index == 0 && !aiming && cellIsPlayer && finger.age > 0.5f)
             {
-                DrawPlacementUI(finger.screenPos);
+                DrawRadialUI(player.CurrentPlayerCell.transform.position);
+            }
+
+            else if(finger.index == 0 && aiming)
+            {
+                player.touchUI.ShowInputUI = false;
             }
 
             else if(finger.index == 1 && aiming)
@@ -133,19 +138,20 @@ namespace Archi.Touch
 
         private void FingerUp(DFinger finger)
         {
-            if (finger.index == 0 && player.touchUI.ShowPlacementUI)
+            if (finger.index == 0 && player.touchUI.ShowInputUI)
             {
                 var guiList = DTouch.RaycastGUI(finger);
 
-                if(guiList.Count > 0)
+                foreach(var item in guiList)
                 {
-                    foreach(var item in guiList)
+                    if(item.gameObject.TryGetComponent(out UIButton button))
                     {
-                        Debug.Log(item.gameObject.name);
+                        button.PlaceObject();
+                        break;
                     }
                 }
 
-                player.touchUI.ShowPlacementUI = false;
+                player.touchUI.ShowInputUI = false;
             }
 
             else if (finger.index == 1)
@@ -173,10 +179,10 @@ namespace Archi.Touch
             }
         }
 
-        public void DrawPlacementUI(Vector2 placementPos)
+        public void DrawRadialUI(Vector2 placementPos)
         {
-            player.touchUI.PlacementPos = placementPos;
-            player.touchUI.ShowPlacementUI = true;
+            player.touchUI.InputUIPos = placementPos;
+            player.touchUI.ShowInputUI = true;
         }
 
         #endregion UI Methods

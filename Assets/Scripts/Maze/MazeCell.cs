@@ -33,6 +33,10 @@ public class MazeCell : FastPriorityQueueNode
 	// for A*
 	public int travelCost;
 
+	private PlaceableItem placedItem;
+	public PlaceableItem PlacedItem { get => placedItem; set => placedItem = value; }
+	public bool HasItem { get; set; }
+
 	private MazeCellEdge[] edges = new MazeCellEdge[MazeDirections.Count];
 
     void Awake()
@@ -91,5 +95,17 @@ public class MazeCell : FastPriorityQueueNode
 	public HashSet<MazeCell> GetNeighbours()
     {
 		return connectedCells;
+    }
+
+	public void PlaceItem(PlaceableItem item)
+    {
+		placedItem = item;
+		HasItem = true;
+    }
+
+	public void RemoveItem()
+    {
+		placedItem = null;
+		HasItem = false;
     }
 }

@@ -1,18 +1,24 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+public enum PlacementObjectType
+{
+    SoundBomb
+}
+
 public class TouchUI : MonoBehaviour
 {
     [SerializeField]
-    CanvasGroup touchPoint, touchAim, touchPlace;
+    CanvasGroup touchPoint, touchAim;
+    [SerializeField]
+    RadialMenuUI radialMenu;
     [SerializeField]
     float touchTime = 0.5f;
     [SerializeField]
     float aimClampDistance = 10f;
-    [SerializeField]
-    float placementUIDistance = 10f;
 
     Camera cam;
     Coroutine fade;
@@ -21,10 +27,12 @@ public class TouchUI : MonoBehaviour
     private Vector3 aimCenter, aimPos;
     public Vector3 AimCenter { get { return aimCenter; } set { aimCenter = value; } }
     public Vector3 AimPos { get { return aimPos; } set { aimPos = value; } }
-    public bool ShowPlacementUI { get; set; }
-    private Vector2 placementPos;
-    public Vector2 PlacementPos { get { return placementPos; } set { placementPos = value; } }
-    bool placementUISet = false;
+    public bool ShowInputUI { get; set; }
+    private Vector2 inputUIPos;
+    public Vector2 InputUIPos { get { return inputUIPos; } set { inputUIPos = value; } }
+    bool inputUISet = false;
+
+    public Action<PlacementObjectType> PlaceObject;
 
     private void Awake()
     {
@@ -46,27 +54,24 @@ public class TouchUI : MonoBehaviour
             touchAim.alpha = 0;
         }
 
-        if (ShowPlacementUI)
+        if (ShowInputUI)
         {
-            if (!placementUISet)
+            if (!inputUISet)
             {
-                touchPlace.transform.position = DeterminePlacementUIPos(placementPos);
-                placementUISet = true;
+                radialMenu.ShowRadialMenu(inputUIPos);
+                inputUISet = true;
             }
-
-            touchPlace.alpha = 1f;
         }
         else
         {
-            placementUISet = false;
-            touchPlace.alpha = 0;
+            radialMenu.HideRadialMenu();
+            inputUISet = false;
         }
     }
 
-    private Vector2 DeterminePlacementUIPos(Vector2 point)
+    public void CallPlaceObject(PlacementObjectType type)
     {
-        var displacement = (Vector2.up * placementUIDistance);
-        return (point + displacement * 1.5f).y < Screen.height ? point + displacement : point - displacement;
+        PlaceObject(type);
     }
 
     public void TouchPoint(Vector3 point)

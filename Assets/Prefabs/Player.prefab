@@ -453,6 +453,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   projectilePrefab: {fileID: 372506298171578869, guid: 3f7dd9ebfb0ea4133bfb93dfe5f47185,
     type: 3}
+  soundBombPrefab: {fileID: -8828769137660388836, guid: a36dba4683cd143d7a515737ecccc028,
+    type: 3}
+  touchUI: {fileID: 0}
   pathfinder: {fileID: 0}
   simulation: {fileID: 0}
   trajectory: {fileID: 0}

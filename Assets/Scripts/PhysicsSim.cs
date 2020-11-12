@@ -54,8 +54,13 @@ public class PhysicsSim : MonoBehaviour
         sceneHolder.name = "Holder";
         SceneManager.MoveGameObjectToScene(sceneHolder, simulation);
 
-        // add player to simulation
         playerCopy = Instantiate(playerPrefab);
+
+        // disable scripts
+        Destroy(playerCopy.GetComponent<DControl>());
+        Destroy(playerCopy.GetComponent<Player>());
+
+        // add player to simulation
         SceneManager.MoveGameObjectToScene(playerCopy.gameObject, simulation);
         playerCopyTransform = playerCopy.transform;
         playerCopyTransform.position = player.transform.position;
@@ -63,11 +68,6 @@ public class PhysicsSim : MonoBehaviour
         playerCopyTransform.localScale = player.transform.localScale;
         playerCopyTransform.parent = sceneHolder.transform;
         playerCopy.name = "Player Copy";
-
-        // disable scripts
-        //playerCopy.GetComponent<Player>().enabled = false;
-        Destroy(playerCopy.GetComponent<DControl>());
-        Destroy(playerCopy.GetComponent<Player>());
 
         // cache and set up simulation rigidbody
         playerCopyRb = playerCopy.GetComponent<Rigidbody2D>();
