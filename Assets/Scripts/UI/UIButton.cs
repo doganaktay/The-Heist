@@ -1,13 +1,16 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public class UIButton : MonoBehaviour
 {
     TouchUI touchUI;
     [SerializeField]
     PlacementObjectType type;
+    public Image buttonRadial;
+    public Image buttonMask;
+    public RectTransform buttonIcon;
 
     private void Awake()
     {

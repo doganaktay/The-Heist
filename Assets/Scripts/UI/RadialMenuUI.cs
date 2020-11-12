@@ -7,37 +7,37 @@ public class RadialMenuUI : MonoBehaviour
 {
     CanvasGroup menuCanvas;
     [SerializeField]
-    Image radialBackground;
-    [SerializeField]
-    Image radialBackgroundMask;
-    [SerializeField]
     float maxSpreadAngle = 360f;
+    [SerializeField]
+    float angleOffset = 10f;
     [SerializeField]
     float radius = 100f;
     [SerializeField]
-    float uiRingBuffer = 20f;
+    float ringOuterBuffer = 20f;
+    [SerializeField]
+    float ringInnerBuffer = 50f;
+    [SerializeField]
+    float buttonSize = 100f;
 
     Camera cam;
-    float halfButtonHeight;
+
+    List<UIButton> buttons = new List<UIButton>();
 
     private void Awake()
     {
         menuCanvas = GetComponent<CanvasGroup>();
         cam = Camera.main;
 
-        float halfButtonHeight = transform.GetChild(1).GetComponent<RectTransform>().rect.height;
+        for(int i = 0; i < transform.childCount; i++)
+        {
+            var button = transform.GetChild(i).GetComponent<UIButton>();
+            buttons.Add(button);
 
-        Rect radialRect = radialBackground.GetComponent<RectTransform>().rect;
-        radialRect.height = radialRect.width = radialRect.height + radius;
-
-        float newOuterSize = radialRect.height + radius + uiRingBuffer;
-        radialBackground.GetComponent<RectTransform>().sizeDelta =
-            new Vector2(newOuterSize, newOuterSize);
-        float newInnerSize = radialRect.height + radius - halfButtonHeight * 2f - uiRingBuffer;
-        radialBackgroundMask.GetComponent<RectTransform>().sizeDelta =
-            new Vector2(newInnerSize, newInnerSize);
-
-        radialBackground.fillAmount = (maxSpreadAngle / 360f);
+            float newOuterSize = radius + buttonSize / 2f + ringOuterBuffer;
+            button.buttonRadial.GetComponent<RectTransform>().sizeDelta = new Vector2(newOuterSize, newOuterSize);
+            float newInnerSize = radius - buttonSize / 2f - ringInnerBuffer;
+            button.buttonMask.GetComponent<RectTransform>().sizeDelta = new Vector2(newInnerSize, newInnerSize);
+        }
     }
 
     public void ShowRadialMenu(Vector2 center)
@@ -59,31 +59,22 @@ public class RadialMenuUI : MonoBehaviour
     private void DetermineMenuLayout(Vector2 screenPos)
     {
         float spreadAngle = maxSpreadAngle;
-        float angleOffset = 0f;
+        float perButtonAngle = spreadAngle / transform.childCount;
+        float buttonFillAmount = perButtonAngle / 360f;
 
-        bool firstDirectionBlocked = false;
-
-        if ((screenPos + Vector2.up * (radius + halfButtonHeight)).y > Screen.height)
+        for(int i = 0; i < buttons.Count; i++)
         {
-            angleOffset += 180f;
-            firstDirectionBlocked = true;
-        }
-        else if ((screenPos + Vector2.down * (radius + halfButtonHeight)).y < -Screen.height)
-        {
+            var button = buttons[i];
+            button.buttonRadial.fillAmount = buttonFillAmount;
+            Quaternion rot = button.buttonMask.rectTransform.localRotation;
+            rot.eulerAngles = new Vector3(0f, 0f, -perButtonAngle * i);
+            button.buttonMask.rectTransform.localRotation = rot;
 
-        }
-
-
-        float perButtonAngle = maxSpreadAngle * Mathf.Deg2Rad / (transform.childCount - 2);
-
-        // first child is background image so we skip it
-        for(int i = 1; i < transform.childCount; i++)
-        {
-            var child = transform.GetChild(i);
-            float theta = perButtonAngle * (i - 1);
+            float theta = (perButtonAngle * Mathf.Deg2Rad * (i + 1)) - (perButtonAngle * Mathf.Deg2Rad / 2f);
             float xPos = Mathf.Sin(theta);
             float yPos = Mathf.Cos(theta);
-            transform.GetChild(i).localPosition = new Vector2(xPos, yPos) * radius;
+
+            button.buttonIcon.transform.localPosition = new Vector2(xPos, yPos) * radius;
         }
     }
 }
