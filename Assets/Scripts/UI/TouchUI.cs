@@ -14,7 +14,7 @@ public class TouchUI : MonoBehaviour
     [SerializeField]
     CanvasGroup touchPoint, touchAim;
     [SerializeField]
-    RadialMenuUI radialMenu;
+    RadialMenu radialMenu;
     [SerializeField]
     float touchTime = 0.5f;
     [SerializeField]
@@ -46,7 +46,7 @@ public class TouchUI : MonoBehaviour
             Vector2 aimCenter = cam.WorldToScreenPoint(this.aimCenter);
             Vector2 aimPos = cam.WorldToScreenPoint(this.aimPos);
             Vector2 aimDir = aimPos - aimCenter;
-            touchAim.transform.position = Vector2.ClampMagnitude(aimDir, aimClampDistance) + aimCenter;
+            touchAim.transform.position = aimCenter + Vector2.ClampMagnitude(aimDir, aimClampDistance);
             touchAim.alpha = 1f;
         }
         else
@@ -58,13 +58,19 @@ public class TouchUI : MonoBehaviour
         {
             if (!inputUISet)
             {
-                radialMenu.ShowRadialMenu(inputUIPos);
+                radialMenu.transform.position = inputUIPos;
+                radialMenu.ShowRadialUI();
+                radialMenu.pivotPoint = inputUIPos;
                 inputUISet = true;
+            }
+            else
+            {
+                radialMenu.targetPoint = inputUIPos;
             }
         }
         else
         {
-            radialMenu.HideRadialMenu();
+            radialMenu.HideRadialUI();
             inputUISet = false;
         }
     }

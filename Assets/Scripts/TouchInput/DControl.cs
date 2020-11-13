@@ -111,7 +111,7 @@ namespace Archi.Touch
         {
             if(finger.index == 0 && !aiming && cellIsPlayer && finger.age > 0.5f)
             {
-                DrawRadialUI(player.CurrentPlayerCell.transform.position);
+                DrawRadialUI(finger.screenPos);
             }
 
             else if(finger.index == 0 && aiming)
@@ -140,16 +140,20 @@ namespace Archi.Touch
         {
             if (finger.index == 0 && player.touchUI.ShowInputUI)
             {
-                var guiList = DTouch.RaycastGUI(finger);
+                //var guiList = DTouch.RaycastGUI(finger);
 
-                foreach(var item in guiList)
-                {
-                    if(item.gameObject.TryGetComponent(out UIButton button))
-                    {
-                        button.PlaceObject();
-                        break;
-                    }
-                }
+                //foreach(var item in guiList)
+                //{
+                //    Debug.Log(item.gameObject.name);
+
+                //    var button = item.gameObject.GetComponentInParent<UIButton>();
+
+                //    if(button != null)
+                //    {
+                //        button.PlaceObject();
+                //        break;
+                //    }
+                //}
 
                 player.touchUI.ShowInputUI = false;
             }
