@@ -18,6 +18,7 @@ public class RadialMenu : MonoBehaviour
     [HideInInspector]
     public Vector2 pivotPoint, targetPoint;
     bool isActive = false;
+    bool wasOutOfBounds = false;
     int selectionIndex = -1;
     int lastSelectionIndex = -1;
 
@@ -51,7 +52,6 @@ public class RadialMenu : MonoBehaviour
 
             iconRect.localPosition = new Vector2(xPos, yPos) * (radialRectSize / 3f);
             iconRect.rotation = Quaternion.identity;
-
         }
     }
 
@@ -59,17 +59,28 @@ public class RadialMenu : MonoBehaviour
     {
         if (isActive)
         {
-            Vector2 selectionDirection = (targetPoint - pivotPoint).normalized;
-            float selectionAngle = Mathf.Atan2(selectionDirection.x, selectionDirection.y) * Mathf.Rad2Deg;
+            Vector2 selectionDirection = (targetPoint - pivotPoint);
+            Vector2 selectionDirectionNormalized = selectionDirection.normalized;
+            float selectionAngle = Mathf.Atan2(selectionDirectionNormalized.x, selectionDirectionNormalized.y) * Mathf.Rad2Deg;
             selectionAngle = (selectionAngle + 360f) % 360;
             selectionIndex = (int)(selectionAngle / perItemAngle);
 
-            if(selectionIndex > -1 && selectionIndex < menuItems.Count && selectionIndex != lastSelectionIndex)
+            bool isValidSelection = selectionIndex > -1 && selectionIndex < menuItems.Count
+                                    && (selectionIndex != lastSelectionIndex || wasOutOfBounds);
+
+            bool isInBounds = selectionDirection.sqrMagnitude < (radialRectSize / 2f) * (radialRectSize / 2f)
+                              && selectionDirection.sqrMagnitude > (radialRectSize / 7f) * (radialRectSize / 7f);
+
+
+            if (isValidSelection && isInBounds)
             {
-                if(lastSelectionIndex > -1 && lastSelectionIndex < menuItems.Count)
+                //ResetSelection();
+                if (lastSelectionIndex > -1 && lastSelectionIndex < menuItems.Count)
                     menuItems[lastSelectionIndex].Deselect(baseColor);
 
                 menuItems[selectionIndex].Select(hoverColor);
+
+                wasOutOfBounds = false;
 
                 lastSelectionIndex = selectionIndex;
 
@@ -77,13 +88,28 @@ public class RadialMenu : MonoBehaviour
             }
             else if (selectionIndex >= menuItems.Count && selectionIndex != lastSelectionIndex)
             {
-                menuItems[lastSelectionIndex].Deselect(baseColor);
+                //ResetSelection();
+                if (lastSelectionIndex > -1 && lastSelectionIndex < menuItems.Count)
+                    menuItems[lastSelectionIndex].Deselect(baseColor);
+
                 lastSelectionIndex = selectionIndex;
+
+                Debug.Log("No button at this angle");
+            }
+            else if (!isInBounds && !wasOutOfBounds)
+            {
+                //ResetSelection();
+                if (selectionIndex > -1 && selectionIndex < menuItems.Count)
+                    menuItems[selectionIndex].Deselect(baseColor);
+
+                wasOutOfBounds = true;
+
+                Debug.Log("Finger left button bounds");
             }
 
-            Debug.Log("Selection angle: " + selectionAngle + " Selection index: " + selectionIndex);
+            //Debug.Log("Vector magnitude: " + (targetPoint - pivotPoint).magnitude + " Selection angle: " + selectionAngle + " Selection index: " + selectionIndex);
         }
-        else if (selectionIndex > -1)
+        else if (selectionIndex > -1 && selectionIndex < menuItems.Count)
         {
             menuItems[selectionIndex].Deselect(baseColor);
             selectionIndex = -1;
@@ -101,5 +127,13 @@ public class RadialMenu : MonoBehaviour
     {
         radialCanvasGroup.alpha = 0f;
         isActive = false;
+    }
+
+    private void ResetSelection()
+    {
+        foreach(var item in menuItems)
+        {
+            item.Deselect(baseColor);
+        }
     }
 }
