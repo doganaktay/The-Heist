@@ -8,7 +8,7 @@ public class RadialMenuItem : MonoBehaviour
     public Image radialBackground;
     public Image icon;
 
-    public PlacementObjectType placementType;
+    public ButtonActionType buttonActionType;
 
     public void Select(Color hoverColor)
     {

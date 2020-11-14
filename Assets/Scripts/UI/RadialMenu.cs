@@ -21,9 +21,11 @@ public class RadialMenu : MonoBehaviour
     bool wasOutOfBounds = false;
     int selectionIndex = -1;
     int lastSelectionIndex = -1;
+    TouchUI touchUI;
 
     void Awake()
     {
+        touchUI = GetComponentInParent<TouchUI>();
         radialCanvasGroup = GetComponent<CanvasGroup>();
 
         perItemAngle = maxMenuAngle / transform.childCount;
@@ -74,7 +76,6 @@ public class RadialMenu : MonoBehaviour
 
             if (isValidSelection && isInBounds)
             {
-                //ResetSelection();
                 if (lastSelectionIndex > -1 && lastSelectionIndex < menuItems.Count)
                     menuItems[lastSelectionIndex].Deselect(baseColor);
 
@@ -83,31 +84,21 @@ public class RadialMenu : MonoBehaviour
                 wasOutOfBounds = false;
 
                 lastSelectionIndex = selectionIndex;
-
-                Debug.Log("New selection");
             }
             else if (selectionIndex >= menuItems.Count && selectionIndex != lastSelectionIndex)
             {
-                //ResetSelection();
                 if (lastSelectionIndex > -1 && lastSelectionIndex < menuItems.Count)
                     menuItems[lastSelectionIndex].Deselect(baseColor);
 
                 lastSelectionIndex = selectionIndex;
-
-                Debug.Log("No button at this angle");
             }
             else if (!isInBounds && !wasOutOfBounds)
             {
-                //ResetSelection();
                 if (selectionIndex > -1 && selectionIndex < menuItems.Count)
                     menuItems[selectionIndex].Deselect(baseColor);
 
                 wasOutOfBounds = true;
-
-                Debug.Log("Finger left button bounds");
             }
-
-            //Debug.Log("Vector magnitude: " + (targetPoint - pivotPoint).magnitude + " Selection angle: " + selectionAngle + " Selection index: " + selectionIndex);
         }
         else if (selectionIndex > -1 && selectionIndex < menuItems.Count)
         {
@@ -115,6 +106,11 @@ public class RadialMenu : MonoBehaviour
             selectionIndex = -1;
             lastSelectionIndex = -1;
         }
+    }
+
+    public void PressButton()
+    {
+        touchUI.CallButtonHit(menuItems[selectionIndex].buttonActionType);
     }
 
     public void ShowRadialUI()

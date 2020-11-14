@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public enum PlacementObjectType
+public enum ButtonActionType
 {
     SoundBomb
 }
@@ -32,7 +32,7 @@ public class TouchUI : MonoBehaviour
     public Vector2 InputUIPos { get { return inputUIPos; } set { inputUIPos = value; } }
     bool inputUISet = false;
 
-    public Action<PlacementObjectType> PlaceObject;
+    public Action<ButtonActionType> ButtonAction;
 
     private void Awake()
     {
@@ -75,9 +75,9 @@ public class TouchUI : MonoBehaviour
         }
     }
 
-    public void CallPlaceObject(PlacementObjectType type)
+    public void CallButtonHit(ButtonActionType type)
     {
-        PlaceObject(type);
+        ButtonAction(type);
     }
 
     public void TouchPoint(Vector3 point)

@@ -75,7 +75,7 @@ public class Player : MonoBehaviour
         instances.Add(this);
         if (instances.Count > 0 && instances[0] == this)
         {
-            touchUI.PlaceObject += PlaceObject;
+            touchUI.ButtonAction += PlaceObject;
         }
     }
 
@@ -107,7 +107,7 @@ public class Player : MonoBehaviour
     {
         if(instances.Count > 0 && instances[0] == this)
         {
-            touchUI.PlaceObject -= PlaceObject;
+            touchUI.ButtonAction -= PlaceObject;
         }
 
         if(instances.Contains(this))
@@ -166,11 +166,11 @@ public class Player : MonoBehaviour
 
     #region Object Placement
 
-    public void PlaceObject(PlacementObjectType placementObjectType)
+    public void PlaceObject(ButtonActionType buttonActionType)
     {
-        switch (placementObjectType)
+        switch (buttonActionType)
         {
-            case PlacementObjectType.SoundBomb:
+            case ButtonActionType.SoundBomb:
                 {
                     Instantiate(soundBombPrefab, currentPlayerCell.transform.position, Quaternion.identity);
                     currentPlayerCell.PlaceItem(soundBombPrefab);

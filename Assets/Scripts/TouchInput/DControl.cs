@@ -140,20 +140,18 @@ namespace Archi.Touch
         {
             if (finger.index == 0 && player.touchUI.ShowInputUI)
             {
-                //var guiList = DTouch.RaycastGUI(finger);
+                var guiList = DTouch.RaycastGUI(finger);
 
-                //foreach(var item in guiList)
-                //{
-                //    Debug.Log(item.gameObject.name);
+                foreach (var item in guiList)
+                {
+                    var button = item.gameObject.GetComponentInParent<RadialMenu>();
 
-                //    var button = item.gameObject.GetComponentInParent<UIButton>();
-
-                //    if(button != null)
-                //    {
-                //        button.PlaceObject();
-                //        break;
-                //    }
-                //}
+                    if (button != null)
+                    {
+                        button.PressButton();
+                        break;
+                    }
+                }
 
                 player.touchUI.ShowInputUI = false;
             }
