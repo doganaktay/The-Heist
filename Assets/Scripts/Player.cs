@@ -39,7 +39,7 @@ public class Player : MonoBehaviour
     MazeCell nextCell;
     float turnSpeed = 0.5f;
     float bufferDistance = 0.01f;
-    Coroutine currentAction;
+    Coroutine currentMovement;
     List<MazeCell> currentPath = new List<MazeCell>();
     public MazeCell currentPlayerCell;
     public MazeCell lastPlayerCell;
@@ -58,6 +58,8 @@ public class Player : MonoBehaviour
     public bool canDrawTrajectory = false;
     public bool lineReset = true;
 
+    Coroutine currentTask;
+
     #region MonoBehaviour
 
     private void Start()
@@ -75,7 +77,7 @@ public class Player : MonoBehaviour
         instances.Add(this);
         if (instances.Count > 0 && instances[0] == this)
         {
-            touchUI.ButtonAction += PlaceObject;
+            TouchUI.PlaceOrRemoveItem += PutOrRemoveItem;
         }
     }
 
@@ -93,21 +95,11 @@ public class Player : MonoBehaviour
         }
     }
 
-    //private void OnEnable()
-    //{
-    //    instances.Add(this);
-
-    //    if(instances[0] == this)
-    //    {
-    //        touchUI.PlaceObject += PlaceObject;
-    //    }
-    //}
-
     private void OnDisable()
     {
         if(instances.Count > 0 && instances[0] == this)
         {
-            touchUI.ButtonAction -= PlaceObject;
+            TouchUI.PlaceOrRemoveItem -= PutOrRemoveItem;
         }
 
         if(instances.Contains(this))
@@ -166,25 +158,66 @@ public class Player : MonoBehaviour
 
     #region Object Placement
 
-    public void PlaceObject(ButtonActionType buttonActionType)
+    public void PutOrRemoveItem(PlaceableItemType itemType, MazeCell cell)
     {
-        switch (buttonActionType)
+        if (currentMovement != null)
+            StopCoroutine(currentMovement);
+        if (currentTask != null)
+            StopCoroutine(currentTask);
+
+        switch (itemType)
         {
-            case ButtonActionType.SoundBomb:
+            case PlaceableItemType.SoundBomb:
                 {
-                    Instantiate(soundBombPrefab, currentPlayerCell.transform.position, Quaternion.identity);
-                    currentPlayerCell.PlaceItem(soundBombPrefab);
+                    currentTask = StartCoroutine(ItemTask(PlaceableItemType.SoundBomb, soundBombPrefab, cell));
                 }
                 break;
         }
+    }
+
+    IEnumerator ItemTask(PlaceableItemType itemType, PlaceableItem item, MazeCell targetCell)
+    {
+        if (targetCell != currentPlayerCell)
+        {
+            Move(targetCell);
+        }
+
+        while (isMoving)
+            yield return null;
+
+        PutOrRemove(itemType, item, targetCell);
+    }
+
+    void PutOrRemove(PlaceableItemType type, PlaceableItem item, MazeCell cell)
+    {
+        if (!cell.HasPlacedItem(type))
+        {
+            var go = Instantiate(item, cell.transform.position, Quaternion.identity);
+
+            if (!cell.placedItems.ContainsKey(type))
+                cell.PlaceItem(type, go);
+            else
+                cell.placedItems[type] = go;
+        }
+        else
+        {
+            Destroy(cell.placedItems[type].gameObject);
+            cell.RemoveItem(type);
+        }
+    }
+
+    public void StopTask()
+    {
+        if (currentTask != null)
+            StopCoroutine(currentTask);
     }
 
     #endregion Object Placement
 
     void TrackPosition()
     {
-        if (currentAction != null)
-            return;
+        //if (currentMovement != null)
+        //    return;
 
         int hitCount = Physics2D.OverlapCircleNonAlloc(transform.position, 1f, results: posHits, cellLayerMask);
 
@@ -210,12 +243,15 @@ public class Player : MonoBehaviour
         }
     }
 
-    public MazeCell CurrentPlayerCell { get { return currentPlayerCell; } }
+    #region Movement
 
     public bool IsMoving { get { return isMoving; } }
 
     public void Move(MazeCell destination, bool run = false)
     {
+        if (destination == currentPlayerCell)
+            return;
+
         currentPath = pathfinder.GetAStarPath(currentPlayerCell, destination);
 
         if (!run)
@@ -226,18 +262,20 @@ public class Player : MonoBehaviour
         touchUI.TouchPoint(destination.transform.position);
     }
 
+    
+
     void RestartGoToDestination(List<MazeCell> path, float speed)
     {
         StopGoToDestination();
-        currentAction = StartCoroutine(GoToDestination(path, speed));
+        currentMovement = StartCoroutine(GoToDestination(path, speed));
     }
 
     public void StopGoToDestination()
     {
-        if (currentAction != null)
+        if (currentMovement != null)
         {
             isMoving = false;
-            StopCoroutine(currentAction);
+            StopCoroutine(currentMovement);
         }
     }
 
@@ -246,7 +284,7 @@ public class Player : MonoBehaviour
         isMoving = true;
 
         // starting at 1 because index 0 is the cell it is already on
-        int i = 1;
+        int i = path[0] == currentPlayerCell ? 1 : 0;
         while (i < path.Count)
         {
             nextCell = path[i];
@@ -264,4 +302,6 @@ public class Player : MonoBehaviour
 
         isMoving = false;
     }
+
+    #endregion Movement
 }

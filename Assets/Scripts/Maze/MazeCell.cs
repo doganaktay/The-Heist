@@ -30,12 +30,11 @@ public class MazeCell : FastPriorityQueueNode
 	public int cardinalBits = 0;
 	public int diagonalBits = 0;
 
+	// for keeping track of items placed on cell
+	public Dictionary<PlaceableItemType, PlaceableItem> placedItems = new Dictionary<PlaceableItemType, PlaceableItem>();
+
 	// for A*
 	public int travelCost;
-
-	private PlaceableItem placedItem;
-	public PlaceableItem PlacedItem { get => placedItem; set => placedItem = value; }
-	public bool HasItem { get; set; }
 
 	private MazeCellEdge[] edges = new MazeCellEdge[MazeDirections.Count];
 
@@ -97,15 +96,39 @@ public class MazeCell : FastPriorityQueueNode
 		return connectedCells;
     }
 
-	public void PlaceItem(PlaceableItem item)
+	public void PlaceItem(PlaceableItemType type, PlaceableItem item)
     {
-		placedItem = item;
-		HasItem = true;
+		if (!placedItems.ContainsKey(type))
+			placedItems.Add(type, item);
+		else
+			placedItems[type] = item;
     }
 
-	public void RemoveItem()
+	public void RemoveItem(PlaceableItemType type)
     {
-		placedItem = null;
-		HasItem = false;
+		if (placedItems.ContainsKey(type))
+			placedItems[type] = null;
+		else
+			Debug.Log("Item key not found in cell: " + gameObject.name);
     }
+
+	public bool HasPlacedItem(PlaceableItemType type)
+	{
+		if (placedItems.ContainsKey(type) && placedItems[type])
+			return true;
+
+		return false;
+	}
+
+	public bool HasPlacedItem()
+	{
+		foreach(var item in placedItems.Values)
+        {
+			if (item != null)
+				return true;
+        }
+
+		return false;
+	}
+
 }

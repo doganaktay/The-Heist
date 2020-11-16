@@ -62,12 +62,17 @@ namespace Archi.Touch
 
         #region Finger Handlers
 
+        MazeCell lastCellHit;
+        int tapCount;
+
         private void FingerTap(DFinger finger)
         {
             if(finger.index == 0)
             {
                 if (DTouch.instances[0].FindFinger(1) == null && cellIsWalkable)
                 {
+                    player.StopTask();
+
                     if (cellIsPlayer)
                     {
                         if (player.IsMoving)
@@ -75,9 +80,9 @@ namespace Archi.Touch
                     }
                     else
                     {
-                        if (finger.tapCount == 1)
+                        if (finger.tapCount % 2 == 1)
                             player.Move(currentCellHit);
-                        else if (finger.tapCount == 2)
+                        else
                             player.Move(currentCellHit, true);
                     }
                 }
@@ -93,6 +98,7 @@ namespace Archi.Touch
             if(finger.index == 0)
             {
                 CheckFingerPosition(finger);
+                player.touchUI.SetRadialUIPivot(finger.screenPos);
             }
 
             else if(finger.index == 1 && cellIsPlayer)
@@ -109,7 +115,7 @@ namespace Archi.Touch
 
         private void FingerUpdate(DFinger finger)
         {
-            if(finger.index == 0 && !aiming && cellIsPlayer && finger.age > 0.5f)
+            if(finger.index == 0 && !aiming && finger.age > 0.3f)
             {
                 DrawRadialUI(finger.screenPos);
             }
@@ -183,6 +189,7 @@ namespace Archi.Touch
 
         public void DrawRadialUI(Vector2 placementPos)
         {
+            player.touchUI.CurrentTouchCell = currentCellHit;
             player.touchUI.InputUIPos = placementPos;
             player.touchUI.ShowInputUI = true;
         }
@@ -205,7 +212,7 @@ namespace Archi.Touch
                 if (currentCellHit.IsWalkable())
                 {
                     cellIsWalkable = true;
-                    cellIsPlayer = currentCellHit == player.CurrentPlayerCell;
+                    cellIsPlayer = currentCellHit == player.currentPlayerCell;
                     return true;
                 }
             }

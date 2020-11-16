@@ -67,12 +67,10 @@ public class RadialMenu : MonoBehaviour
             selectionAngle = (selectionAngle + 360f) % 360;
             selectionIndex = (int)(selectionAngle / perItemAngle);
 
-            bool isValidSelection = selectionIndex > -1 && selectionIndex < menuItems.Count
-                                    && (selectionIndex != lastSelectionIndex || wasOutOfBounds);
+            bool isValidSelection = IsValidIndex() && (selectionIndex != lastSelectionIndex || wasOutOfBounds);
 
             bool isInBounds = selectionDirection.sqrMagnitude < (radialRectSize / 2f) * (radialRectSize / 2f)
                               && selectionDirection.sqrMagnitude > (radialRectSize / 7f) * (radialRectSize / 7f);
-
 
             if (isValidSelection && isInBounds)
             {
@@ -110,11 +108,33 @@ public class RadialMenu : MonoBehaviour
 
     public void PressButton()
     {
-        touchUI.CallButtonHit(menuItems[selectionIndex].buttonActionType);
+        if(IsValidIndex())
+            touchUI.CallButtonHit(menuItems[selectionIndex].actionType, menuItems[selectionIndex].itemType);
     }
 
-    public void ShowRadialUI()
+    public void ShowRadialUI(MazeCell cell)
     {
+        if (cell.HasPlacedItem())
+        {
+            foreach(var button in menuItems)
+            {
+                if (button.actionType == ButtonActionType.PlaceObject)
+                    button.ChangeButtonText("-");
+                else if (button.actionType == ButtonActionType.UseObject)
+                    button.gameObject.SetActive(true);
+            }
+        }
+        else
+        {
+            foreach (var button in menuItems)
+            {
+                if (button.actionType == ButtonActionType.PlaceObject)
+                    button.ChangeButtonText("+");
+                else if (button.actionType == ButtonActionType.UseObject)
+                    button.gameObject.SetActive(false);
+            }
+        }
+
         radialCanvasGroup.alpha = 1f;
         isActive = true;
     }
@@ -124,6 +144,8 @@ public class RadialMenu : MonoBehaviour
         radialCanvasGroup.alpha = 0f;
         isActive = false;
     }
+
+    bool IsValidIndex() => selectionIndex > -1 && selectionIndex < menuItems.Count;
 
     private void ResetSelection()
     {

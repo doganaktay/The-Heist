@@ -4,7 +4,10 @@ using UnityEngine;
 
 public class SoundBomb : PlaceableItem
 {
-    
-    
+    public override void UseItem()
+    {
+        Debug.Log("Detonate sound bomb");
+    }
+
 
 }

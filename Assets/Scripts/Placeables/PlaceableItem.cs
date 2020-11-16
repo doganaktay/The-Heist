@@ -2,17 +2,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum PlaceableItemType
+{
+    SoundBomb
+}
+
 public class PlaceableItem : MonoBehaviour
 {
-    
-    void Start()
-    {
-        
-    }
-
-    
-    void Update()
-    {
-        
-    }
+    public virtual void UseItem() { }
 }

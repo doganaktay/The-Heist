@@ -51,7 +51,7 @@ public class AStar
                 if (next.state > 1)
                     continue;
 
-                float newCost = costSoFar[current] + maze.Cost(current, next);
+                float newCost = costSoFar[current] + Heuristic(current, next) + maze.Cost(current, next);
 
                 if (!costSoFar.ContainsKey(next) || newCost < costSoFar[next])
                 {

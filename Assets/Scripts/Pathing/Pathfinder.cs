@@ -85,7 +85,9 @@ public class Pathfinder : MonoBehaviour
 
     public List<MazeCell> GetAStarPath(MazeCell start, MazeCell end)
     {
-        return new List<MazeCell>(aStar.GetPath(start, end));
+        List<MazeCell> path = aStar.GetPath(start, end);
+
+        return path;
     }
 
     // check neighbours for placement
@@ -500,5 +502,34 @@ public class Pathfinder : MonoBehaviour
 
         }
     }
+
+#if UNITY_EDITOR
+    private void OnDrawGizmosSelected()
+    {
+        if (maze != null)
+        {
+            foreach (var cell in maze.cells)
+            {
+                foreach (var connected in cell.connectedCells)
+                {
+                    if (connected.pos.y > cell.pos.y)
+                        Debug.DrawLine(cell.transform.position + Vector3.right * 2f, connected.transform.position + Vector3.right * 2f, Color.green);
+                    else if (connected.pos.y < cell.pos.y)
+                        Debug.DrawLine(cell.transform.position + Vector3.left * 2f, connected.transform.position + Vector3.left * 2f, Color.blue);
+
+                    if (connected.pos.x > cell.pos.x)
+                        Debug.DrawLine(cell.transform.position + Vector3.down * 2f, connected.transform.position + Vector3.down * 2f, Color.cyan);
+                    else if (connected.pos.x < cell.pos.x)
+                        Debug.DrawLine(cell.transform.position + Vector3.up * 2f, connected.transform.position + Vector3.up * 2f, Color.red);
+                }
+
+                //foreach(var placed in cell.placedConnectedCells)
+                //{
+                //    Debug.DrawLine(cell.transform.position, placed.transform.position, Color.red);
+                //}
+            }
+        }
+    }
+#endif
 
 }

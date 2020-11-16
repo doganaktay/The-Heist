@@ -6,7 +6,8 @@ using UnityEngine.UI;
 
 public enum ButtonActionType
 {
-    SoundBomb
+    PlaceObject,
+    UseObject
 }
 
 public class TouchUI : MonoBehaviour
@@ -25,14 +26,17 @@ public class TouchUI : MonoBehaviour
 
     public bool ShowAimUI { get; set; }
     private Vector3 aimCenter, aimPos;
-    public Vector3 AimCenter { get { return aimCenter; } set { aimCenter = value; } }
-    public Vector3 AimPos { get { return aimPos; } set { aimPos = value; } }
+    public Vector3 AimCenter { get => aimCenter; set => aimCenter = value; }
+    public Vector3 AimPos { get => aimPos; set => aimPos = value; }
     public bool ShowInputUI { get; set; }
     private Vector2 inputUIPos;
-    public Vector2 InputUIPos { get { return inputUIPos; } set { inputUIPos = value; } }
+    public Vector2 InputUIPos { get => inputUIPos; set => inputUIPos = value; }
     bool inputUISet = false;
+    private MazeCell currentTouchCell;
+    public MazeCell CurrentTouchCell { get => currentTouchCell; set => currentTouchCell = value; }
 
-    public Action<ButtonActionType> ButtonAction;
+
+    public static Action<PlaceableItemType, MazeCell> PlaceOrRemoveItem;
 
     private void Awake()
     {
@@ -58,9 +62,7 @@ public class TouchUI : MonoBehaviour
         {
             if (!inputUISet)
             {
-                radialMenu.transform.position = inputUIPos;
-                radialMenu.ShowRadialUI();
-                radialMenu.pivotPoint = inputUIPos;
+                radialMenu.ShowRadialUI(currentTouchCell);
                 inputUISet = true;
             }
             else
@@ -68,16 +70,33 @@ public class TouchUI : MonoBehaviour
                 radialMenu.targetPoint = inputUIPos;
             }
         }
-        else
+        else if (inputUISet)
         {
             radialMenu.HideRadialUI();
             inputUISet = false;
         }
     }
 
-    public void CallButtonHit(ButtonActionType type)
+    public void SetRadialUIPivot(Vector2 inputPos)
     {
-        ButtonAction(type);
+        radialMenu.transform.position = inputPos;
+        radialMenu.pivotPoint = inputPos;
+    }
+
+    public void CallButtonHit(ButtonActionType actionType, PlaceableItemType itemType)
+    {
+        if(actionType == ButtonActionType.PlaceObject)
+        {
+            PlaceOrRemoveItem(itemType, currentTouchCell);
+        }
+        else if (actionType == ButtonActionType.UseObject)
+        {
+            if (currentTouchCell.placedItems.ContainsKey(itemType) && currentTouchCell.placedItems[itemType] != null)
+                currentTouchCell.placedItems[itemType].UseItem();
+            else
+                Debug.Log("no item found for use");
+        }
+
     }
 
     public void TouchPoint(Vector3 point)
