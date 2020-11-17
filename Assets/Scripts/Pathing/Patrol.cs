@@ -35,18 +35,24 @@ public class Patrol : MonoBehaviour
     void Start()
     {
         speed = Random.Range(minSpeed, maxSpeed);
-        patrolPath = pathfinder.GetRandomAStarPath(currentCell);
-        transform.LookAt2D(patrolPath[1].transform);
-        patrol = StartCoroutine(DoPatrol(patrolPath));
+        PathRequestManager.RequestPath(new PathRequest(OnPathFound, currentCell));
     }
 
     void Update()
     {
         if (!patrolling)
         {
-            patrolPath = pathfinder.GetRandomAStarPath(currentCell);
-            patrol = StartCoroutine(DoPatrol(patrolPath));
+            PathRequestManager.RequestPath(new PathRequest(OnPathFound, currentCell));
         }
+    }
+
+    public void OnPathFound(List<MazeCell> path)
+    {
+        if(patrol != null)
+            StopCoroutine(patrol);
+
+        transform.LookAt2D(path[1].transform);
+        patrol = StartCoroutine(DoPatrol(path));
     }
 
     IEnumerator DoPatrol(List<MazeCell> path)
@@ -54,7 +60,7 @@ public class Patrol : MonoBehaviour
         patrolling = true;
 
         // starting at 1 because index 0 is the cell it is already on
-        int i = 1;
+        int i = path[0] == currentCell ? 1 : 0;
 
         while (i < path.Count)
         {

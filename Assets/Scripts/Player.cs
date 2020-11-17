@@ -40,7 +40,7 @@ public class Player : MonoBehaviour
     float turnSpeed = 0.5f;
     float bufferDistance = 0.01f;
     Coroutine currentMovement;
-    List<MazeCell> currentPath = new List<MazeCell>();
+    //List<MazeCell> currentPath = new List<MazeCell>();
     public MazeCell currentPlayerCell;
     public MazeCell lastPlayerCell;
 
@@ -59,6 +59,7 @@ public class Player : MonoBehaviour
     public bool lineReset = true;
 
     Coroutine currentTask;
+    public bool ShouldRun { get; set; }
 
     #region MonoBehaviour
 
@@ -160,10 +161,13 @@ public class Player : MonoBehaviour
 
     public void PutOrRemoveItem(PlaceableItemType itemType, MazeCell cell)
     {
-        if (currentMovement != null)
-            StopCoroutine(currentMovement);
         if (currentTask != null)
             StopCoroutine(currentTask);
+        if (currentMovement != null)
+        {
+            isMoving = false;
+            StopCoroutine(currentMovement);
+        }
 
         switch (itemType)
         {
@@ -181,6 +185,8 @@ public class Player : MonoBehaviour
         {
             Move(targetCell);
         }
+
+        yield return null;
 
         while (isMoving)
             yield return null;
@@ -247,19 +253,22 @@ public class Player : MonoBehaviour
 
     public bool IsMoving { get { return isMoving; } }
 
-    public void Move(MazeCell destination, bool run = false)
+    public void Move(MazeCell targetCell)
     {
-        if (destination == currentPlayerCell)
+        PathRequestManager.RequestPath(new PathRequest(OnPathFound, currentPlayerCell, targetCell));
+    }
+
+    public void OnPathFound(List<MazeCell> path)
+    {
+        if (path[path.Count - 1] == currentPlayerCell)
             return;
 
-        currentPath = pathfinder.GetAStarPath(currentPlayerCell, destination);
-
-        if (!run)
-            RestartGoToDestination(currentPath, walkSpeed);
+        if (!ShouldRun)
+            RestartGoToDestination(path, walkSpeed);
         else
-            RestartGoToDestination(currentPath, runSpeed);
+            RestartGoToDestination(path, runSpeed);
 
-        touchUI.TouchPoint(destination.transform.position);
+        touchUI.TouchPoint(path[path.Count - 1].transform.position);
     }
 
     
@@ -283,6 +292,11 @@ public class Player : MonoBehaviour
     {
         isMoving = true;
 
+        for(int j = 0; j < path.Count - 1; j++)
+        {
+            Debug.DrawLine(path[j].transform.position, path[j+1].transform.position, Color.red, 5f);
+        }
+
         // starting at 1 because index 0 is the cell it is already on
         int i = path[0] == currentPlayerCell ? 1 : 0;
         while (i < path.Count)
@@ -291,11 +305,13 @@ public class Player : MonoBehaviour
             aim.LookAt2D(nextCell.transform, turnSpeed);
             transform.position = Vector2.MoveTowards(transform.position, nextCell.transform.position, speed * Time.deltaTime);
 
-            if (((Vector2)nextCell.transform.position - (Vector2)transform.position).magnitude < bufferDistance)
+            if (transform.position == nextCell.transform.position)
             {
-                currentPlayerCell = nextCell;
+                //currentPlayerCell = nextCell;
                 i++;
             }
+
+            Debug.DrawLine(transform.position, nextCell.transform.position, Color.blue, 5f);
 
             yield return null;
         }

@@ -965,6 +965,7 @@ GameObject:
   m_Component:
   - component: {fileID: 798157647}
   - component: {fileID: 798157646}
+  - component: {fileID: 798157648}
   m_Layer: 0
   m_Name: Pathfinder
   m_TagString: Untagged
@@ -994,7 +995,6 @@ MonoBehaviour:
   endPos:
     x: 31
     y: 17
-  visualizePath: 0
   initialized: 0
   startDistance: 0
   currentDistance: 0
@@ -1014,6 +1014,18 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &798157648
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 798157645}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8cfa30a2479d3450698a05b3eae196ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &855666543
 GameObject:
   m_ObjectHideFlags: 0

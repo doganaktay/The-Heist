@@ -200,7 +200,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 8704
   visibleTargets: []
-  meshResolution: 2
+  meshResolution: 1
   edgeResolveIterations: 1
   edgeDstThreshold: 0.1
   maskCutawayDst: 0

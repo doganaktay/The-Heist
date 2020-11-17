@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
@@ -35,7 +36,6 @@ public class Pathfinder : MonoBehaviour
 
     private void Start()
     {
-        //GameManager.MazeGenFinished += NewPath;
         Player.MazeChange += NewPath;
 
         pathFound = new bool[searchSize];
@@ -78,16 +78,26 @@ public class Pathfinder : MonoBehaviour
     public List<MazeCell> GetRandomAStarPath(MazeCell start)
     {
         // random endpoint assignment
-        var end = areafinder.WalkableArea[Random.Range(0, areafinder.WalkableArea.Count - 1)];
+        var end = areafinder.WalkableArea[UnityEngine.Random.Range(0, areafinder.WalkableArea.Count - 1)];
 
         return new List<MazeCell>(aStar.GetPath(start, end));
     }
 
     public List<MazeCell> GetAStarPath(MazeCell start, MazeCell end)
     {
-        List<MazeCell> path = aStar.GetPath(start, end);
+        return new List<MazeCell>(aStar.GetPath(start, end));
+    }
 
-        return path;
+    public void FindPath(PathRequest request, Action<PathResult> callback)
+    {
+        List<MazeCell> newPath;
+
+        if (request.end != null)
+            newPath = GetAStarPath(request.start, request.end);
+        else
+            newPath = GetRandomAStarPath(request.start);
+
+        callback(new PathResult(newPath, request.callback));
     }
 
     // check neighbours for placement

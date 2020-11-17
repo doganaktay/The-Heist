@@ -1,6 +1,7 @@
-﻿using UnityEngine;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
 // Taken and adapted to 2D from Sebastian Lague's FOV tutorial
 
@@ -33,8 +34,16 @@ public class FieldOfView : MonoBehaviour
 	public bool canDraw = true;
 	bool meshCleared = false;
 
+	List<Vector3> viewPoints = new List<Vector3>();
+	Vector3[] vertices;
+	List<int> triangles;
+
 	void Start()
 	{
+		// manually sized vertex array and tri list
+		vertices = new Vector3[200];
+		triangles = new List<int>(600);
+
 		viewMeshFilter = GetComponent<MeshFilter>();
 		viewMesh = new Mesh();
 		viewMesh.name = "View Mesh";
@@ -59,8 +68,8 @@ public class FieldOfView : MonoBehaviour
 
     private void Update()
     {
-		if (CanSeePlayer())
-			Debug.Log(transform.parent.gameObject.name + " can see the player!");
+		//if (CanSeePlayer())
+		//	Debug.Log(transform.parent.gameObject.name + " can see the player!");
     }
 
     private void LateUpdate()
@@ -109,7 +118,7 @@ public class FieldOfView : MonoBehaviour
 	{
 		int stepCount = Mathf.RoundToInt(viewAngle * meshResolution);
 		float stepAngleSize = viewAngle / stepCount;
-		List<Vector3> viewPoints = new List<Vector3>();
+		viewPoints.Clear();
 		ViewCastInfo oldViewCast = new ViewCastInfo();
 		for (int i = 0; i <= stepCount; i++)
 		{
@@ -142,8 +151,12 @@ public class FieldOfView : MonoBehaviour
 		}
 
 		int vertexCount = viewPoints.Count + 1;
-		Vector3[] vertices = new Vector3[vertexCount];
-		int[] triangles = new int[(vertexCount - 2) * 3];
+
+		// currently trying to use a manually sized array for vertices and a list for the tris to avoid GC
+		//Vector3[] vertices = new Vector3[vertexCount];
+		//int[] triangles = new int[(vertexCount - 2) * 3];
+
+		triangles.Clear();
 
 		vertices[0] = Vector3.zero;
 		for (int i = 0; i < vertexCount - 1; i++)
@@ -152,17 +165,24 @@ public class FieldOfView : MonoBehaviour
 
 			if (i < vertexCount - 2)
 			{
-				triangles[i * 3] = 0;
-				triangles[i * 3 + 1] = i + 1;
-				triangles[i * 3 + 2] = i + 2;
+				//triangles[i * 3] = 0;
+				//triangles[i * 3 + 1] = i + 1;
+				//triangles[i * 3 + 2] = i + 2;
+
+				triangles.Add(0);
+				triangles.Add(i + 1);
+				triangles.Add(i + 2);
 			}
 		}
 
 		viewMesh.Clear();
 
 		viewMesh.vertices = vertices;
-		viewMesh.triangles = triangles;
-		viewMesh.RecalculateNormals();
+		viewMesh.SetTriangles(triangles, 0);
+		//viewMesh.triangles = triangles;
+
+		// recalculation is expensive and mesh has correct normals from triangle indices
+		//viewMesh.RecalculateNormals();
 	}
 
 
