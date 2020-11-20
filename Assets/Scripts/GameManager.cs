@@ -43,8 +43,21 @@ public class GameManager : MonoBehaviour
 		mazeInstance = Instantiate(mazePrefab);
 		mazeInstance.Generate();
 
-		// pass references to pathfinder
-		pathfinder.maze = mazeInstance;
+		if(mazeInstance.cellScaleY > mazeInstance.cellScaleX)
+        {
+			var newPos = mazeInstance.transform.position;
+			newPos.x -= (mazeInstance.cellScaleY - mazeInstance.cellScaleX) * mazeInstance.cells.GetLength(0) / 2f;
+			mazeInstance.transform.position = newPos;
+        }
+		else if (mazeInstance.cellScaleX > mazeInstance.cellScaleY)
+        {
+			var newPos = mazeInstance.transform.position;
+			newPos.y -= (mazeInstance.cellScaleX - mazeInstance.cellScaleY) * mazeInstance.cells.GetLength(1) / 2f;
+			mazeInstance.transform.position = newPos;
+        }
+
+        // pass references to pathfinder
+        pathfinder.maze = mazeInstance;
 		pathfinder.areafinder = areafinder;
 		pathfinder.initialized = false;
 		pathfinder.startPos = new IntVector2(0, 0);

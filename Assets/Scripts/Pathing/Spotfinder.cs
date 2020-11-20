@@ -177,7 +177,8 @@ public class Spotfinder : MonoBehaviour
                 go.transform.position = new Vector3(spot.transform.position.x, spot.transform.position.y,
                                                     spot.transform.position.z - spotHeight / 2);
                 go.transform.rotation = Quaternion.Euler(go.transform.rotation.x, go.transform.rotation.y, go.transform.rotation.z + tileToPlace.selectedRule.rotation);
-                Vector3 scale = new Vector3(maze.cellScaleX, maze.cellScaleY, spotHeight);
+                Vector3 scale = tileToPlace.selectedRule.rotation % 180f == 0 ?
+                                new Vector3(maze.cellScaleX, maze.cellScaleY, 1f) : new Vector3(maze.cellScaleY, maze.cellScaleX, 1f);
                 go.transform.localScale = scale;
                 go.transform.parent = layout.transform;
 
@@ -198,6 +199,7 @@ public class Spotfinder : MonoBehaviour
                 {
                     candidates.Add(potentialTile);
                     potentialTile.selectedRule = rule;
+                    break;
                 }
             }
         }
@@ -341,11 +343,11 @@ public class Spotfinder : MonoBehaviour
         }
     }
 
-    private void OnGUI()
-    {
-        if (GUI.Button(new Rect(10, 250, 80, 60), "Determine Tiles"))
-            DetermineTilePlacement();
-    }
+    //private void OnGUI()
+    //{
+    //    if (GUI.Button(new Rect(10, 250, 80, 60), "Determine Tiles"))
+    //        DetermineTilePlacement();
+    //}
 
     private void OnDrawGizmos()
     {

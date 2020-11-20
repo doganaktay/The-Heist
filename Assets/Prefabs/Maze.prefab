@@ -49,7 +49,7 @@ MonoBehaviour:
   cellPrefab: {fileID: 3116785791752703768, guid: 7a0856d39a0d24cc982e3afdbdbc7971,
     type: 3}
   cellScaleX: 20
-  cellScaleY: 20
+  cellScaleY: 18
   passagePrefab: {fileID: 5661722619256354059, guid: 7fdaa56311dc5417a858a07b0742c134,
     type: 3}
   wallPrefab: {fileID: 3497784237843523080, guid: eec22deb43dd643b392e2c654c127b34,

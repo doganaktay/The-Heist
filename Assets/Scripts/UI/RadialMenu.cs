@@ -19,9 +19,11 @@ public class RadialMenu : MonoBehaviour
     public Vector2 pivotPoint, targetPoint;
     bool isActive = false;
     bool wasOutOfBounds = false;
+    Vector2 selectionDirection;
     int selectionIndex = -1;
     int lastSelectionIndex = -1;
     TouchUI touchUI;
+    float offsetAngle = 0;
 
     void Awake()
     {
@@ -30,7 +32,64 @@ public class RadialMenu : MonoBehaviour
 
         perItemAngle = maxMenuAngle / transform.childCount;
         perItemFillPercent = perItemAngle / 360f;
+        SetupRadialUI();
+    }
 
+    void Update()
+    {
+        if (isActive)
+        {
+            selectionDirection = (targetPoint - pivotPoint);
+            Vector2 selectionDirectionNormalized = selectionDirection.normalized;
+            float selectionAngle = Mathf.Atan2(selectionDirectionNormalized.x, selectionDirectionNormalized.y) * Mathf.Rad2Deg - offsetAngle;
+            selectionAngle = (selectionAngle + 720f) % 360;
+            selectionIndex = Mathf.FloorToInt(selectionAngle / perItemAngle);
+
+            bool isValidSelection = IsValidIndex() && (selectionIndex != lastSelectionIndex || wasOutOfBounds);
+
+            if (isValidSelection && IsInButtonBounds())
+            {
+                if (lastSelectionIndex > -1 && lastSelectionIndex < menuItems.Count)
+                    menuItems[lastSelectionIndex].Deselect(baseColor);
+
+                menuItems[selectionIndex].Select(hoverColor);
+
+                wasOutOfBounds = false;
+
+                lastSelectionIndex = selectionIndex;
+            }
+            else if (selectionIndex >= menuItems.Count && selectionIndex != lastSelectionIndex)
+            {
+                if (lastSelectionIndex > -1 && lastSelectionIndex < menuItems.Count)
+                    menuItems[lastSelectionIndex].Deselect(baseColor);
+
+                lastSelectionIndex = selectionIndex;
+            }
+            else if (!IsInButtonBounds() && !wasOutOfBounds)
+            {
+                if (selectionIndex > -1 && selectionIndex < menuItems.Count)
+                    menuItems[selectionIndex].Deselect(baseColor);
+
+                wasOutOfBounds = true;
+            }
+        }
+        else if (selectionIndex > -1 && selectionIndex < menuItems.Count)
+        {
+            menuItems[selectionIndex].Deselect(baseColor);
+            selectionIndex = -1;
+            lastSelectionIndex = -1;
+        }
+    }
+
+    public void PressButton()
+    {
+        if (IsValidIndex() && IsInButtonBounds())
+            touchUI.CallButtonHit(menuItems[selectionIndex].actionType, menuItems[selectionIndex].itemType);
+    }
+
+
+    void SetupRadialUI()
+    {
         // the icons rotate with the  radial pieces
         // so the trig calculation is always the same values
         float theta = (perItemAngle - perItemAngle / 2f) * Mathf.Deg2Rad;
@@ -57,63 +116,37 @@ public class RadialMenu : MonoBehaviour
         }
     }
 
-    void Update()
+    void RotateRadialUI()
     {
-        if (isActive)
+        var halfRect = radialRectSize / 2f;
+
+        offsetAngle = 0f;
+
+        bool yOutOfBounds = pivotPoint.y + halfRect > Screen.height || pivotPoint.y - halfRect < 0f;
+
+        if (yOutOfBounds)
         {
-            Vector2 selectionDirection = (targetPoint - pivotPoint);
-            Vector2 selectionDirectionNormalized = selectionDirection.normalized;
-            float selectionAngle = Mathf.Atan2(selectionDirectionNormalized.x, selectionDirectionNormalized.y) * Mathf.Rad2Deg;
-            selectionAngle = (selectionAngle + 360f) % 360;
-            selectionIndex = (int)(selectionAngle / perItemAngle);
+            if (pivotPoint.y + halfRect > Screen.height)
+                offsetAngle = pivotPoint.x + halfRect > Screen.width ? 180f : 90f;
+        
+            if (pivotPoint.y - halfRect < 0f)
+                offsetAngle = pivotPoint.x + halfRect > Screen.width ? 270f : 0f;
 
-            bool isValidSelection = IsValidIndex() && (selectionIndex != lastSelectionIndex || wasOutOfBounds);
-
-            bool isInBounds = selectionDirection.sqrMagnitude < (radialRectSize / 2f) * (radialRectSize / 2f)
-                              && selectionDirection.sqrMagnitude > (radialRectSize / 7f) * (radialRectSize / 7f);
-
-            if (isValidSelection && isInBounds)
-            {
-                if (lastSelectionIndex > -1 && lastSelectionIndex < menuItems.Count)
-                    menuItems[lastSelectionIndex].Deselect(baseColor);
-
-                menuItems[selectionIndex].Select(hoverColor);
-
-                wasOutOfBounds = false;
-
-                lastSelectionIndex = selectionIndex;
-            }
-            else if (selectionIndex >= menuItems.Count && selectionIndex != lastSelectionIndex)
-            {
-                if (lastSelectionIndex > -1 && lastSelectionIndex < menuItems.Count)
-                    menuItems[lastSelectionIndex].Deselect(baseColor);
-
-                lastSelectionIndex = selectionIndex;
-            }
-            else if (!isInBounds && !wasOutOfBounds)
-            {
-                if (selectionIndex > -1 && selectionIndex < menuItems.Count)
-                    menuItems[selectionIndex].Deselect(baseColor);
-
-                wasOutOfBounds = true;
-            }
         }
-        else if (selectionIndex > -1 && selectionIndex < menuItems.Count)
+        else if (pivotPoint.x + halfRect > Screen.width)
+            offsetAngle = 270f;
+
+        for(int i = 0; i < menuItems.Count; i++)
         {
-            menuItems[selectionIndex].Deselect(baseColor);
-            selectionIndex = -1;
-            lastSelectionIndex = -1;
+            menuItems[i].GetComponent<RectTransform>().localRotation = Quaternion.Euler(0f, 0f, -perItemAngle * i - offsetAngle);
+            menuItems[i].icon.rectTransform.rotation = Quaternion.identity;
         }
-    }
-
-    public void PressButton()
-    {
-        if(IsValidIndex())
-            touchUI.CallButtonHit(menuItems[selectionIndex].actionType, menuItems[selectionIndex].itemType);
     }
 
     public void ShowRadialUI(MazeCell cell)
     {
+        RotateRadialUI();
+
         if (cell.HasPlacedItem())
         {
             foreach(var button in menuItems)
@@ -146,6 +179,9 @@ public class RadialMenu : MonoBehaviour
     }
 
     bool IsValidIndex() => selectionIndex > -1 && selectionIndex < menuItems.Count;
+
+    bool IsInButtonBounds() => selectionDirection.sqrMagnitude < (radialRectSize / 2f) * (radialRectSize / 2f)
+                              && selectionDirection.sqrMagnitude > (radialRectSize / 7f) * (radialRectSize / 7f);
 
     private void ResetSelection()
     {

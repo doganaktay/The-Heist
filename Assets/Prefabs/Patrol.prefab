@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 5284805516819639897}
   - component: {fileID: -8045927754576532818}
   - component: {fileID: 4575945924325056854}
-  - component: {fileID: 1458725215718996400}
   - component: {fileID: 6135599268688126621}
   m_Layer: 11
   m_Name: Patrol
@@ -109,27 +108,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!50 &1458725215718996400
-Rigidbody2D:
-  serializedVersion: 4
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5284805516819639902}
-  m_BodyType: 0
-  m_Simulated: 1
-  m_UseFullKinematicContacts: 0
-  m_UseAutoMass: 0
-  m_Mass: 1
-  m_LinearDrag: 0
-  m_AngularDrag: 0.05
-  m_GravityScale: 1
-  m_Material: {fileID: 0}
-  m_Interpolate: 1
-  m_SleepingMode: 1
-  m_CollisionDetection: 0
-  m_Constraints: 0
 --- !u!58 &6135599268688126621
 CircleCollider2D:
   m_ObjectHideFlags: 0
