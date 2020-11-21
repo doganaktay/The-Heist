@@ -137,7 +137,7 @@ namespace Archi.Touch
                 float rot = Mathf.Atan2(diff.y, diff.x) * Mathf.Rad2Deg;
                 player.aim.transform.localRotation = Quaternion.Euler(0f, 0f, rot - 90f);
 
-                if((finger.screenPos - finger.lastScreenPos).magnitude > 0.1f || player.lineReset)
+                if((finger.screenPos - finger.lastScreenPos).sqrMagnitude > 0.001f || player.lineReset)
                 {
                     player.SetTrajectory();
                 }
