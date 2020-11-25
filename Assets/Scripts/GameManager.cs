@@ -5,6 +5,13 @@ using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
+	[Header("Setup")]
+	[SerializeField] int gridSizeX;
+	[SerializeField] int gridSizeY;
+	[SerializeField] float cellSizeX;
+	[SerializeField] float cellSizeY;
+
+	[Header("References")]
 	public TouchUI touchUI;
 	public Trajectory trajectory;
 	public PhysicsSim physicsSim;
@@ -41,6 +48,10 @@ public class GameManager : MonoBehaviour
 	{
 		// generate maze
 		mazeInstance = Instantiate(mazePrefab);
+		mazeInstance.size.x = gridSizeX;
+		mazeInstance.size.y = gridSizeY;
+		mazeInstance.cellScaleX = cellSizeX;
+		mazeInstance.cellScaleY = cellSizeY;
 		mazeInstance.Generate();
 
 		if(mazeInstance.cellScaleY > mazeInstance.cellScaleX)
@@ -108,8 +119,11 @@ public class GameManager : MonoBehaviour
 		physicsSim.player = player;
 		physicsSim.trajectory = trajectory;
 
+		// pass data to touchUI
+		touchUI.topMenuHeight = (1 - (cellSizeY * gridSizeY / (cellSizeX * gridSizeX  / 16f * 9f))) * Screen.height;
+
 		// set up areas, placeable slots and simulation
-		ConstructLayout();
+		ConstructScene();
 
 		// directional light reset
 		lights.StartRotation();
@@ -118,7 +132,7 @@ public class GameManager : MonoBehaviour
 		MazeGenFinished();
     }
 
-	private void ConstructLayout()
+	private void ConstructScene()
     {
 		pathfinder.NewPath();
 		areafinder.FindAreas();
@@ -126,7 +140,7 @@ public class GameManager : MonoBehaviour
 		areafinder.MakeRooms();
 		spotfinder.DeterminePlacement();
 		areafinder.FindAreas();
-		areafinder.DropWalls();
+		areafinder.DropWalls(true);
 		//physicsSim.AddLayout(); // enable to include placement in physics sim
 		pathfinder.NewPath();
 		areafinder.FindAreas();

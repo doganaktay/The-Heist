@@ -31,6 +31,8 @@ public class AreaFinder : MonoBehaviour
     public List<MazeCell> GetRandomArea(){ return lowCellAreas.ElementAt(UnityEngine.Random.Range(0, lowCellAreas.Count)).Value; }
     public List<MazeCell> WalkableArea { get { return walkableArea; } }
 
+    List<MazeCellWall> availableWallsForDrop;
+
     #if UNITY_EDITOR
     public bool displayCellID = false;
     #endif
@@ -42,30 +44,49 @@ public class AreaFinder : MonoBehaviour
         NewDetermineAreas();
     }
 
-    public void DropWalls()
+    public void DropWalls(bool isFirstDrop = false)
     {
-        List<MazeCellWall> availableWalls = new List<MazeCellWall>();
-
-        foreach(var wall in maze.wallsInScene)
+        if (availableWallsForDrop == null || isFirstDrop)
         {
-            if (wall.cellA.state < 2 && wall.cellB != null && wall.cellB.state < 2)
-                availableWalls.Add(wall);
+            availableWallsForDrop = new List<MazeCellWall>();
+
+            foreach (var wall in maze.wallsInScene)
+            {
+                if (wall.cellB != null && wall.cellA.state < 2 && wall.cellB.state < 2)
+                {
+                    if (!availableWallsForDrop.Contains(wall))
+                        availableWallsForDrop.Add(wall);
+                }
+            }
         }
 
-        int dropCount = Mathf.FloorToInt(availableWalls.Count * wallDropPercent);
+        int dropCount;
 
-        for(int i = 0; i < dropCount; i++)
+        if (isFirstDrop)
+            dropCount = Mathf.FloorToInt(availableWallsForDrop.Count * wallDropPercent);
+        else
+            dropCount = 1;
+
+        if(availableWallsForDrop.Count <= 0)
         {
-            var ordered = availableWalls.OrderByDescending(x => Mathf.Abs(x.cellA.distanceFromStart[0] - x.cellB.distanceFromStart[0])).ToList();
+            Debug.Log("No walls left to drop");
+            return;
+        }
+
+        for (int i = 0; i < dropCount; i++)
+        {
+            var ordered = availableWallsForDrop.OrderByDescending(x => Mathf.Abs(x.cellA.distanceFromStart[0] - x.cellB.distanceFromStart[0])).ToList();
 
             MazeDirections.RemoveWall(ordered[0]);
             maze.wallsInScene.Remove(ordered[0]);
-            availableWalls.Remove(ordered[0]);
+            availableWallsForDrop.Remove(ordered[0]);
             simulation.RemoveWallFromSimulation(ordered[0].gameObject);
 
             pathfinder.NewPath();
             FindAreas();
         }
+
+        Debug.Log(availableWallsForDrop.Count);
     }
 
     // used to turn maze paths into rooms after maze is constructed

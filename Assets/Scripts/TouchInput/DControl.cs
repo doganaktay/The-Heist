@@ -66,30 +66,44 @@ namespace Archi.Touch
         {
             if(finger.index == 0)
             {
-                if (DTouch.instances[0].FindFinger(1) == null && cellIsWalkable)
+                if (DTouch.instances[0].FindFinger(1) == null)
                 {
-                    player.StopTask();
-
-                    if (cellIsPlayer)
+                    if (!finger.IsOverGUI)
                     {
-                        if (player.IsMoving)
-                            player.StopGoToDestination();
+                        if (cellIsWalkable)
+                        {
+                            player.StopTask();
+
+                            if (cellIsPlayer)
+                            {
+                                if (player.IsMoving)
+                                    player.StopGoToDestination();
+                            }
+                            else
+                            {
+                                if (finger.tapCount % 2 == 1)
+                                {
+                                    player.ShouldRun = false;
+                                    player.Move(currentCellHit);
+                                }
+                                else
+                                {
+                                    player.ShouldRun = true;
+                                    player.Move(currentCellHit);
+                                }
+                            }
+                        }
                     }
                     else
                     {
-                        if (finger.tapCount % 2 == 1)
-                        {
-                            player.ShouldRun = false;
-                            player.Move(currentCellHit);
-                        }
-                        else
-                        {
-                            player.ShouldRun = true;
-                            player.Move(currentCellHit);
-                        }
+                        var hitResults = DTouch.RaycastGUI(finger);
+
+                        var uiMenu = hitResults[0].gameObject.GetComponentInParent<UIMenu>();
+                        var menuItem = hitResults[0].gameObject.GetComponentInParent<UIMenuItem>();
+                        uiMenu.SelectMenuItem(menuItem);
                     }
                 }
-                else if (DTouch.instances[0].FindFinger(1) != null)
+                else
                 {
                     player.LaunchProjectile();
                 }
@@ -100,8 +114,8 @@ namespace Archi.Touch
         {
             if(finger.index == 0)
             {
-                CheckFingerPosition(finger);
-                player.touchUI.SetRadialUIPivot(cam.WorldToScreenPoint(currentCellHit.transform.position));
+                if (!finger.IsOverGUI)
+                    CheckFingerPosition(finger);
             }
 
             else if(finger.index == 1 && cellIsPlayer)
@@ -120,8 +134,7 @@ namespace Archi.Touch
         {
             if(finger.index == 0 && !aiming && finger.age > 0.3f)
             {
-                if(currentCellHit.state < 2)
-                    DrawRadialUI(finger.screenPos);
+                
             }
 
             else if(finger.index == 0 && aiming)
@@ -189,13 +202,6 @@ namespace Archi.Touch
             {
                 player.touchUI.AimPos = aimPos;
             }
-        }
-
-        public void DrawRadialUI(Vector2 placementPos)
-        {
-            player.touchUI.CurrentTouchCell = currentCellHit;
-            player.touchUI.InputUIPos = placementPos;
-            player.touchUI.ShowInputUI = true;
         }
 
         #endregion UI Methods

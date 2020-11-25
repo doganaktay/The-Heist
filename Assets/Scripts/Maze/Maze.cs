@@ -5,10 +5,10 @@ using UnityEngine;
 
 public class Maze : MonoBehaviour
 {
-    public IntVector2 size;
+    [HideInInspector] public IntVector2 size;
+    [HideInInspector] public float cellScaleX, cellScaleY;
 
     public MazeCell cellPrefab;
-    public float cellScaleX, cellScaleY;
 
     public MazeCell[,] cells;
 
@@ -126,7 +126,6 @@ public class Maze : MonoBehaviour
         wall.gameObject.name = otherCell == null ? cell.pos.x + "," + cell.pos.y + ": " + direction :
                                                    cell.pos.x + "," + cell.pos.y
                                                    + " to " + otherCell.pos.x + "," + otherCell.pos.y;
-
         wallsInScene.Add(wall);
     }
 

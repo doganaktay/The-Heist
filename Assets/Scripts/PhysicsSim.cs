@@ -107,8 +107,8 @@ public class PhysicsSim : MonoBehaviour
             wallCopy.transform.position = wall.transform.position;
             wallCopy.transform.rotation = wall.transform.rotation;
 
-            // flipping the scale axis if the wall is originally rotated
-            // since the wall isn't parented to a cell unlike in the main scene
+            // flipping the scale x,y axis if the wall is rotated in main scene
+            // since the wall isn't parented to a cell in the sim
             Vector3 scale;
             if(wallCopy.transform.rotation.z % 180 == 0)
                 scale = new Vector3(maze.cellScaleX, maze.cellScaleY, 1f);
@@ -127,7 +127,10 @@ public class PhysicsSim : MonoBehaviour
                 r.enabled = false;
             }
 
-            objectPairs.Add(wall.gameObject, wallCopy.gameObject);
+            if (!objectPairs.ContainsKey(wall.gameObject))
+                objectPairs.Add(wall.gameObject, wallCopy.gameObject);
+            else
+                Debug.Log("sim already contains key");
         }
     }
 
@@ -159,7 +162,9 @@ public class PhysicsSim : MonoBehaviour
 
     public void RemoveWallFromSimulation(GameObject wall)
     {
-        Destroy(objectPairs[wall]);
+        if (objectPairs.ContainsKey(wall))
+            Destroy(objectPairs[wall]);
+
         objectPairs.Remove(wall);
     }
 

@@ -7,13 +7,14 @@ using UnityEngine.UI;
 public enum ButtonActionType
 {
     PlaceObject,
-    UseObject
+    UseObject,
+    Menu
 }
 
 public class TouchUI : MonoBehaviour
 {
     [SerializeField]
-    CanvasGroup touchPoint, touchAim;
+    CanvasGroup touchPoint, touchAim, topMenu;
     [SerializeField]
     RadialMenu radialMenu;
     [SerializeField]
@@ -35,12 +36,18 @@ public class TouchUI : MonoBehaviour
     private MazeCell currentTouchCell;
     public MazeCell CurrentTouchCell { get => currentTouchCell; set => currentTouchCell = value; }
 
+    public float topMenuHeight;
+
 
     public static Action<PlaceableItemType, MazeCell> PlaceOrRemoveItem;
 
-    private void Awake()
+    private void Start()
     {
         cam = Camera.main;
+
+        topMenu.GetComponent<RectTransform>().sizeDelta = new Vector2(Screen.width, topMenuHeight);
+        topMenu.GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, -topMenuHeight / 2f);
+
     }
 
     private void Update()
@@ -58,29 +65,6 @@ public class TouchUI : MonoBehaviour
             touchAim.alpha = 0;
         }
 
-        if (ShowInputUI)
-        {
-            if (!inputUISet)
-            {
-                radialMenu.ShowRadialUI(currentTouchCell);
-                inputUISet = true;
-            }
-            else
-            {
-                radialMenu.targetPoint = inputUIPos;
-            }
-        }
-        else if (inputUISet)
-        {
-            radialMenu.HideRadialUI();
-            inputUISet = false;
-        }
-    }
-
-    public void SetRadialUIPivot(Vector2 inputPos)
-    {
-        radialMenu.transform.position = inputPos;
-        radialMenu.pivotPoint = inputPos;
     }
 
     public void CallButtonHit(ButtonActionType actionType, PlaceableItemType itemType)
