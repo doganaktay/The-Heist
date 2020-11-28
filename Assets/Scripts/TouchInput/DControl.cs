@@ -4,7 +4,6 @@ using UnityEngine;
 
 namespace Archi.Touch
 {
-    [RequireComponent(typeof(Player))]
     public class DControl : MonoBehaviour
     {
         // this is used so that only the first instance of the object
@@ -14,7 +13,8 @@ namespace Archi.Touch
 
         static int cellLayerMask = 1 << 10;
 
-        Player player;
+        public Player player;
+        public TouchUI touchUI;
         Collider2D[] touchHits1, touchHits2;
         uint colliderBufferCounter = 0;
         [SerializeField]
@@ -27,7 +27,6 @@ namespace Archi.Touch
 
         private void Start()
         {
-            player = GetComponent<Player>();
             cam = Camera.main;
 
             touchHits1 = new Collider2D[10];
@@ -70,37 +69,23 @@ namespace Archi.Touch
                 {
                     if (!finger.IsOverGUI)
                     {
-                        if (cellIsWalkable)
-                        {
-                            player.StopTask();
-
-                            if (cellIsPlayer)
-                            {
-                                if (player.IsMoving)
-                                    player.StopGoToDestination();
-                            }
-                            else
-                            {
-                                if (finger.tapCount % 2 == 1)
-                                {
-                                    player.ShouldRun = false;
-                                    player.Move(currentCellHit);
-                                }
-                                else
-                                {
-                                    player.ShouldRun = true;
-                                    player.Move(currentCellHit);
-                                }
-                            }
-                        }
+                        DispatchAction(finger);
                     }
-                    else
+                    else if(touchUI.CurrentSelectedButton == null || touchUI.CurrentSelectedButton.ButtonType != ButtonActionType.Menu)
                     {
                         var hitResults = DTouch.RaycastGUI(finger);
 
-                        var uiMenu = hitResults[0].gameObject.GetComponentInParent<UIMenu>();
-                        var menuItem = hitResults[0].gameObject.GetComponentInParent<UIMenuItem>();
-                        uiMenu.SelectMenuItem(menuItem);
+                        var item = hitResults[0].gameObject.GetComponentInParent<UIMenuItem>();
+
+                        if(item != null)
+                        {
+                            hitResults[0].gameObject.GetComponentInParent<UIMenu>().SelectMenuItem(item);
+
+                            if(item.ButtonType == ButtonActionType.Menu)
+                            {
+                                touchUI.ShowMainMenu();
+                            }
+                        }
                     }
                 }
                 else
@@ -132,17 +117,7 @@ namespace Archi.Touch
 
         private void FingerUpdate(DFinger finger)
         {
-            if(finger.index == 0 && !aiming && finger.age > 0.3f)
-            {
-                
-            }
-
-            else if(finger.index == 0 && aiming)
-            {
-                player.touchUI.ShowInputUI = false;
-            }
-
-            else if(finger.index == 1 && aiming)
+            if(finger.index == 1 && aiming)
             {
                 aimTouchTarget = cam.ScreenToWorldPoint(finger.screenPos);
                 Vector2 diff = aimTouchTarget - aimTouchPivot;
@@ -161,28 +136,10 @@ namespace Archi.Touch
 
         private void FingerUp(DFinger finger)
         {
-            if (finger.index == 0 && player.touchUI.ShowInputUI)
-            {
-                var guiList = DTouch.RaycastGUI(finger);
-
-                foreach (var item in guiList)
-                {
-                    var button = item.gameObject.GetComponentInParent<RadialMenu>();
-
-                    if (button != null)
-                    {
-                        button.PressButton();
-                        break;
-                    }
-                }
-
-                player.touchUI.ShowInputUI = false;
-            }
-
-            else if (finger.index == 1)
+            if (finger.index == 1)
             {
                 player.ResetTrajectory();
-                player.touchUI.ShowAimUI = false;
+                touchUI.ShowAimUI = false;
                 aiming = false;
             }
         }
@@ -195,18 +152,78 @@ namespace Archi.Touch
         {
             if (isCenter)
             {
-                player.touchUI.AimCenter = player.touchUI.AimPos = aimPos;
-                player.touchUI.ShowAimUI = true;
+                touchUI.AimCenter = touchUI.AimPos = aimPos;
+                touchUI.ShowAimUI = true;
             }
             else
             {
-                player.touchUI.AimPos = aimPos;
+                touchUI.AimPos = aimPos;
             }
         }
 
         #endregion UI Methods
 
         #region Utilities
+
+        private void DispatchAction(DFinger finger)
+        {
+            if (!touchUI.CurrentSelectedButton)
+            {
+                if (cellIsWalkable)
+                {
+                    player.StopTask();
+
+                    if (cellIsPlayer)
+                    {
+                        if (player.IsMoving)
+                            player.StopGoToDestination();
+                    }
+                    else
+                    {
+                        if (finger.tapCount % 2 == 1)
+                        {
+                            player.ShouldRun = false;
+                            player.Move(currentCellHit);
+                        }
+                        else
+                        {
+                            player.ShouldRun = true;
+                            player.Move(currentCellHit);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                switch (touchUI.CurrentSelectedButton.ButtonType)
+                {
+                    case ButtonActionType.PlaceObject:
+                        player.PutOrRemoveItem(touchUI.CurrentSelectedButton.ItemType, currentCellHit);
+                        touchUI.CurrentSelectedButton.Deselect();
+                        touchUI.CurrentSelectedButton = null;
+                        break;
+                    case ButtonActionType.UseObject:
+                        if(!currentCellHit.HasPlacedItem())
+                        {
+                            Debug.Log("No placed item");
+                        }
+                        else
+                        {
+                            foreach(var item in currentCellHit.placedItems.Values)
+                            {
+                                if (item)
+                                {
+                                    item.UseItem();
+                                }
+                            }
+                        }
+
+                        touchUI.CurrentSelectedButton.Deselect();
+                        touchUI.CurrentSelectedButton = null;
+                        break;
+                }
+            }
+        }
 
         private bool CheckFingerPosition(DFinger finger)
         {

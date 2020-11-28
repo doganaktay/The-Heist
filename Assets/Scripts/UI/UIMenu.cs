@@ -30,12 +30,30 @@ public class UIMenu : MonoBehaviour
 
     public void SelectMenuItem(UIMenuItem selection)
     {
+        bool haveSelection = false;
+
         foreach(var item in menuItems)
         {
-            if (item == selection)
+            if (item == selection && !item.IsSelected)
+            {
                 item.Select();
+                touchUI.CurrentSelectedButton = item;
+                haveSelection = true;
+            }
             else
                 item.Deselect();
+        }
+
+        if (!haveSelection)
+            touchUI.CurrentSelectedButton = null;
+    }
+
+    public void DeselectMenuItem(UIMenuItem selection)
+    {
+        if (selection.IsSelected)
+        {
+            selection.Deselect();
+            touchUI.CurrentSelectedButton = null;
         }
     }
 

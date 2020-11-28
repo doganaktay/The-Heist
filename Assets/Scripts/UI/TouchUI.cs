@@ -13,10 +13,10 @@ public enum ButtonActionType
 
 public class TouchUI : MonoBehaviour
 {
+    public GameManager gameManager;
+
     [SerializeField]
-    CanvasGroup touchPoint, touchAim, topMenu;
-    [SerializeField]
-    RadialMenu radialMenu;
+    CanvasGroup touchPoint, touchAim, topUIBar, mainMenu;
     [SerializeField]
     float touchTime = 0.5f;
     [SerializeField]
@@ -29,25 +29,18 @@ public class TouchUI : MonoBehaviour
     private Vector3 aimCenter, aimPos;
     public Vector3 AimCenter { get => aimCenter; set => aimCenter = value; }
     public Vector3 AimPos { get => aimPos; set => aimPos = value; }
-    public bool ShowInputUI { get; set; }
-    private Vector2 inputUIPos;
-    public Vector2 InputUIPos { get => inputUIPos; set => inputUIPos = value; }
-    bool inputUISet = false;
     private MazeCell currentTouchCell;
     public MazeCell CurrentTouchCell { get => currentTouchCell; set => currentTouchCell = value; }
 
-    public float topMenuHeight;
+    public float topMenuHeight, mainMenuHeight;
 
-
-    public static Action<PlaceableItemType, MazeCell> PlaceOrRemoveItem;
+    UIMenuItem currentSelectedButton;
+    public UIMenuItem CurrentSelectedButton { get => currentSelectedButton; set => currentSelectedButton = value; }
 
     private void Start()
     {
         cam = Camera.main;
-
-        topMenu.GetComponent<RectTransform>().sizeDelta = new Vector2(Screen.width, topMenuHeight);
-        topMenu.GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, -topMenuHeight / 2f);
-
+        SetUpUIDimensions();
     }
 
     private void Update()
@@ -63,22 +56,6 @@ public class TouchUI : MonoBehaviour
         else
         {
             touchAim.alpha = 0;
-        }
-
-    }
-
-    public void CallButtonHit(ButtonActionType actionType, PlaceableItemType itemType)
-    {
-        if(actionType == ButtonActionType.PlaceObject)
-        {
-            PlaceOrRemoveItem(itemType, currentTouchCell);
-        }
-        else if (actionType == ButtonActionType.UseObject)
-        {
-            if (currentTouchCell.placedItems.ContainsKey(itemType) && currentTouchCell.placedItems[itemType] != null)
-                currentTouchCell.placedItems[itemType].UseItem();
-            else
-                Debug.Log("no item found for use");
         }
 
     }
@@ -112,4 +89,56 @@ public class TouchUI : MonoBehaviour
             yield return null;
         }
     }
+
+    private void SetUpUIDimensions()
+    {
+        var topUIRect = topUIBar.GetComponent<RectTransform>();
+        topUIRect.sizeDelta = new Vector2(Screen.width, topMenuHeight);
+        topUIRect.anchoredPosition = new Vector2(0f, -topMenuHeight / 2f);
+
+        var mainMenuRect = mainMenu.GetComponent<RectTransform>();
+        mainMenuRect.sizeDelta = new Vector2(Screen.width, mainMenuHeight);
+        mainMenuRect.anchoredPosition = new Vector2(0f, -mainMenuHeight / 2f);
+        var mainMenuBgRect = mainMenu.transform.GetChild(0).GetComponent<RectTransform>();
+        mainMenuBgRect.sizeDelta = new Vector2(Screen.width, mainMenuHeight);
+        mainMenuBgRect.anchoredPosition = new Vector2(0f, -topMenuHeight);
+        var mainMenuItemsRect = mainMenu.transform.GetChild(1).GetComponent<RectTransform>();
+        mainMenuItemsRect.sizeDelta = new Vector2(Screen.width / 2f, mainMenuHeight / 2f);
+        mainMenuItemsRect.anchoredPosition = new Vector2(0f, -topMenuHeight);
+    }
+
+    #region Main menu methods
+
+    public void ShowMainMenu()
+    {
+        mainMenu.gameObject.SetActive(true);
+        mainMenu.alpha = 1f;
+        Time.timeScale = 0f;
+    }
+
+    public void ResumeGame()
+    {
+        Time.timeScale = 1f;
+        mainMenu.alpha = 0f;
+        currentSelectedButton.Deselect();
+        currentSelectedButton = null;
+        mainMenu.gameObject.SetActive(false);
+    }
+
+    public void ResetGame()
+    {
+        gameManager.RestartGame();
+        mainMenu.alpha = 0f;
+        currentSelectedButton.Deselect();
+        currentSelectedButton = null;
+        mainMenu.gameObject.SetActive(false);
+    }
+
+    public void QuitGame()
+    {
+        Debug.Log("Quit application");
+        Application.Quit();
+    }
+
+    #endregion
 }

@@ -327,7 +327,6 @@ GameObject:
   - component: {fileID: 447034769133315995}
   - component: {fileID: 7925979547997160563}
   - component: {fileID: 1492204798581725389}
-  - component: {fileID: 5957628913211887928}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -493,16 +492,3 @@ MonoBehaviour:
   - {fileID: 11400000, guid: fd7093b563e4e4c78a88549709054feb, type: 2}
   currentProjectile: {fileID: 0}
   selectionChanged: 0
---- !u!114 &5957628913211887928
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7495380814707733899}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1c36032a168f7462796ce49283420bcc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  overlapCircleRadius: 3

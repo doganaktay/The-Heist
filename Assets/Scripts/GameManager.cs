@@ -2,6 +2,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using Archi.Touch;
 
 public class GameManager : MonoBehaviour
 {
@@ -12,6 +13,7 @@ public class GameManager : MonoBehaviour
 	[SerializeField] float cellSizeY;
 
 	[Header("References")]
+	public DControl touchControl;
 	public TouchUI touchUI;
 	public Trajectory trajectory;
 	public PhysicsSim physicsSim;
@@ -23,8 +25,6 @@ public class GameManager : MonoBehaviour
 	public TextOverlay textOverlay;
 	public Player playerPrefab;
 	public static Player player;
-	public PathFollow aiPrefab;
-	public PathFollow ai;
 	public Maze mazePrefab;
 	private Maze mazeInstance;
 	public GameObject layout;
@@ -107,12 +107,6 @@ public class GameManager : MonoBehaviour
 		// pass another reference to pathfinder
 		pathfinder.player = player;
 
-		// pass references to AI
-		//ai.maze = mazeInstance;
-		//ai.pathfinder = pathfinder;
-		//ai.startPos = new IntVector2(0, 0);
-		//ai.endPos = new IntVector2(mazeInstance.size.x - 1, mazeInstance.size.y - 1);
-
 		// pass references to PhysicsSimulation
 		physicsSim.maze = mazeInstance;
 		physicsSim.playerPrefab = playerPrefab;
@@ -120,7 +114,14 @@ public class GameManager : MonoBehaviour
 		physicsSim.trajectory = trajectory;
 
 		// pass data to touchUI
-		touchUI.topMenuHeight = (1 - (cellSizeY * gridSizeY / (cellSizeX * gridSizeX  / 16f * 9f))) * Screen.height;
+		touchUI.gameManager = this;
+		var mazeHeight = cellSizeY * gridSizeY / (cellSizeX * gridSizeX / 16f * 9f);
+		touchUI.topMenuHeight = (1 - mazeHeight) * Screen.height;
+		touchUI.mainMenuHeight = mazeHeight * Screen.height;
+
+		// pass references to touchControl
+		touchControl.player = player;
+		touchControl.touchUI = touchUI;
 
 		// set up areas, placeable slots and simulation
 		ConstructScene();
@@ -146,7 +147,7 @@ public class GameManager : MonoBehaviour
 		areafinder.FindAreas();
 	}
 
-	private void RestartGame()
+	public void RestartGame()
 	{		
 		Destroy(mazeInstance.gameObject);
 		Destroy(player.gameObject);

@@ -78,7 +78,7 @@ public class Player : MonoBehaviour
         instances.Add(this);
         if (instances.Count > 0 && instances[0] == this)
         {
-            TouchUI.PlaceOrRemoveItem += PutOrRemoveItem;
+            
         }
     }
 
@@ -100,7 +100,7 @@ public class Player : MonoBehaviour
     {
         if(instances.Count > 0 && instances[0] == this)
         {
-            TouchUI.PlaceOrRemoveItem -= PutOrRemoveItem;
+            
         }
 
         if(instances.Contains(this))

@@ -83,8 +83,8 @@ public class RadialMenu : MonoBehaviour
 
     public void PressButton()
     {
-        if (IsValidIndex() && IsInButtonBounds())
-            touchUI.CallButtonHit(menuItems[selectionIndex].actionType, menuItems[selectionIndex].itemType);
+        //if (IsValidIndex() && IsInButtonBounds())
+            //touchUI.CallButtonHit(menuItems[selectionIndex].actionType, menuItems[selectionIndex].itemType);
     }
 
 
