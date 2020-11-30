@@ -16,6 +16,7 @@ public class Player : MonoBehaviour
     public Pathfinder pathfinder;
     public PhysicsSim simulation;
     public Trajectory trajectory;
+    public GameObject spawnedObjectHolder;
     Rigidbody2D rb;
     public float walkSpeed = 1f;
     public float runSpeed = 5f;
@@ -78,7 +79,7 @@ public class Player : MonoBehaviour
         instances.Add(this);
         if (instances.Count > 0 && instances[0] == this)
         {
-            
+
         }
     }
 
@@ -133,6 +134,9 @@ public class Player : MonoBehaviour
     {
         var proj = Instantiate(projectilePrefab, transform.position + aimUp * (transform.localScale.x / 2f * 1.1f + projectileSelector.currentProjectile.width / 2f),
             Quaternion.identity);
+
+        proj.gameObject.transform.SetParent(spawnedObjectHolder.transform);
+
         proj.GetComponent<Projectile>().Launch(projectileSelector.currentProjectile, aimUp, spinAmount);
     }
 
@@ -199,6 +203,8 @@ public class Player : MonoBehaviour
         if (!cell.HasPlacedItem(type))
         {
             var go = Instantiate(item, cell.transform.position, Quaternion.identity);
+
+            go.transform.SetParent(spawnedObjectHolder.transform);
 
             if (!cell.placedItems.ContainsKey(type))
                 cell.PlaceItem(type, go);

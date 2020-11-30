@@ -27,7 +27,7 @@ public class GameManager : MonoBehaviour
 	public static Player player;
 	public Maze mazePrefab;
 	private Maze mazeInstance;
-	public GameObject layout;
+	public GameObject layout, spawnedObjects;
 
 	private void Start()
 	{
@@ -103,6 +103,7 @@ public class GameManager : MonoBehaviour
 		player.simulation = physicsSim;
 		player.trajectory = trajectory;
 		player.touchUI = touchUI;
+		player.spawnedObjectHolder = spawnedObjects;
 
 		// pass another reference to pathfinder
 		pathfinder.player = player;
@@ -152,27 +153,17 @@ public class GameManager : MonoBehaviour
 		Destroy(mazeInstance.gameObject);
 		Destroy(player.gameObject);
 
-		ClearLayout();
-
-		//ai.StopAndDestroy();
-
-		// clearing material cache on projectiles
-		// not strictly necessary, but if random friction values start getting used
-		// uncomment if there's a danger of the dictionary growing too large
-		//Projectile.ClearMaterialCache();
+		ClearObjectHolder(layout);
+		ClearObjectHolder(spawnedObjects);
 
         BeginGame();
 	}
 
-	void ClearLayout()
+	void ClearObjectHolder(GameObject holder)
     {
-		for (int i=0; i < layout.transform.childCount; i++)
+		for (int i=0; i < holder.transform.childCount; i++)
         {
-			var t = layout.transform.GetChild(i);
-
-			if (t == layout.transform)
-				continue;
-
+			var t = holder.transform.GetChild(i);
 			Destroy(t.gameObject);
         }
     }

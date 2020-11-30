@@ -128,6 +128,7 @@ public class TouchUI : MonoBehaviour
     public void ResetGame()
     {
         gameManager.RestartGame();
+        Time.timeScale = 1f;
         mainMenu.alpha = 0f;
         currentSelectedButton.Deselect();
         currentSelectedButton = null;

@@ -67,7 +67,7 @@ namespace Archi.Touch
             {
                 if (DTouch.instances[0].FindFinger(1) == null)
                 {
-                    if (!finger.IsOverGUI)
+                    if (!finger.startedOverGUI && !finger.IsOverGUI)
                     {
                         DispatchAction(finger);
                     }
@@ -75,17 +75,24 @@ namespace Archi.Touch
                     {
                         var hitResults = DTouch.RaycastGUI(finger);
 
-                        var item = hitResults[0].gameObject.GetComponentInParent<UIMenuItem>();
-
-                        if(item != null)
+                        if(hitResults.Count > 0)
                         {
-                            hitResults[0].gameObject.GetComponentInParent<UIMenu>().SelectMenuItem(item);
+                            var item = hitResults[0].gameObject.GetComponentInParent<UIMenuItem>();
 
-                            if(item.ButtonType == ButtonActionType.Menu)
+                            if(item != null)
                             {
-                                touchUI.ShowMainMenu();
+                                hitResults[0].gameObject.GetComponentInParent<UIMenu>().SelectMenuItem(item);
+
+                                if(item.ButtonType == ButtonActionType.Menu)
+                                {
+                                    touchUI.ShowMainMenu();
+                                }
                             }
                         }
+                    }
+                    else if (touchUI.CurrentSelectedButton.ButtonType == ButtonActionType.Menu)
+                    {
+                        touchUI.ResumeGame();
                     }
                 }
                 else
