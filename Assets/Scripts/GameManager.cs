@@ -87,6 +87,9 @@ public class GameManager : MonoBehaviour
 		spotfinder.areafinder = areafinder;
 		spotfinder.layout = layout;
 
+		// pass references to dispersion calculator
+		Dispersion.maze = mazeInstance;
+
 		// pass references to patrol manager
 		patrolManager.pathfinder = pathfinder;
 		patrolManager.areafinder = areafinder;

@@ -234,10 +234,10 @@ public class Spotfinder : MonoBehaviour
         cell.cardinalBits = 0;
         cell.diagonalBits = 0;
 
-        for(int i = 0; i < MazeDirections.vectors.Length; i++)
+        for(int i = 0; i < MazeDirections.cardinalVectors.Length; i++)
         {
-            var xpos = cell.pos.x + MazeDirections.vectors[i].x;
-            var ypos = cell.pos.y + MazeDirections.vectors[i].y;
+            var xpos = cell.pos.x + MazeDirections.cardinalVectors[i].x;
+            var ypos = cell.pos.y + MazeDirections.cardinalVectors[i].y;
 
             if (xpos < 0 || ypos < 0 || xpos > maze.size.x - 1 || ypos > maze.size.y - 1)
                 continue;
@@ -260,8 +260,8 @@ public class Spotfinder : MonoBehaviour
                 if (diagonal.state > 1)
                     continue;
 
-                var xnext = cell.pos.x + MazeDirections.vectors[(i + 1) % MazeDirections.vectors.Length].x;
-                var ynext = cell.pos.y + MazeDirections.vectors[(i + 1) % MazeDirections.vectors.Length].y;
+                var xnext = cell.pos.x + MazeDirections.cardinalVectors[(i + 1) % MazeDirections.cardinalVectors.Length].x;
+                var ynext = cell.pos.y + MazeDirections.cardinalVectors[(i + 1) % MazeDirections.cardinalVectors.Length].y;
                 var next = maze.cells[xnext, ynext];
 
                 if (neighbour.connectedCells.Contains(diagonal) && diagonal.connectedCells.Contains(next)
@@ -284,8 +284,8 @@ public class Spotfinder : MonoBehaviour
                 if (diagonal.state > 1)
                     continue;
 
-                var xnext = cell.pos.x + MazeDirections.vectors[(i + 1) % MazeDirections.vectors.Length].x;
-                var ynext = cell.pos.y + MazeDirections.vectors[(i + 1) % MazeDirections.vectors.Length].y;
+                var xnext = cell.pos.x + MazeDirections.cardinalVectors[(i + 1) % MazeDirections.cardinalVectors.Length].x;
+                var ynext = cell.pos.y + MazeDirections.cardinalVectors[(i + 1) % MazeDirections.cardinalVectors.Length].y;
                 var next = maze.cells[xnext, ynext];
 
                 if (neighbour.connectedCells.Contains(diagonal) && diagonal.connectedCells.Contains(next)
@@ -308,8 +308,8 @@ public class Spotfinder : MonoBehaviour
                 if (diagonal.state > 1)
                     continue;
 
-                var xnext = cell.pos.x + MazeDirections.vectors[(i + 1) % MazeDirections.vectors.Length].x;
-                var ynext = cell.pos.y + MazeDirections.vectors[(i + 1) % MazeDirections.vectors.Length].y;
+                var xnext = cell.pos.x + MazeDirections.cardinalVectors[(i + 1) % MazeDirections.cardinalVectors.Length].x;
+                var ynext = cell.pos.y + MazeDirections.cardinalVectors[(i + 1) % MazeDirections.cardinalVectors.Length].y;
                 var next = maze.cells[xnext, ynext];
 
                 if (neighbour.connectedCells.Contains(diagonal) && diagonal.connectedCells.Contains(next)
@@ -332,36 +332,13 @@ public class Spotfinder : MonoBehaviour
                 if (diagonal.state > 1)
                     continue;
 
-                var xnext = cell.pos.x + MazeDirections.vectors[(i + 1) % MazeDirections.vectors.Length].x;
-                var ynext = cell.pos.y + MazeDirections.vectors[(i + 1) % MazeDirections.vectors.Length].y;
+                var xnext = cell.pos.x + MazeDirections.cardinalVectors[(i + 1) % MazeDirections.cardinalVectors.Length].x;
+                var ynext = cell.pos.y + MazeDirections.cardinalVectors[(i + 1) % MazeDirections.cardinalVectors.Length].y;
                 var next = maze.cells[xnext, ynext];
 
                 if (neighbour.connectedCells.Contains(diagonal) && diagonal.connectedCells.Contains(next)
                     && (next.connectedCells.Contains(cell) || next.placedConnectedCells.Contains(cell)))
                     cell.diagonalBits |= 1 << 3;
-            }
-        }
-    }
-
-    //private void OnGUI()
-    //{
-    //    if (GUI.Button(new Rect(10, 250, 80, 60), "Determine Tiles"))
-    //        DetermineTilePlacement();
-    //}
-
-    private void OnDrawGizmos()
-    {
-        if (maze != null && maze.cells.Length != 0)
-        {
-            //foreach (var cell in availableSpots)
-            //{
-            //    if (cell.isPlaceable)
-            //        Gizmos.DrawCube(cell.transform.position, new Vector3(5,5,5));
-            //}
-
-            foreach (var cell in placedSpots)
-            {
-               Gizmos.DrawCube(cell.transform.position, new Vector3(5, 5, 5));
             }
         }
     }

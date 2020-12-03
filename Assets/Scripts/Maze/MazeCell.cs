@@ -29,6 +29,7 @@ public class MazeCell : FastPriorityQueueNode
 	// used for bit ops for spot placement
 	public int cardinalBits = 0;
 	public int diagonalBits = 0;
+	public int allNeighbourBits = 0;
 
 	// for keeping track of items placed on cell
 	public Dictionary<PlaceableItemType, PlaceableItem> placedItems = new Dictionary<PlaceableItemType, PlaceableItem>();

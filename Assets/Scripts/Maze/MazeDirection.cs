@@ -22,7 +22,7 @@ public static class MazeDirections
 	}
 
 	// clockwise from top
-	public static IntVector2[] vectors = {
+	public static IntVector2[] cardinalVectors = {
 		new IntVector2(0, 1),
 		new IntVector2(1, 0),
 		new IntVector2(0, -1),
@@ -37,9 +37,21 @@ public static class MazeDirections
 		new IntVector2(-1, 1)
 	};
 
+	// clockwise from top
+	public static IntVector2[] allVectors = {
+		new IntVector2(0,1),
+		new IntVector2(1,1),
+		new IntVector2(1,0),
+		new IntVector2(1,-1),
+		new IntVector2(0,-1),
+		new IntVector2(-1,-1),
+		new IntVector2(-1,0),
+		new IntVector2(-1,1)
+    };
+
 	public static IntVector2 ToIntVector2(this MazeDirection direction)
 	{
-		return vectors[(int)direction];
+		return cardinalVectors[(int)direction];
 	}
 
 	private static MazeDirection[] opposites = {
@@ -73,5 +85,34 @@ public static class MazeDirections
 		wall.cellB.connectedCells.Add(wall.cellA);
 
 		wall.gameObject.SetActive(false);
+	}
+
+	public static bool IsConnectedTo(this MazeCell current, MazeCell next, bool isCardinal)
+	{
+		if (isCardinal)
+		{
+			if (current.connectedCells.Contains(next) || current.placedConnectedCells.Contains(next))
+				return true;
+		}
+		else
+		{
+			int connected = 0;
+
+			foreach (var cell in current.connectedCells)
+			{
+				if (cell.connectedCells.Contains(next) || cell.placedConnectedCells.Contains(next))
+					connected++;
+			}
+			foreach (var cell in current.placedConnectedCells)
+			{
+				if (cell.connectedCells.Contains(next) || cell.placedConnectedCells.Contains(next))
+					connected++;
+			}
+
+			if (connected == 2)
+				return true;
+		}
+
+		return false;
 	}
 }

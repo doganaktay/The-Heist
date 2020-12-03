@@ -96,10 +96,10 @@ public class AreaFinder : MonoBehaviour
         {
             foreach (var cell in room.Value)
             {
-                for (int i = 0; i < MazeDirections.vectors.Length; i++)
+                for (int i = 0; i < MazeDirections.cardinalVectors.Length; i++)
                 {
-                    var xpos = cell.pos.x + MazeDirections.vectors[i].x;
-                    var ypos = cell.pos.y + MazeDirections.vectors[i].y;
+                    var xpos = cell.pos.x + MazeDirections.cardinalVectors[i].x;
+                    var ypos = cell.pos.y + MazeDirections.cardinalVectors[i].y;
 
                     if (xpos < 0 || ypos < 0 || xpos > maze.size.x - 1 || ypos > maze.size.y - 1)
                         continue;
@@ -124,10 +124,10 @@ public class AreaFinder : MonoBehaviour
         {
             foreach (var cell in room.Value)
             {
-                for (int i = 0; i < MazeDirections.vectors.Length; i++)
+                for (int i = 0; i < MazeDirections.cardinalVectors.Length; i++)
                 {
-                    var xpos = cell.pos.x + MazeDirections.vectors[i].x;
-                    var ypos = cell.pos.y + MazeDirections.vectors[i].y;
+                    var xpos = cell.pos.x + MazeDirections.cardinalVectors[i].x;
+                    var ypos = cell.pos.y + MazeDirections.cardinalVectors[i].y;
 
                     if (xpos < 0 || ypos < 0 || xpos > maze.size.x - 1 || ypos > maze.size.y - 1)
                         continue;

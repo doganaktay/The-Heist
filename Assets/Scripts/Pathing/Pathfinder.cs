@@ -34,6 +34,8 @@ public class Pathfinder : MonoBehaviour
     // astar
     public AStar aStar;
 
+    #region MonoBehaviour
+
     private void Start()
     {
         Player.MazeChange += NewPath;
@@ -67,6 +69,8 @@ public class Pathfinder : MonoBehaviour
         //GameManager.MazeGenFinished -= NewPath;
         Player.MazeChange -= NewPath;
     }
+
+    #endregion
 
     // For setting maze path from startPos to endPos
     public void NewPath()
