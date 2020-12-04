@@ -1,6 +1,8 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Diagnostics;
 
 public class Propagation : MonoBehaviour
 {
@@ -8,14 +10,22 @@ public class Propagation : MonoBehaviour
 
     [Tooltip("1 / this value is used to scale strength attenuation after each iteration of propagation")]
     [SerializeField] private float attenuationScalar = 1f;
+    private Camera cam;
 
     public int[,] connectivityGrid;
     public bool[,] isSearched;
     Queue<MazeCell> queue;
 
+    List<MazeCell> requestedAreaOfEffect = new List<MazeCell>();
+
+    private void Start()
+    {
+        cam = Camera.main;
+    }
+
     public void BuildConnectivityGrid()
     {
-        maze = GetComponent<Pathfinder>().maze;
+        //maze = GetComponent<Pathfinder>().maze;
 
         if(connectivityGrid == null)
         {
@@ -47,25 +57,28 @@ public class Propagation : MonoBehaviour
 
     private void Update()
     {
-        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector3 mousePos = cam.ScreenToWorldPoint(Input.mousePosition);
 
         if (Input.GetMouseButtonDown(0))
         {
             Collider2D hit = Physics2D.OverlapCircle(mousePos, 1f, 1 << 10);
-
-            Debug.Log("Propagating");
             Propagate(hit.GetComponent<MazeCell>(), 10000f, 10f);
         }
     }
 
-    public void Propagate(MazeCell center, float initialStrength, float minViableStrength)
+    public List<MazeCell> Propagate(MazeCell center, float initialStrength, float minViableStrength)
     {
+        Stopwatch timer = new Stopwatch();
+        timer.Start();
+
+        Array.Clear(isSearched, 0, isSearched.Length);
+        requestedAreaOfEffect.Clear();
         queue.Clear();
 
         queue.Enqueue(center);
         isSearched[center.pos.x, center.pos.y] = true;
 
-        Debug.Log("Starting propagation at center: " + center.gameObject.name);
+        UnityEngine.Debug.Log("Starting propagation at center: " + center.gameObject.name);
 
         var strength = initialStrength;
         center.cellText.text = strength.ToString();
@@ -84,6 +97,7 @@ public class Propagation : MonoBehaviour
             var current = queue.Dequeue();
             currentRingCellCount--;
             currentRing.Add(current);
+            requestedAreaOfEffect.Add(current);
 
             current.GetComponentInChildren<Renderer>().material.color = Color.blue;
 
@@ -120,9 +134,14 @@ public class Propagation : MonoBehaviour
                 strength = Attenuate(strength, totalRingCount, currentRingCellCount);
 
                 if (strengthPerCell < minViableStrength)
-                { Debug.Log("Fell below minimum threshold"); break; }
+                { UnityEngine.Debug.Log("Fell below minimum threshold"); break; }
             }
         }
+
+        timer.Stop();
+        UnityEngine.Debug.Log($"Propagation time: {timer.ElapsedMilliseconds}ms");
+
+        return requestedAreaOfEffect;
     }
 
     private float Attenuate(float strength, float iteration, float ringCount)

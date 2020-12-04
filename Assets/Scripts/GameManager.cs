@@ -21,6 +21,7 @@ public class GameManager : MonoBehaviour
 	public Pathfinder pathfinder;
 	public AreaFinder areafinder;
 	public Spotfinder spotfinder;
+	public Propagation propagationModule;
 	public PatrolManager patrolManager;
 	public TextOverlay textOverlay;
 	public Player playerPrefab;
@@ -88,7 +89,7 @@ public class GameManager : MonoBehaviour
 		spotfinder.layout = layout;
 
 		// pass references to dispersion calculator
-		Dispersion.maze = mazeInstance;
+		Propagation.maze = mazeInstance;
 
 		// pass references to patrol manager
 		patrolManager.pathfinder = pathfinder;
@@ -149,6 +150,7 @@ public class GameManager : MonoBehaviour
 		//physicsSim.AddLayout(); // enable to include placement in physics sim
 		pathfinder.NewPath();
 		areafinder.FindAreas();
+		propagationModule.BuildConnectivityGrid();
 	}
 
 	public void RestartGame()
