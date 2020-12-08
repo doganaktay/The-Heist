@@ -107,7 +107,7 @@ public class Propagation : MonoBehaviour
 
                 foreach(var cell in currentRing)
                 {
-                    cell.GetComponentInChildren<Renderer>().material.color = Color.blue;
+                    //cell.GetComponentInChildren<Renderer>().material.color = Color.blue;
 
                     if (cell.state < 2)
                         requestedAreaOfEffect.Add(cell);

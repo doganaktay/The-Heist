@@ -201,15 +201,8 @@ public class Player : Character
         if (!cell.HasPlacedItem(type))
         {
             var go = Instantiate(item, cell.transform.position, Quaternion.identity);
-
             go.Place(cell);
-
             go.transform.SetParent(spawnedObjectHolder.transform);
-
-            if (!cell.placedItems.ContainsKey(type))
-                cell.PlaceItem(type, go);
-            else
-                cell.placedItems[type] = go;
         }
         else
         {

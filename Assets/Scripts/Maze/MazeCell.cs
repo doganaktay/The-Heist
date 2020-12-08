@@ -36,9 +36,6 @@ public class MazeCell : FastPriorityQueueNode
 	// for keeping track of items placed on cell
 	public Dictionary<PlaceableItemType, PlaceableItem> placedItems = new Dictionary<PlaceableItemType, PlaceableItem>();
 
-	// for notifying characters currently on cell
-	public Action<CellNotificationData> NotifyCharacter;
-
 	// for A*
 	public int travelCost;
 
@@ -151,15 +148,5 @@ public class MazeCell : FastPriorityQueueNode
 	public void ClearAOE()
     {
 		mat.color = initialColor;
-    }
-
-	public void Subscribe(Action<CellNotificationData> callback)
-    {
-		NotifyCharacter += callback;
-    }
-
-	public void Unsubscribe(Action<CellNotificationData> callback)
-    {
-		NotifyCharacter -= callback;
     }
 }

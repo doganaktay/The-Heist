@@ -127,7 +127,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   type: 0
-  strength: 20000
+  strength: 100000
   minThreshold: 10
   notificationColor: {r: 0, g: 0, b: 1, a: 1}
 --- !u!1 &8246069865455294447

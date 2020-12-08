@@ -15,5 +15,5 @@ public class PlaceableItem : MonoBehaviour
     public MazeCell Position { get => position; set => position = value; }
 
     public virtual void UseItem() { }
-    public virtual void Place(MazeCell cell) => position = cell;
+    public virtual void Place(MazeCell cell) { position = cell; cell.PlaceItem(type, this); }
 }

@@ -19,6 +19,10 @@ public class SoundBomb : PlaceableItem, IPropagatable
     {
         base.Place(cell);
         affectedCells = AcquirePropagationArea(position, strength, minThreshold);
+        foreach(var affected in affectedCells)
+        {
+            affected.IndicateAOE(notificationColor);
+        }
     }
 
     public List<MazeCell> AcquirePropagationArea(MazeCell center, float strength, float minimum)
@@ -32,6 +36,9 @@ public class SoundBomb : PlaceableItem, IPropagatable
         foreach(var cell in affectedCells)
         {
             NotificationModule.MakeNotification(cell, new CellNotificationData(1, 10, position));
+            cell.ClearAOE();
         }
+        //position.RemoveItem(type);
+        Destroy(gameObject);
     }
 }
