@@ -52,8 +52,8 @@ public class Pathfinder : MonoBehaviour
     {
         if (player.cellChanged)
         {
-            if (player.currentPlayerCell.state == 0)
-                SetHighlightPath(player.currentPlayerCell.pos, player.areaIndex);
+            if (player.CurrentCell.state == 0)
+                SetHighlightPath(player.CurrentCell.pos, player.areaIndex);
             else
             {
                 if (highestIndex < 1000)

@@ -91,6 +91,9 @@ public class GameManager : MonoBehaviour
 		// pass references to dispersion calculator
 		Propagation.maze = mazeInstance;
 
+		// initialize and pass references to notification module
+		NotificationModule.Create(mazeInstance);
+
 		// pass references to patrol manager
 		patrolManager.pathfinder = pathfinder;
 		patrolManager.areafinder = areafinder;

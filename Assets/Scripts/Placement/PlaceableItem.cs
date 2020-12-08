@@ -10,9 +10,10 @@ public enum PlaceableItemType
 public class PlaceableItem : MonoBehaviour
 {
 
-    [SerializeField]
-    bool hasAOE = false;
-    List<MazeCell> affectedCells = new List<MazeCell>();
+    public PlaceableItemType type;
+    protected MazeCell position;
+    public MazeCell Position { get => position; set => position = value; }
 
     public virtual void UseItem() { }
+    public virtual void Place(MazeCell cell) => position = cell;
 }

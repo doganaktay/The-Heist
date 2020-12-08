@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Patrol : MonoBehaviour
+public class Patrol : Character
 {
     public Pathfinder pathfinder;
+    private FieldOfView fieldOfView;
     bool patrolling;
     [SerializeField]
     Transform body;
@@ -27,19 +28,22 @@ public class Patrol : MonoBehaviour
     float maxWaitTime = 3f;
 
     List<MazeCell> patrolPath = new List<MazeCell>();
-    public MazeCell currentCell;
     MazeCell nextCell;
 
     Coroutine patrol;
 
-    void Start()
+    protected override void Start()
     {
+        base.Start();
+
+        fieldOfView = GetComponentInChildren<FieldOfView>();
         speed = Random.Range(minSpeed, maxSpeed);
-        PathRequestManager.RequestPath(new PathRequest(OnPathFound, currentCell));
     }
 
-    void Update()
+    protected override void Update()
     {
+        base.Update();
+
         if (!patrolling)
         {
             PathRequestManager.RequestPath(new PathRequest(OnPathFound, currentCell));
@@ -88,7 +92,7 @@ public class Patrol : MonoBehaviour
         {
             lookCurrent += Time.deltaTime;
             var ratio = lookCurrent / lookSpeed * (180f / randomRot.eulerAngles.z);
-            var t = ratio < 1f ? ratio : 1f;
+            var t = Mathf.Min(ratio, 1f);
 
             transform.rotation = Quaternion.Slerp(currentRot, targetRot, t);
 

@@ -9,7 +9,6 @@ public class Maze : MonoBehaviour
     [HideInInspector] public float cellScaleX, cellScaleY;
 
     public MazeCell cellPrefab;
-
     public MazeCell[,] cells;
 
     public MazeCellPassage passagePrefab;

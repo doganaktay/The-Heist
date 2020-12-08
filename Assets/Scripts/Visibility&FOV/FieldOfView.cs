@@ -106,7 +106,7 @@ public class FieldOfView : MonoBehaviour
 		}
 	}
 
-	private bool CanSeePlayer()
+	public bool CanSeePlayer()
     {
 		if (visibleTargets.Contains(GameManager.player.transform))
 			return true;

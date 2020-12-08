@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(ProjectileSelector))]
-public class Player : MonoBehaviour
+public class Player : Character
 {
     // physics sim creates a copy so we need to keep track of instance count to determine signing up for events
     public static List<Player> instances = new List<Player>();
@@ -29,12 +29,9 @@ public class Player : MonoBehaviour
     public bool cellChanged = false;
     public Maze maze;
 
-    Collider2D[] posHits;
-    Collider2D previousHit;
     RaycastHit2D[] rayHits;
     // mask currently includes walls, placements and player
     static int projectileLayerMask = 1 << 9 | 1<<8 | 1<<13;
-    static int cellLayerMask = 1 << 10;
 
     bool isMoving = false;
     MazeCell nextCell;
@@ -64,10 +61,11 @@ public class Player : MonoBehaviour
 
     #region MonoBehaviour
 
-    private void Start()
+    protected override void Start()
     {
+        base.Start();
+
         rb = GetComponent<Rigidbody2D>();
-        posHits = new Collider2D[10];
         rayHits = new RaycastHit2D[10];
 
         cam = Camera.main;
@@ -83,9 +81,9 @@ public class Player : MonoBehaviour
         }
     }
 
-    void Update()
+    protected override void Update()
     {
-        TrackPosition();
+        base.Update();
     }
 
     void LateUpdate()
@@ -185,7 +183,7 @@ public class Player : MonoBehaviour
 
     IEnumerator ItemTask(PlaceableItemType itemType, PlaceableItem item, MazeCell targetCell)
     {
-        if (targetCell != currentPlayerCell)
+        if (targetCell != currentCell)
         {
             Move(targetCell);
         }
@@ -203,6 +201,8 @@ public class Player : MonoBehaviour
         if (!cell.HasPlacedItem(type))
         {
             var go = Instantiate(item, cell.transform.position, Quaternion.identity);
+
+            go.Place(cell);
 
             go.transform.SetParent(spawnedObjectHolder.transform);
 
@@ -226,47 +226,18 @@ public class Player : MonoBehaviour
 
     #endregion Object Placement
 
-    void TrackPosition()
-    {
-        //if (currentMovement != null)
-        //    return;
-
-        int hitCount = Physics2D.OverlapCircleNonAlloc(transform.position, 1f, results: posHits, cellLayerMask);
-
-        if (hitCount > 0)
-        {
-
-            float dist = Mathf.Infinity;
-            int closestIndex = 0;
-            for (int i = 0; i < hitCount; i++)
-            {
-                var temp = Vector2.Distance(posHits[i].transform.position, transform.position);
-                if (temp < dist)
-                {
-                    dist = temp;
-                    closestIndex = i;
-                }
-            }
-
-            if (posHits[closestIndex] == previousHit) { return; }
-
-            lastPlayerCell = currentPlayerCell;
-            currentPlayerCell = posHits[closestIndex].GetComponent<MazeCell>();
-        }
-    }
-
     #region Movement
 
     public bool IsMoving { get { return isMoving; } }
 
     public void Move(MazeCell targetCell)
     {
-        PathRequestManager.RequestPath(new PathRequest(OnPathFound, currentPlayerCell, targetCell));
+        PathRequestManager.RequestPath(new PathRequest(OnPathFound, currentCell, targetCell));
     }
 
     public void OnPathFound(List<MazeCell> path)
     {
-        if (path[path.Count - 1] == currentPlayerCell)
+        if (path[path.Count - 1] == currentCell)
             return;
 
         if (!ShouldRun)
@@ -304,7 +275,7 @@ public class Player : MonoBehaviour
         }
 
         // starting at 1 because index 0 is the cell it is already on
-        int i = path[0] == currentPlayerCell ? 1 : 0;
+        int i = path[0] == currentCell ? 1 : 0;
         while (i < path.Count)
         {
             nextCell = path[i];
@@ -313,7 +284,7 @@ public class Player : MonoBehaviour
 
             if (transform.position == nextCell.transform.position)
             {
-                //currentPlayerCell = nextCell;
+                //currentCell = nextCell;
                 i++;
             }
 

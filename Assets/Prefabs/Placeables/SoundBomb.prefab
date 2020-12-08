@@ -126,9 +126,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab7e5c783195847cb9db5eb1426d6560, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hasAOE: 1
-  AOEObject: {fileID: 7083733755646788955}
-  effectRadius: 100
+  type: 0
+  strength: 20000
+  minThreshold: 10
+  notificationColor: {r: 0, g: 0, b: 1, a: 1}
 --- !u!1 &8246069865455294447
 GameObject:
   m_ObjectHideFlags: 0

@@ -25,7 +25,7 @@ public class PatrolManager : MonoBehaviour
 
             patrol.name = "Patrol " + (patrols.Count + i);
             patrol.pathfinder = pathfinder;
-            patrol.currentCell = randomCell;
+            //patrol.CurrentCell = randomCell;
             patrol.transform.parent = transform;
 
             patrols.Add(patrol);

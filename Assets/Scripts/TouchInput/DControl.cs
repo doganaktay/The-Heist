@@ -246,7 +246,7 @@ namespace Archi.Touch
                 if (currentCellHit.IsWalkable())
                 {
                     cellIsWalkable = true;
-                    cellIsPlayer = currentCellHit == player.currentPlayerCell;
+                    cellIsPlayer = currentCellHit == player.CurrentCell;
                     return true;
                 }
             }
