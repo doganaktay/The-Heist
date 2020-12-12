@@ -904,7 +904,8 @@ MonoBehaviour:
   simulation: {fileID: 0}
   pathfinder: {fileID: 0}
   wallDropPercent: 0.1
-  displayCellID: 0
+  passableWallPercent: 0.1
+  displayCellID: 1
 --- !u!4 &600934098
 Transform:
   m_ObjectHideFlags: 0

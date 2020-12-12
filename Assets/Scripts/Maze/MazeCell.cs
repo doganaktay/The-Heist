@@ -33,6 +33,8 @@ public class MazeCell : FastPriorityQueueNode
 	public int diagonalBits = 0;
 	public int allNeighbourBits = 0;
 
+	List<Color> requestedIndicatorColors = new List<Color>();
+
 	// for keeping track of items placed on cell
 	public Dictionary<PlaceableItemType, PlaceableItem> placedItems = new Dictionary<PlaceableItemType, PlaceableItem>();
 
@@ -142,11 +144,33 @@ public class MazeCell : FastPriorityQueueNode
 
 	public void IndicateAOE(Color aoeColor)
     {
-		mat.color = aoeColor;
+		requestedIndicatorColors.Add(aoeColor);
+		mat.color = MixIndicatorColors();
     }
 
-	public void ClearAOE()
+	public void ClearAOE(Color aoeColor)
     {
-		mat.color = initialColor;
+		requestedIndicatorColors.Remove(aoeColor);
+		mat.color = MixIndicatorColors();
+    }
+
+	private Color MixIndicatorColors()
+    {
+		if (requestedIndicatorColors.Count == 0)
+			return initialColor;
+
+		float tempR = 0;
+		float tempG = 0;
+		float tempB = 0;
+		foreach(var color in requestedIndicatorColors)
+        {
+			tempR += color.r;
+			tempG += color.g;
+			tempB += color.b;
+        }
+
+		return new Color(tempR / requestedIndicatorColors.Count,
+						 tempG / requestedIndicatorColors.Count,
+						 tempB / requestedIndicatorColors.Count);
     }
 }

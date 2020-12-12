@@ -36,9 +36,9 @@ public class SoundBomb : PlaceableItem, IPropagatable
         foreach(var cell in affectedCells)
         {
             NotificationModule.MakeNotification(cell, new CellNotificationData(1, 10, position));
-            cell.ClearAOE();
+            cell.ClearAOE(notificationColor);
         }
         //position.RemoveItem(type);
-        Destroy(gameObject);
+        Destroy(gameObject, 0.1f);
     }
 }

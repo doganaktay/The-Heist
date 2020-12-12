@@ -16,8 +16,6 @@ public class Propagation : MonoBehaviour
     public bool[,] isSearched;
     Queue<MazeCell> queue;
 
-    List<MazeCell> requestedAreaOfEffect = new List<MazeCell>();
-
     private void Awake()
     {
         if (instance == null)
@@ -61,17 +59,15 @@ public class Propagation : MonoBehaviour
         Stopwatch timer = new Stopwatch();
         timer.Start();
 
+        List<MazeCell> requestedAreaOfEffect = new List<MazeCell>();
+
         Array.Clear(isSearched, 0, isSearched.Length);
-        requestedAreaOfEffect.Clear();
         queue.Clear();
 
         queue.Enqueue(center);
         isSearched[center.pos.x, center.pos.y] = true;
 
-        //UnityEngine.Debug.Log("Starting propagation at center: " + center.gameObject.name);
-
         var strength = initialStrength;
-        //center.DisplayText(strength.ToString());
 
         int currentRingCellCount = 1;
         int nextRingCellCount = 0;
@@ -107,8 +103,6 @@ public class Propagation : MonoBehaviour
 
                 foreach(var cell in currentRing)
                 {
-                    //cell.GetComponentInChildren<Renderer>().material.color = Color.blue;
-
                     if (cell.state < 2)
                         requestedAreaOfEffect.Add(cell);
                 }
@@ -139,10 +133,4 @@ public class Propagation : MonoBehaviour
     }
 
     private bool IsInBounds(int x, int y) => x >= 0 && y >= 0 && x < maze.size.x && y < maze.size.y;
-
-    private void OnGUI()
-    {
-        if (GUI.Button(new Rect(10, 70, 80, 60), "Calculate Bits"))
-            BuildConnectivityGrid();
-    }
 }

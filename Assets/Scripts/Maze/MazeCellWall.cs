@@ -4,5 +4,7 @@ using UnityEngine;
 
 public class MazeCellWall : MazeCellEdge
 {
-    
+    public bool IsPassable { get; set; }
+
+
 }

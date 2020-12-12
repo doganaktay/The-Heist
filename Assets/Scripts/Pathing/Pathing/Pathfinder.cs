@@ -30,7 +30,7 @@ public class Pathfinder : MonoBehaviour
 
     // last level reset time
     public float lastRestartTime;
-
+    
     // astar
     public AStar aStar;
 
@@ -500,7 +500,7 @@ public class Pathfinder : MonoBehaviour
                 cell.distanceFromStart[index] = 0;
             }
 
-            var state = cell.state == 1;
+            //var state = cell.state == 1;
 
             //if (state)
             //{

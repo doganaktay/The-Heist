@@ -14,6 +14,9 @@ public class AreaFinder : MonoBehaviour
     [SerializeField]
     [Tooltip("Percentage from 0 to 1 to be used when deciding how many walls to drop")]
     float wallDropPercent = 0.1f;
+    [SerializeField]
+    [Tooltip("Percentage from 0 to 1 to be used when deciding how many walls to make passable")]
+    float passableWallPercent = 0.1f;
 
     Dictionary<int, List<MazeCell>> lowCellAreas = new Dictionary<int, List<MazeCell>>();
     Dictionary<int, List<MazeCell>> highCellAreas = new Dictionary<int, List<MazeCell>>();
@@ -86,7 +89,32 @@ public class AreaFinder : MonoBehaviour
             FindAreas();
         }
 
-        Debug.Log(availableWallsForDrop.Count);
+        Debug.Log($"Walls in scene {maze.wallsInScene.Count} Available for drop {availableWallsForDrop.Count}");
+    }
+
+    public void SetPassableWalls()
+    {
+        var passCount = Mathf.FloorToInt(availableWallsForDrop.Count * passableWallPercent);
+
+        List<(int, MazeCellWall)> walls = new List<(int, MazeCellWall)>();
+        foreach(var wall in availableWallsForDrop)
+        {
+            int pathCount = pathfinder.GetAStarPath(wall.cellA, wall.cellB).Count;
+            (int, MazeCellWall) pair = (pathCount, wall);
+            walls.Add(pair);
+        }
+
+        var ordered = walls.OrderBy(x => x.Item1).ToList();
+
+        int i = 0;
+        while(i < passCount && ordered.Count > 0)
+        {
+            availableWallsForDrop.Remove(ordered[ordered.Count - 1].Item2);
+            ordered[ordered.Count - 1].Item2.IsPassable = true;
+            ordered[ordered.Count - 1].Item2.transform.GetChild(1).GetComponent<Renderer>().material.color = new Color(0.34f, 0.92f, 0.11f, 1f);
+            ordered.RemoveAt(ordered.Count - 1);
+            i++;
+        }
     }
 
     // used to turn maze paths into rooms after maze is constructed
@@ -139,7 +167,7 @@ public class AreaFinder : MonoBehaviour
                     {
                         var wall = (MazeCellWall)cell.GetEdge((MazeDirection)i);
                         MazeDirections.RemoveWall(wall);
-                        maze.wallsInScene.Remove(wall.GetComponentInParent<MazeCellWall>());
+                        maze.wallsInScene.Remove(wall);
                         simulation.RemoveWallFromSimulation(wall.gameObject);
 
                         cell.connectedCells.Add(neighbour);
@@ -536,11 +564,11 @@ public class AreaFinder : MonoBehaviour
 
     private void OnGUI()
     {
-        if (GUI.Button(new Rect(10, 130, 80, 60), "Drop Walls"))
+        if (GUI.Button(new Rect(10, 70, 80, 60), "Drop Walls"))
             DropWalls();
-        //if (GUI.Button(new Rect(10, 130, 80, 60), "Make Rooms"))
-        //    MakeRooms();
-        //if (GUI.Button(new Rect(10, 190, 80, 60), "Find Corridors"))
-        //    DetermineSinglePaths();
+        if (GUI.Button(new Rect(10, 130, 80, 60), "Pass Walls"))
+            SetPassableWalls();
+        if (GUI.Button(new Rect(10, 190, 80, 60), "Find Paths"))
+            DetermineSinglePaths();
     }
 }

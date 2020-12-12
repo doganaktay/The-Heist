@@ -28,9 +28,6 @@ public abstract class Character : MonoBehaviour
 
     void TrackPosition()
     {
-        //if (currentMovement != null)
-        //    return;
-
         int hitCount = Physics2D.OverlapCircleNonAlloc(transform.position, 1f, results: posHits, cellLayerMask);
 
         if (hitCount > 0)

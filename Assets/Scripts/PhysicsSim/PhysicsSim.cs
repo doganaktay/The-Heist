@@ -103,21 +103,19 @@ public class PhysicsSim : MonoBehaviour
         {
             var wallCopy = Instantiate(maze.wallPrefab);
             SceneManager.MoveGameObjectToScene(wallCopy.gameObject, simulation);
+            wallCopy.name = wall.name + " Copy";
             wallCopy.transform.position = wall.transform.position;
             wallCopy.transform.rotation = wall.transform.rotation;
-
-            // flipping the scale x,y axis if the wall is rotated in main scene
-            // since the wall isn't parented to a cell in the sim
-            Vector3 scale;
-            if(wallCopy.transform.rotation.z % 180 == 0)
-                scale = new Vector3(maze.cellScaleX, maze.cellScaleY, 1f);
-            else
-                scale = new Vector3(maze.cellScaleY, maze.cellScaleX, 1f);
-
-            wallCopy.transform.localScale = scale;
+            wallCopy.transform.localScale =
+                wall.transform.rotation.eulerAngles.z == 0f || wall.transform.rotation.eulerAngles.z == 180f ?
+                new Vector3(wall.transform.localScale.x * maze.cellScaleX,
+                            wall.transform.localScale.y * maze.cellScaleY,
+                            1f) :
+                new Vector3(wall.transform.localScale.x * maze.cellScaleY,
+                            wall.transform.localScale.y * maze.cellScaleX,
+                            1f);
             wallCopy.transform.parent = sceneHolder.transform;
 
-            wallCopy.name = wall.name + " Copy";
 
             Destroy(wallCopy.transform.GetChild(1).gameObject);
 
