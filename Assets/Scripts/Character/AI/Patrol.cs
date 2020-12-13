@@ -46,7 +46,7 @@ public class Patrol : Character
 
         if (!patrolling)
         {
-            PathRequestManager.RequestPath(new PathRequest(OnPathFound, currentCell));
+            PathRequestManager.RequestPath(new PathRequest(OnPathFound, PathLayer.Base, currentCell));
         }
     }
 

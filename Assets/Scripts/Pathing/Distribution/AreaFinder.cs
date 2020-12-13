@@ -96,25 +96,43 @@ public class AreaFinder : MonoBehaviour
     {
         var passCount = Mathf.FloorToInt(availableWallsForDrop.Count * passableWallPercent);
 
-        List<(int, MazeCellWall)> walls = new List<(int, MazeCellWall)>();
-        foreach(var wall in availableWallsForDrop)
+        var ordered = BuildOrderedWallList(availableWallsForDrop, PathLayer.Special);
+
+        int i = 0;
+        while(i < passCount && ordered.Count > 0)
         {
-            int pathCount = pathfinder.GetAStarPath(wall.cellA, wall.cellB).Count;
+            availableWallsForDrop.Remove(ordered[ordered.Count - 1].Item2);
+
+            ordered[ordered.Count - 1].Item2.AddSpecialPassage();
+            ordered[ordered.Count - 1].Item2.transform.GetChild(1).GetComponent<Renderer>().material.color = new Color(0.34f, 0.92f, 0.11f, 1f);
+
+            ordered.RemoveAt(ordered.Count - 1);
+
+            ordered = BuildOrderedWallList(availableWallsForDrop, PathLayer.Special);
+
+            i++;
+        }
+    }
+
+    List<(int, MazeCellWall)> BuildOrderedWallList(List<MazeCellWall> availableWalls, PathLayer pathLayer)
+    {
+        List<(int, MazeCellWall)> walls = new List<(int, MazeCellWall)>();
+        foreach (var wall in availableWalls)
+        {
+            int pathCount = pathfinder.GetAStarPath(pathLayer, wall.cellA, wall.cellB).Count;
             (int, MazeCellWall) pair = (pathCount, wall);
             walls.Add(pair);
         }
 
         var ordered = walls.OrderBy(x => x.Item1).ToList();
 
-        int i = 0;
-        while(i < passCount && ordered.Count > 0)
+        foreach(var o in ordered)
         {
-            availableWallsForDrop.Remove(ordered[ordered.Count - 1].Item2);
-            ordered[ordered.Count - 1].Item2.IsPassable = true;
-            ordered[ordered.Count - 1].Item2.transform.GetChild(1).GetComponent<Renderer>().material.color = new Color(0.34f, 0.92f, 0.11f, 1f);
-            ordered.RemoveAt(ordered.Count - 1);
-            i++;
+            Debug.Log($"{o.Item2.gameObject.name} with count {o.Item1}");
         }
+
+        return ordered;
+        //return walls.OrderBy(x => x.Item1).ToList();
     }
 
     // used to turn maze paths into rooms after maze is constructed

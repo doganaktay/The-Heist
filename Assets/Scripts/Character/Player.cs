@@ -135,7 +135,7 @@ public class Player : Character
 
         proj.gameObject.transform.SetParent(spawnedObjectHolder.transform);
 
-        proj.GetComponent<Projectile>().Launch(projectileSelector.currentProjectile, aimUp, spinAmount);
+        proj.Launch(projectileSelector.currentProjectile, aimUp, spinAmount);
     }
 
     void DrawTrajectory()
@@ -225,7 +225,7 @@ public class Player : Character
 
     public void Move(MazeCell targetCell)
     {
-        PathRequestManager.RequestPath(new PathRequest(OnPathFound, currentCell, targetCell));
+        PathRequestManager.RequestPath(new PathRequest(OnPathFound, PathLayer.Base, currentCell, targetCell));
     }
 
     public void OnPathFound(List<MazeCell> path)

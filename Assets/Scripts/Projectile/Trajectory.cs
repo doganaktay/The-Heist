@@ -10,6 +10,7 @@ public class Trajectory : MonoBehaviour
     public float width;
 
     // mesh gen
+    MeshFilter meshFilter;
     public Mesh sharedMesh;
     public Mesh lineMesh;
     public Mesh projMesh;
@@ -23,7 +24,8 @@ public class Trajectory : MonoBehaviour
         projMesh = new Mesh();
         projMesh.name = "Projectiles";
 
-        sharedMesh = GetComponent<MeshFilter>().sharedMesh = new Mesh();
+        meshFilter = GetComponent<MeshFilter>();
+        sharedMesh = meshFilter.sharedMesh = new Mesh();
         sharedMesh.name = "Trajectory";
     }
 
@@ -127,7 +129,7 @@ public class Trajectory : MonoBehaviour
         combine[1].mesh = projMesh;
         combine[1].transform = transform.localToWorldMatrix;
 
-        GetComponent<MeshFilter>().sharedMesh.CombineMeshes(combine);
+        meshFilter.sharedMesh.CombineMeshes(combine);
     }
 
     void OnDrawGizmos()

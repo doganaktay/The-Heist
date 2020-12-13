@@ -67,12 +67,14 @@ public struct PathRequest
 {
     public MazeCell start;
     public MazeCell end;
+    public PathLayer pathLayer;
     public Action<List<MazeCell>> callback;
 
-    public PathRequest(Action<List<MazeCell>> callback, MazeCell start, MazeCell end = null )
+    public PathRequest(Action<List<MazeCell>> callback, PathLayer pathLayer, MazeCell start, MazeCell end = null )
     {
+        this.callback = callback;
+        this.pathLayer = pathLayer;
         this.start = start;
         this.end = end;
-        this.callback = callback;
     }
 }

@@ -18,8 +18,13 @@ public class MazeCell : FastPriorityQueueNode
 	public bool[] visited;
 	public bool searched = false;
 
+	// actually connected cells
 	public HashSet<MazeCell> connectedCells = new HashSet<MazeCell>();
+	// connected cells with placement on them
 	public HashSet<MazeCell> placedConnectedCells = new HashSet<MazeCell>();
+	// cells only connected through special connections through walls (like grates)
+	public HashSet<MazeCell> specialConnectedCells = new HashSet<MazeCell>();
+
 	public MazeCell[] exploredFrom;
 	public int[] distanceFromStart;
 

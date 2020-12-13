@@ -4,6 +4,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 
+public enum PathLayer
+{
+    Base,
+    Special
+}
+
 public class Pathfinder : MonoBehaviour
 {
     public Player player;
@@ -78,28 +84,19 @@ public class Pathfinder : MonoBehaviour
         SetNewPath(startPos, endPos);
     }
 
-    // get aStar path
-    public List<MazeCell> GetRandomAStarPath(MazeCell start)
+    public List<MazeCell> GetAStarPath(PathLayer layer, MazeCell start, MazeCell end = null)
     {
-        // random endpoint assignment
-        var end = areafinder.WalkableArea[UnityEngine.Random.Range(0, areafinder.WalkableArea.Count - 1)];
+        if(end == null)
+            end = areafinder.WalkableArea[UnityEngine.Random.Range(0, areafinder.WalkableArea.Count - 1)];
 
-        return new List<MazeCell>(aStar.GetPath(start, end));
-    }
-
-    public List<MazeCell> GetAStarPath(MazeCell start, MazeCell end)
-    {
-        return new List<MazeCell>(aStar.GetPath(start, end));
+        return new List<MazeCell>(aStar.GetPath(layer, start, end));
     }
 
     public void FindPath(PathRequest request, Action<PathResult> callback)
     {
         List<MazeCell> newPath;
 
-        if (request.end != null)
-            newPath = GetAStarPath(request.start, request.end);
-        else
-            newPath = GetRandomAStarPath(request.start);
+        newPath = GetAStarPath(request.pathLayer, request.start, request.end);
 
         callback(new PathResult(newPath, request.callback));
     }

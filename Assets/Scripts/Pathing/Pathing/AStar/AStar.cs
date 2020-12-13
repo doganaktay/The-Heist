@@ -23,7 +23,7 @@ public class AStar
     public List<MazeCell> aStarPath = new List<MazeCell>();
     FastPriorityQueue<MazeCell> frontier;
 
-    public List<MazeCell> GetPath(MazeCell start, MazeCell end)
+    public List<MazeCell> GetPath(PathLayer layer, MazeCell start, MazeCell end)
     {
         // clearing dictionaries for re-use
         cameFrom.Clear();
@@ -64,6 +64,30 @@ public class AStar
                         frontier.UpdatePriority(next, priority);
 
                     cameFrom[next] = current;
+                }
+            }
+
+            if(layer == PathLayer.Special)
+            {
+                foreach (var next in current.specialConnectedCells)
+                {
+                    if (next.state > 1)
+                        continue;
+
+                    float newCost = costSoFar[current] + Heuristic(current, next) + maze.Cost(current, next);
+
+                    if (!costSoFar.ContainsKey(next) || newCost < costSoFar[next])
+                    {
+                        costSoFar[next] = newCost;
+                        float priority = newCost + Heuristic(next, end);
+
+                        if (!frontier.Contains(next))
+                            frontier.Enqueue(next, priority);
+                        else
+                            frontier.UpdatePriority(next, priority);
+
+                        cameFrom[next] = current;
+                    }
                 }
             }
         }
