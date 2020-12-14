@@ -154,6 +154,7 @@ public class GameManager : MonoBehaviour
 		pathfinder.NewPath();
 		areafinder.FindAreas();
 		propagationModule.BuildConnectivityGrid();
+		areafinder.SetPassableWalls();
 	}
 
 	public void RestartGame()

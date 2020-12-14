@@ -12,6 +12,7 @@ namespace Archi.Touch
         static List<DControl> instances = new List<DControl>();
 
         static int cellLayerMask = 1 << 10;
+        static int wallLayerMask = 1 << 9;
 
         public Player player;
         public TouchUI touchUI;
@@ -39,8 +40,9 @@ namespace Archi.Touch
 
             if(instances[0] == this)
             {
-                DTouch.OnFingerTap += FingerTap;
                 DTouch.OnFingerDown += FingerDown;
+                DTouch.OnFingerTap += FingerTap;
+                DTouch.OnFingerSwipe += FingerSwipe;
                 DTouch.OnFingerUpdate += FingerUpdate;
                 DTouch.OnFingerUp += FingerUp;
             }
@@ -50,8 +52,9 @@ namespace Archi.Touch
         {
             if(instances[0] == this)
             {
-                DTouch.OnFingerTap -= FingerTap;
                 DTouch.OnFingerDown -= FingerDown;
+                DTouch.OnFingerTap -= FingerTap;
+                DTouch.OnFingerSwipe -= FingerSwipe;
                 DTouch.OnFingerUpdate -= FingerUpdate;
                 DTouch.OnFingerUp -= FingerUp;
             }
@@ -102,6 +105,31 @@ namespace Archi.Touch
             }
         }
 
+        private void FingerSwipe(DFinger finger)
+        {
+            if (finger.index == 0 && DTouch.instances[0].FindFinger(1) == null && cellIsPlayer)
+            {
+                Debug.Log($"Finger swipe");
+                var pos = cam.ScreenToWorldPoint(finger.startScreenPos);
+                var dir = finger.SwipeScaledDelta;
+                Debug.DrawRay(pos, dir, Color.yellow, 10f);
+
+                RaycastHit2D hit = Physics2D.Raycast(pos, dir, Mathf.Infinity, wallLayerMask);
+
+                if (hit.collider != null)
+                {
+                    Debug.Log($"Wall hit: {hit.collider.gameObject.transform.parent.name}");
+                    var wall = hit.collider.GetComponentInParent<MazeCellWall>();
+                    var target = wall.CheckCell(currentCellHit);
+
+                    if(target != null)
+                    {
+                        player.Move(target, PathLayer.Special);
+                    }
+                }
+            }
+        }
+        
         private void FingerDown(DFinger finger)
         {
             if(finger.index == 0)

@@ -12,4 +12,14 @@ public class MazeCellWall : MazeCellEdge
         cellB.specialConnectedCells.Add(cellA);
         IsPassable = true;
     }
+
+    public MazeCell CheckCell(MazeCell cell)
+    {
+        if (cell == cellA)
+            return cellB;
+        else if (cell == cellB)
+            return cellA;
+        else
+            return null;
+    }
 }

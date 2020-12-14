@@ -223,9 +223,9 @@ public class Player : Character
 
     public bool IsMoving { get { return isMoving; } }
 
-    public void Move(MazeCell targetCell)
+    public void Move(MazeCell targetCell, PathLayer pathLayer = PathLayer.Base)
     {
-        PathRequestManager.RequestPath(new PathRequest(OnPathFound, PathLayer.Base, currentCell, targetCell));
+        PathRequestManager.RequestPath(new PathRequest(OnPathFound, pathLayer, currentCell, targetCell));
     }
 
     public void OnPathFound(List<MazeCell> path)

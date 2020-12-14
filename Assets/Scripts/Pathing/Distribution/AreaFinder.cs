@@ -124,15 +124,7 @@ public class AreaFinder : MonoBehaviour
             walls.Add(pair);
         }
 
-        var ordered = walls.OrderBy(x => x.Item1).ToList();
-
-        foreach(var o in ordered)
-        {
-            Debug.Log($"{o.Item2.gameObject.name} with count {o.Item1}");
-        }
-
-        return ordered;
-        //return walls.OrderBy(x => x.Item1).ToList();
+        return walls.OrderBy(x => x.Item1).ToList();
     }
 
     // used to turn maze paths into rooms after maze is constructed
