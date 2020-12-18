@@ -12,6 +12,8 @@ public class GameManager : MonoBehaviour
 	[SerializeField] float cellSizeX;
 	[SerializeField] float cellSizeY;
 
+	List<IntVector2> corners = new List<IntVector2>();
+
 	[Header("References")]
 	public DControl touchControl;
 	public Trajectory trajectory;
@@ -54,6 +56,16 @@ public class GameManager : MonoBehaviour
 		mazeInstance.cellScaleY = cellSizeY;
 		mazeInstance.Generate();
 
+		// retrieve four corner cells
+		var possibleCorners = new List<IntVector2>();
+		possibleCorners.Add(new IntVector2(0, 0));
+		possibleCorners.Add(new IntVector2(0, mazeInstance.size.y - 1));
+		possibleCorners.Add(new IntVector2(mazeInstance.size.x - 1, 0));
+		possibleCorners.Add(new IntVector2(mazeInstance.size.x - 1, mazeInstance.size.y - 1));
+		possibleCorners.Shuffle();
+		var selectedStart = possibleCorners[0];
+		var selectedEnd = possibleCorners[1];
+
 		if(mazeInstance.cellScaleY > mazeInstance.cellScaleX)
         {
 			var newPos = mazeInstance.transform.position;
@@ -71,8 +83,8 @@ public class GameManager : MonoBehaviour
         pathfinder.maze = mazeInstance;
 		pathfinder.areafinder = areafinder;
 		pathfinder.initialized = false;
-		pathfinder.startPos = new IntVector2(0, 0);
-		pathfinder.endPos = new IntVector2(mazeInstance.size.x - 1, mazeInstance.size.y - 1);
+		pathfinder.startPos = selectedStart;
+		pathfinder.endPos = selectedEnd;
 		pathfinder.aStar = new AStar(mazeInstance);
 
 		// pass references to areafinder
@@ -101,8 +113,8 @@ public class GameManager : MonoBehaviour
 		textOverlay.InitializeDisplay();
 
 		// instantiate and pass references to player
-		player = Instantiate(playerPrefab, new Vector3(mazeInstance.cells[0, 0].transform.position.x,
-										   mazeInstance.cells[0, 0].transform.position.y, -3.5f), Quaternion.identity);
+		player = Instantiate(playerPrefab, new Vector3(mazeInstance.cells[selectedStart.x, selectedStart.y].transform.position.x,
+										   mazeInstance.cells[selectedStart.x, selectedStart.y].transform.position.y, -3.5f), Quaternion.identity);
 		player.maze = mazeInstance;
 		player.pathfinder = pathfinder;
 		player.simulation = physicsSim;
