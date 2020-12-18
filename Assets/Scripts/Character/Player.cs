@@ -12,40 +12,17 @@ public class Player : Character
     public Projectile projectilePrefab;
     ProjectileSelector projectileSelector; // selects current projectile from an array of SOs
     public SoundBomb soundBombPrefab;
-    public TouchUI touchUI;
-    public Pathfinder pathfinder;
-    public PhysicsSim simulation;
-    public Trajectory trajectory;
-    public GameObject spawnedObjectHolder;
-    Rigidbody2D rb;
-    public float walkSpeed = 1f;
-    public float runSpeed = 5f;
-    [Range(0.001f, 0.999f)]
-    public float brakeSpeed = 0.1f;
-    public int areaIndex = 0;
-    public bool hitIndexChanged = false;
-    public int cellState;
+    [HideInInspector] public Pathfinder pathfinder;
+    [HideInInspector] public PhysicsSim simulation;
+    [HideInInspector] public Trajectory trajectory;
+    [HideInInspector] public GameObject spawnedObjectHolder;
     
-    public bool cellChanged = false;
-    public Maze maze;
+    [HideInInspector] public Maze maze;
 
     RaycastHit2D[] rayHits;
     // mask currently includes walls, placements and player
-    static int projectileLayerMask = 1 << 9 | 1<<8 | 1<<13;
+    readonly static int projectileLayerMask = 1 << 9 | 1<<8 | 1<<13;
 
-    bool isMoving = false;
-    MazeCell nextCell;
-    float turnSpeed = 0.5f;
-    float bufferDistance = 0.01f;
-    Coroutine currentMovement;
-    //List<MazeCell> currentPath = new List<MazeCell>();
-    public MazeCell currentPlayerCell;
-    public MazeCell lastPlayerCell;
-
-    public static event Action MazeChange;
-
-    public Camera cam;
-    public Transform aim;
     Vector3 lastPos;
     public Vector3 aimUp;
     float spinAmount = 0;
@@ -57,7 +34,6 @@ public class Player : Character
     public bool lineReset = true;
 
     Coroutine currentTask;
-    public bool ShouldRun { get; set; }
 
     #region MonoBehaviour
 
@@ -65,20 +41,13 @@ public class Player : Character
     {
         base.Start();
 
-        rb = GetComponent<Rigidbody2D>();
         rayHits = new RaycastHit2D[10];
-
-        cam = Camera.main;
         aim = transform.GetChild(0).transform;
 
         projectileSelector = GetComponent<ProjectileSelector>();
 
         // doing event subscription in start because reference is not available when OnEnable is called
         instances.Add(this);
-        if (instances.Count > 0 && instances[0] == this)
-        {
-
-        }
     }
 
     protected override void Update()
@@ -97,11 +66,6 @@ public class Player : Character
 
     private void OnDisable()
     {
-        if(instances.Count > 0 && instances[0] == this)
-        {
-            
-        }
-
         if(instances.Contains(this))
             instances.Remove(this);
     }
@@ -218,76 +182,4 @@ public class Player : Character
     }
 
     #endregion Object Placement
-
-    #region Movement
-
-    public bool IsMoving { get { return isMoving; } }
-
-    public void Move(MazeCell targetCell, PathLayer pathLayer = PathLayer.Base)
-    {
-        PathRequestManager.RequestPath(new PathRequest(OnPathFound, pathLayer, currentCell, targetCell));
-    }
-
-    public void OnPathFound(List<MazeCell> path)
-    {
-        if (path[path.Count - 1] == currentCell)
-            return;
-
-        if (!ShouldRun)
-            RestartGoToDestination(path, walkSpeed);
-        else
-            RestartGoToDestination(path, runSpeed);
-
-        touchUI.TouchPoint(path[path.Count - 1].transform.position);
-    }
-
-    
-
-    void RestartGoToDestination(List<MazeCell> path, float speed)
-    {
-        StopGoToDestination();
-        currentMovement = StartCoroutine(GoToDestination(path, speed));
-    }
-
-    public void StopGoToDestination()
-    {
-        if (currentMovement != null)
-        {
-            isMoving = false;
-            StopCoroutine(currentMovement);
-        }
-    }
-
-    IEnumerator GoToDestination(List<MazeCell> path, float speed)
-    {
-        isMoving = true;
-
-        for(int j = 0; j < path.Count - 1; j++)
-        {
-            Debug.DrawLine(path[j].transform.position, path[j+1].transform.position, Color.red, 5f);
-        }
-
-        // starting at 1 because index 0 is the cell it is already on
-        int i = path[0] == currentCell ? 1 : 0;
-        while (i < path.Count)
-        {
-            nextCell = path[i];
-            aim.LookAt2D(nextCell.transform, turnSpeed);
-            transform.position = Vector2.MoveTowards(transform.position, nextCell.transform.position, speed * Time.deltaTime);
-
-            if (transform.position == nextCell.transform.position)
-            {
-                //currentCell = nextCell;
-                i++;
-            }
-
-            Debug.DrawLine(transform.position, nextCell.transform.position, Color.blue, 5f);
-
-            yield return null;
-        }
-
-        isMoving = false;
-    }
-
-    #endregion Movement
 }

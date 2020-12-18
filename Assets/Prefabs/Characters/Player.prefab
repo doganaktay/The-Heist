@@ -450,24 +450,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 77a463e92a4f845aea3f6a761697ebe7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isOnGrid: 1
+  speed:
+    min: 25
+    max: 50
+  turnSpeed: 0.5
   projectilePrefab: {fileID: 372506298171578869, guid: 3f7dd9ebfb0ea4133bfb93dfe5f47185,
     type: 3}
   soundBombPrefab: {fileID: -8828769137660388836, guid: a36dba4683cd143d7a515737ecccc028,
     type: 3}
-  touchUI: {fileID: 0}
   pathfinder: {fileID: 0}
   simulation: {fileID: 0}
   trajectory: {fileID: 0}
+  spawnedObjectHolder: {fileID: 0}
   walkSpeed: 25
   runSpeed: 50
-  brakeSpeed: 0.25
-  areaIndex: 0
-  hitIndexChanged: 0
-  cellState: 0
-  cellChanged: 0
   maze: {fileID: 0}
-  currentPlayerCell: {fileID: 0}
-  lastPlayerCell: {fileID: 0}
   cam: {fileID: 0}
   aim: {fileID: 0}
   aimUp: {x: 0, y: 0, z: 0}

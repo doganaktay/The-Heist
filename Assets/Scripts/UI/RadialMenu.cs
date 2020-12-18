@@ -22,12 +22,11 @@ public class RadialMenu : MonoBehaviour
     Vector2 selectionDirection;
     int selectionIndex = -1;
     int lastSelectionIndex = -1;
-    TouchUI touchUI;
     float offsetAngle = 0;
 
     void Awake()
     {
-        touchUI = GetComponentInParent<TouchUI>();
+        TouchUI.instance = GetComponentInParent<TouchUI>();
         radialCanvasGroup = GetComponent<CanvasGroup>();
 
         perItemAngle = maxMenuAngle / transform.childCount;
@@ -40,8 +39,7 @@ public class RadialMenu : MonoBehaviour
         if (isActive)
         {
             selectionDirection = (targetPoint - pivotPoint);
-            Vector2 selectionDirectionNormalized = selectionDirection.normalized;
-            float selectionAngle = Mathf.Atan2(selectionDirectionNormalized.x, selectionDirectionNormalized.y) * Mathf.Rad2Deg - offsetAngle;
+            float selectionAngle = selectionDirection.GetLookAngle() - offsetAngle;
             selectionAngle = (selectionAngle + 720f) % 360;
             selectionIndex = Mathf.FloorToInt(selectionAngle / perItemAngle);
 
@@ -84,7 +82,7 @@ public class RadialMenu : MonoBehaviour
     public void PressButton()
     {
         //if (IsValidIndex() && IsInButtonBounds())
-            //touchUI.CallButtonHit(menuItems[selectionIndex].actionType, menuItems[selectionIndex].itemType);
+            //TouchUI.instance.CallButtonHit(menuItems[selectionIndex].actionType, menuItems[selectionIndex].itemType);
     }
 
 

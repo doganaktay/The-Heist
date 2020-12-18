@@ -13,6 +13,8 @@ public enum ButtonActionType
 
 public class TouchUI : MonoBehaviour
 {
+    public static TouchUI instance;
+
     public GameManager gameManager;
 
     [SerializeField]

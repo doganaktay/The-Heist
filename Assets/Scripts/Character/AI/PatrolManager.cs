@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class PatrolManager : MonoBehaviour
 {
-    public Pathfinder pathfinder;
     public AreaFinder areafinder;
     public Patrol patrolPrefab;
     public List<Patrol> patrols = new List<Patrol>();
@@ -24,10 +23,7 @@ public class PatrolManager : MonoBehaviour
             var patrol = Instantiate(patrolPrefab, new Vector3(randomCell.transform.position.x, randomCell.transform.position.y, -1f), Quaternion.identity);
 
             patrol.name = "Patrol " + (patrols.Count + i);
-            patrol.pathfinder = pathfinder;
-            //patrol.CurrentCell = randomCell;
             patrol.transform.parent = transform;
-
             patrols.Add(patrol);
         }
     }
@@ -36,7 +32,6 @@ public class PatrolManager : MonoBehaviour
     {
         foreach (var patrol in patrols)
         {
-            //patrol.StopAndDestroy();
             if(patrol != null)
                 Destroy(patrol.gameObject);
         }

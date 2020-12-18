@@ -14,7 +14,6 @@ public class GameManager : MonoBehaviour
 
 	[Header("References")]
 	public DControl touchControl;
-	public TouchUI touchUI;
 	public Trajectory trajectory;
 	public PhysicsSim physicsSim;
 	public Lights lights;
@@ -88,14 +87,13 @@ public class GameManager : MonoBehaviour
 		spotfinder.areafinder = areafinder;
 		spotfinder.layout = layout;
 
-		// pass references to dispersion calculator
+		// pass references to propagation calculator
 		Propagation.maze = mazeInstance;
 
 		// initialize and pass references to notification module
 		NotificationModule.Create(mazeInstance);
 
-		// pass references to patrol manager
-		patrolManager.pathfinder = pathfinder;
+		// pass references to patrol manager		
 		patrolManager.areafinder = areafinder;
 
 		// initialize and pass references to text overlay
@@ -109,7 +107,6 @@ public class GameManager : MonoBehaviour
 		player.pathfinder = pathfinder;
 		player.simulation = physicsSim;
 		player.trajectory = trajectory;
-		player.touchUI = touchUI;
 		player.spawnedObjectHolder = spawnedObjects;
 
 		// pass another reference to pathfinder
@@ -121,15 +118,14 @@ public class GameManager : MonoBehaviour
 		physicsSim.player = player;
 		physicsSim.trajectory = trajectory;
 
-		// pass data to touchUI
-		touchUI.gameManager = this;
+		// pass data to TouchUI.instance
+		TouchUI.instance.gameManager = this;
 		var mazeHeight = cellSizeY * gridSizeY / (cellSizeX * gridSizeX / 16f * 9f);
-		touchUI.topMenuHeight = (1 - mazeHeight) * Screen.height;
-		touchUI.mainMenuHeight = mazeHeight * Screen.height;
+		TouchUI.instance.topMenuHeight = (1 - mazeHeight) * Screen.height;
+		TouchUI.instance.mainMenuHeight = mazeHeight * Screen.height;
 
 		// pass references to touchControl
 		touchControl.player = player;
-		touchControl.touchUI = touchUI;
 
 		// set up areas, placeable slots and simulation
 		ConstructScene();

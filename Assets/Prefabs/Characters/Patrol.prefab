@@ -47,17 +47,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ad7c8c03e1514fa08e0b4f4b359ef09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isOnGrid: 1
   pathfinder: {fileID: 0}
   body: {fileID: 5833953138234766926}
   minSpeed: 8
   maxSpeed: 20
+  speed:
+    min: 8
+    max: 20
   turnSpeed: 0.6
   minLookSpeed: 0.5
   maxLookSpeed: 2
+  lookSpeed:
+    min: 0.5
+    max: 2
   bufferDistance: 0.01
   minWaitTime: 5
   maxWaitTime: 10
-  currentCell: {fileID: 0}
+  waitTime:
+    min: 5
+    max: 10
 --- !u!212 &4575945924325056854
 SpriteRenderer:
   m_ObjectHideFlags: 0

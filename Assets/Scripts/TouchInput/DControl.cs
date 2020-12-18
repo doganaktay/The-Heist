@@ -15,7 +15,6 @@ namespace Archi.Touch
         static int wallLayerMask = 1 << 9;
 
         public Player player;
-        public TouchUI touchUI;
         Collider2D[] touchHits1, touchHits2;
         uint colliderBufferCounter = 0;
         [SerializeField]
@@ -74,7 +73,7 @@ namespace Archi.Touch
                     {
                         DispatchAction(finger);
                     }
-                    else if(touchUI.CurrentSelectedButton == null || touchUI.CurrentSelectedButton.ButtonType != ButtonActionType.Menu)
+                    else if(TouchUI.instance.CurrentSelectedButton == null || TouchUI.instance.CurrentSelectedButton.ButtonType != ButtonActionType.Menu)
                     {
                         var hitResults = DTouch.RaycastGUI(finger);
 
@@ -88,14 +87,14 @@ namespace Archi.Touch
 
                                 if(item.ButtonType == ButtonActionType.Menu)
                                 {
-                                    touchUI.ShowMainMenu();
+                                    TouchUI.instance.ShowMainMenu();
                                 }
                             }
                         }
                     }
-                    else if (touchUI.CurrentSelectedButton.ButtonType == ButtonActionType.Menu)
+                    else if (TouchUI.instance.CurrentSelectedButton.ButtonType == ButtonActionType.Menu)
                     {
-                        touchUI.ResumeGame();
+                        TouchUI.instance.ResumeGame();
                     }
                 }
                 else
@@ -109,16 +108,13 @@ namespace Archi.Touch
         {
             if (finger.index == 0 && DTouch.instances[0].FindFinger(1) == null && cellIsPlayer)
             {
-                Debug.Log($"Finger swipe");
                 var pos = cam.ScreenToWorldPoint(finger.startScreenPos);
                 var dir = finger.SwipeScaledDelta;
-                Debug.DrawRay(pos, dir, Color.yellow, 10f);
 
                 RaycastHit2D hit = Physics2D.Raycast(pos, dir, Mathf.Infinity, wallLayerMask);
 
                 if (hit.collider != null)
                 {
-                    Debug.Log($"Wall hit: {hit.collider.gameObject.transform.parent.name}");
                     var wall = hit.collider.GetComponentInParent<MazeCellWall>();
                     var target = wall.CheckCell(currentCellHit);
 
@@ -174,7 +170,7 @@ namespace Archi.Touch
             if (finger.index == 1)
             {
                 player.ResetTrajectory();
-                touchUI.ShowAimUI = false;
+                TouchUI.instance.ShowAimUI = false;
                 aiming = false;
             }
         }
@@ -187,12 +183,12 @@ namespace Archi.Touch
         {
             if (isCenter)
             {
-                touchUI.AimCenter = touchUI.AimPos = aimPos;
-                touchUI.ShowAimUI = true;
+                TouchUI.instance.AimCenter = TouchUI.instance.AimPos = aimPos;
+                TouchUI.instance.ShowAimUI = true;
             }
             else
             {
-                touchUI.AimPos = aimPos;
+                TouchUI.instance.AimPos = aimPos;
             }
         }
 
@@ -202,7 +198,7 @@ namespace Archi.Touch
 
         private void DispatchAction(DFinger finger)
         {
-            if (!touchUI.CurrentSelectedButton)
+            if (!TouchUI.instance.CurrentSelectedButton)
             {
                 if (cellIsWalkable)
                 {
@@ -225,17 +221,19 @@ namespace Archi.Touch
                             player.ShouldRun = true;
                             player.Move(currentCellHit);
                         }
+
+                        TouchUI.instance.TouchPoint(currentCellHit.transform.position);
                     }
                 }
             }
             else
             {
-                switch (touchUI.CurrentSelectedButton.ButtonType)
+                switch (TouchUI.instance.CurrentSelectedButton.ButtonType)
                 {
                     case ButtonActionType.PlaceObject:
-                        player.PutOrRemoveItem(touchUI.CurrentSelectedButton.ItemType, currentCellHit);
-                        touchUI.CurrentSelectedButton.Deselect();
-                        touchUI.CurrentSelectedButton = null;
+                        player.PutOrRemoveItem(TouchUI.instance.CurrentSelectedButton.ItemType, currentCellHit);
+                        TouchUI.instance.CurrentSelectedButton.Deselect();
+                        TouchUI.instance.CurrentSelectedButton = null;
                         break;
                     case ButtonActionType.UseObject:
                         if(!currentCellHit.HasPlacedItem())
@@ -253,8 +251,8 @@ namespace Archi.Touch
                             }
                         }
 
-                        touchUI.CurrentSelectedButton.Deselect();
-                        touchUI.CurrentSelectedButton = null;
+                        TouchUI.instance.CurrentSelectedButton.Deselect();
+                        TouchUI.instance.CurrentSelectedButton = null;
                         break;
                 }
             }

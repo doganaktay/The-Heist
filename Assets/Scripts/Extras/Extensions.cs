@@ -77,4 +77,31 @@ public static class Extensions
     {
         return cell.state < 2;
     }
+
+    public static float GetLookAngle(this Vector3 direction)
+    {
+        var dirNormalized = direction.normalized;
+        return Mathf.Atan2(dirNormalized.x, dirNormalized.y) * Mathf.Rad2Deg;
+    }
+
+    public static float GetLookAngle(this Vector2 direction)
+    {
+        var dirNormalized = direction.normalized;
+        return Mathf.Atan2(dirNormalized.x, dirNormalized.y) * Mathf.Rad2Deg;
+    }
+
+    public static Color WithAlpha(this Color color, float alpha)
+    {
+        return new Color(color.r, color.g, color.b, alpha);
+    }
+
+    public static Color FromRGB(this Color color, int r, int g, int b, int a = 255)
+    {
+        color.r = Mathf.Clamp((float)r, 0, 255) / 255;
+        color.g = Mathf.Clamp((float)g, 0, 255) / 255;
+        color.b = Mathf.Clamp((float)b, 0, 255) / 255;
+        color.a = Mathf.Clamp((float)a, 0, 255) / 255;
+
+        return color;
+    }
 }

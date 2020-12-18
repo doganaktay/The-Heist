@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class UIMenu : MonoBehaviour
 {
-    TouchUI touchUI;
     CanvasGroup menuCanvasGroup;
 
     [SerializeField]
@@ -19,7 +18,7 @@ public class UIMenu : MonoBehaviour
 
     void Awake()
     {
-        touchUI = GetComponentInParent<TouchUI>();
+        TouchUI.instance = GetComponentInParent<TouchUI>();
         menuCanvasGroup = GetComponent<CanvasGroup>();
 
         for(int i = 0; i < transform.childCount; i++)
@@ -37,7 +36,7 @@ public class UIMenu : MonoBehaviour
             if (item == selection && !item.IsSelected)
             {
                 item.Select();
-                touchUI.CurrentSelectedButton = item;
+                TouchUI.instance.CurrentSelectedButton = item;
                 haveSelection = true;
             }
             else
@@ -45,7 +44,7 @@ public class UIMenu : MonoBehaviour
         }
 
         if (!haveSelection)
-            touchUI.CurrentSelectedButton = null;
+            TouchUI.instance.CurrentSelectedButton = null;
     }
 
     public void DeselectMenuItem(UIMenuItem selection)
@@ -53,7 +52,7 @@ public class UIMenu : MonoBehaviour
         if (selection.IsSelected)
         {
             selection.Deselect();
-            touchUI.CurrentSelectedButton = null;
+            TouchUI.instance.CurrentSelectedButton = null;
         }
     }
 

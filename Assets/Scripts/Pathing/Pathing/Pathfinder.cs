@@ -44,36 +44,12 @@ public class Pathfinder : MonoBehaviour
 
     private void Start()
     {
-        Player.MazeChange += NewPath;
-
         pathFound = new bool[searchSize];
         queue = new Queue<MazeCell>[searchSize];
         path = new List<MazeCell>[searchSize];
         startCell = new MazeCell[searchSize];
         endCell = new MazeCell[searchSize];
         explored = new List<MazeCell>[searchSize];
-    }
-
-    void Update()
-    {
-        if (player.cellChanged)
-        {
-            if (player.CurrentCell.state == 0)
-                SetHighlightPath(player.CurrentCell.pos, player.areaIndex);
-            else
-            {
-                if (highestIndex < 1000)
-                    ResetCells(explored[highestIndex], highestIndex, true);
-            }
-
-            player.cellChanged = false;
-        }
-    }
-
-    private void OnDestroy()
-    {
-        //GameManager.MazeGenFinished -= NewPath;
-        Player.MazeChange -= NewPath;
     }
 
     #endregion
@@ -418,31 +394,6 @@ public class Pathfinder : MonoBehaviour
     public MazeCell GetDestination(int pathIndex)
     {
         return endCell[pathIndex];
-    }
-
-    // tracking last start and end cell for timer reset
-    MazeCell lastStartCell, lastEndCell;
-    // Display path
-    void DisplayPath(List<MazeCell> path, int colorIndex, int pathIndex, bool resetTime = false)
-    {
-        bool reset = player.hitIndexChanged || lastStartCell != startCell[pathIndex] || !endCell[pathIndex].connectedCells.Contains(lastEndCell);
-
-        foreach (MazeCell cell in path)
-        {
-            cell.mat.SetColorIndex(colorIndex);
-            cell.mat.SetPathIndex(cell.distanceFromStart[pathIndex]);
-            cell.mat.SetPathCount(endCell[pathIndex].distanceFromStart[pathIndex]);
-
-            if (resetTime && reset)
-            { cell.mat.SetRestartTime(Time.time); }
-        }
-
-        if (!reset)
-            path.ElementAt(path.Count - 1).mat.SetRestartTime(lastEndCell.mat.GetRestartTime());
-
-        lastStartCell = startCell[pathIndex];
-        lastEndCell = endCell[pathIndex];
-        player.hitIndexChanged = false;
     }
 
     void ResetCells(int index)
