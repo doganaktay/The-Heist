@@ -5,6 +5,7 @@ using UnityEngine;
 
 // Taken and adapted to 2D from Sebastian Lague's FOV tutorial
 
+[RequireComponent(typeof(MeshFilter)), RequireComponent(typeof(MeshRenderer))]
 public class FieldOfView : MonoBehaviour
 {
 	public float viewRadius;
@@ -41,8 +42,8 @@ public class FieldOfView : MonoBehaviour
 	void Start()
 	{
 		// manually sized vertex array and tri list
-		vertices = new Vector3[200];
-		triangles = new List<int>(600);
+		vertices = new Vector3[800];
+		triangles = new List<int>(2400);
 
 		viewMeshFilter = GetComponent<MeshFilter>();
 		viewMesh = new Mesh();
@@ -53,7 +54,7 @@ public class FieldOfView : MonoBehaviour
 		filter.layerMask = obstacleMask;
 		zOffset = transform.parent.transform.position.z;
 
-		StartCoroutine("FindTargetsWithDelay", .2f);
+		StartCoroutine("FindTargetsWithDelay", .35f);
 	}
 
 
@@ -66,25 +67,19 @@ public class FieldOfView : MonoBehaviour
 		}
 	}
 
-    private void Update()
-    {
-		//if (CanSeePlayer())
-		//	Debug.Log(transform.parent.gameObject.name + " can see the player!");
-    }
-
     private void LateUpdate()
 	{
-		if (canDraw)
-		{
-			DrawFieldOfView();
-			meshCleared = false;
-		}
-		else if (!meshCleared)
-		{
-			viewMesh.Clear();
-			meshCleared = true;
-		}
-	}
+        if (canDraw)
+        {
+            DrawFieldOfView();
+            meshCleared = false;
+        }
+        else if (!meshCleared)
+        {
+            viewMesh.Clear();
+            meshCleared = true;
+        }
+    }
 
 	private void FindVisibleTargets()
 	{
@@ -115,19 +110,87 @@ public class FieldOfView : MonoBehaviour
     }
 
 	void DrawFieldOfView()
-	{
-		int stepCount = Mathf.RoundToInt(viewAngle * meshResolution);
-		float stepAngleSize = viewAngle / stepCount;
-		viewPoints.Clear();
-		ViewCastInfo oldViewCast = new ViewCastInfo();
-		for (int i = 0; i <= stepCount; i++)
-		{
-			float angle;
+    {
+        ConstructViewMesh();
+
+        int vertexCount = viewPoints.Count + 1;
+
+        triangles.Clear();
+
+        vertices[0] = Vector3.zero;
+        for (int i = 0; i < vertexCount - 1; i++)
+        {
+            vertices[i + 1] = transform.InverseTransformPoint(viewPoints[i]) + Vector3.up * maskCutawayDst;
+
+            if (i < vertexCount - 2)
+            {
+                triangles.Add(0);
+                triangles.Add(i + 1);
+                triangles.Add(i + 2);
+            }
+        }
+
+        viewMesh.Clear();
+
+        viewMesh.vertices = vertices;
+        viewMesh.SetTriangles(triangles, 0);
+
+        // recalculation is expensive and mesh has correct normals from triangle indices
+        //viewMesh.RecalculateNormals();
+    }
+
+    private void ConstructViewMesh()
+    {
+        int stepCount = Mathf.RoundToInt(viewAngle * meshResolution);
+        float stepAngleSize = viewAngle / stepCount;
+        viewPoints.Clear();
+        ViewCastInfo oldViewCast = new ViewCastInfo();
+        for (int i = 0; i <= stepCount; i++)
+        {
+            float angle;
 
             // using aim holder rotation for facing direction
             angle = -aim.eulerAngles.z - viewAngle / 2 + stepAngleSize * i;
 
             ViewCastInfo newViewCast = ViewCast(angle);
+
+            if (i > 0)
+            {
+                bool edgeDstThresholdExceeded = Mathf.Abs(oldViewCast.dst - newViewCast.dst) > edgeDstThreshold;
+                if (oldViewCast.hit != newViewCast.hit || (oldViewCast.hit && newViewCast.hit && edgeDstThresholdExceeded))
+                {
+                    EdgeInfo edge = FindEdge(oldViewCast, newViewCast);
+                    if (edge.pointA != Vector2.zero)
+                    {
+                        viewPoints.Add(edge.pointA);
+                    }
+                    if (edge.pointB != Vector2.zero)
+                    {
+                        viewPoints.Add(edge.pointB);
+                    }
+                }
+            }
+
+            viewPoints.Add(newViewCast.point);
+            oldViewCast = newViewCast;
+        }
+    }
+
+	public List<Vector3> GetFOVSnapshot()
+    {
+		var points = new List<Vector3>();
+
+		int stepCount = Mathf.RoundToInt(viewAngle * meshResolution);
+		float stepAngleSize = viewAngle / stepCount;
+		ViewCastInfo oldViewCast = new ViewCastInfo();
+		for (int i = 0; i <= stepCount; i++)
+		{
+			float angle;
+
+			// using aim holder rotation for facing direction
+			angle = -aim.eulerAngles.z - viewAngle / 2 + stepAngleSize * i;
+
+			ViewCastInfo newViewCast = ViewCast(angle);
 
 			if (i > 0)
 			{
@@ -137,54 +200,21 @@ public class FieldOfView : MonoBehaviour
 					EdgeInfo edge = FindEdge(oldViewCast, newViewCast);
 					if (edge.pointA != Vector2.zero)
 					{
-						viewPoints.Add(edge.pointA);
+						points.Add(edge.pointA);
 					}
 					if (edge.pointB != Vector2.zero)
 					{
-						viewPoints.Add(edge.pointB);
+						points.Add(edge.pointB);
 					}
 				}
 			}
 
-			viewPoints.Add(newViewCast.point);
+			points.Add(newViewCast.point);
 			oldViewCast = newViewCast;
 		}
 
-		int vertexCount = viewPoints.Count + 1;
-
-		// currently trying to use a manually sized array for vertices and a list for the tris to avoid GC
-		//Vector3[] vertices = new Vector3[vertexCount];
-		//int[] triangles = new int[(vertexCount - 2) * 3];
-
-		triangles.Clear();
-
-		vertices[0] = Vector3.zero;
-		for (int i = 0; i < vertexCount - 1; i++)
-		{
-			vertices[i + 1] = transform.InverseTransformPoint(viewPoints[i]) + Vector3.up * maskCutawayDst;
-
-			if (i < vertexCount - 2)
-			{
-				//triangles[i * 3] = 0;
-				//triangles[i * 3 + 1] = i + 1;
-				//triangles[i * 3 + 2] = i + 2;
-
-				triangles.Add(0);
-				triangles.Add(i + 1);
-				triangles.Add(i + 2);
-			}
-		}
-
-		viewMesh.Clear();
-
-		viewMesh.vertices = vertices;
-		viewMesh.SetTriangles(triangles, 0);
-		//viewMesh.triangles = triangles;
-
-		// recalculation is expensive and mesh has correct normals from triangle indices
-		//viewMesh.RecalculateNormals();
-	}
-
+		return points;
+    }
 
 	EdgeInfo FindEdge(ViewCastInfo minViewCast, ViewCastInfo maxViewCast)
 	{
@@ -223,14 +253,9 @@ public class FieldOfView : MonoBehaviour
 		hit = Physics2D.Raycast(transform.position, dir, viewRadius, obstacleMask);
 
 		if (hit.collider != null)
-		{
-			// zOffset is added here to make the directions consistent with 2D
 			return new ViewCastInfo(true, hit.point, hit.distance, globalAngle);
-		}
 		else
-		{
 			return new ViewCastInfo(false, (Vector2)transform.position + dir * viewRadius, viewRadius, globalAngle);
-		}
 	}
 
 	public Vector2 DirFromAngle(float angleInDegrees, bool angleIsGlobal)
@@ -269,5 +294,4 @@ public class FieldOfView : MonoBehaviour
 			pointB = _pointB;
 		}
 	}
-
 }

@@ -24,6 +24,7 @@ public class GameManager : MonoBehaviour
 	public Spotfinder spotfinder;
 	public Propagation propagationModule;
 	public PatrolManager patrolManager;
+	public CCTV cctv;
 	public TextOverlay textOverlay;
 	public Player playerPrefab;
 	public static Player player;
@@ -107,6 +108,9 @@ public class GameManager : MonoBehaviour
 
 		// pass references to patrol manager		
 		patrolManager.areafinder = areafinder;
+
+		// pass references to CCTV
+		cctv.maze = mazeInstance;
 
 		// initialize and pass references to text overlay
 		textOverlay.maze = mazeInstance;
