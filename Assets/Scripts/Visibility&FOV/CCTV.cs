@@ -158,9 +158,11 @@ public class CCTV : MonoBehaviour
 
         List<Vector3> displacementDirs = new List<Vector3>();
 
+        var diagonalMask = 1 << 1 | 1 << 3 | 1 << 5 | 1 << 7;
+
         foreach(var set in CamPosVectors)
         {
-            bool testSame = (cell.allNeighbourBits ^ set.mask) == 0;
+            bool testSame = ((cell.allNeighbourBits ^ set.mask) & ~diagonalMask) == 0;
 
             Debug.Log($"{cell.gameObject.name} checking bitfield value {System.Convert.ToString(cell.allNeighbourBits, 2)} against mask {System.Convert.ToString(set.mask, 2)}" +
                       $" with result {System.Convert.ToString((cell.allNeighbourBits ^ set.mask),2)}. Test passes: {testSame} Adding direction: {set.direction}");
