@@ -11,8 +11,7 @@ public class GameManager : MonoBehaviour
 	[SerializeField] int gridSizeY;
 	[SerializeField] float cellSizeX;
 	[SerializeField] float cellSizeY;
-
-	List<IntVector2> corners = new List<IntVector2>();
+	public static float CellDiagonal;
 
 	[Header("References")]
 	public DControl touchControl;
@@ -66,6 +65,9 @@ public class GameManager : MonoBehaviour
 		possibleCorners.Shuffle();
 		var selectedStart = possibleCorners[0];
 		var selectedEnd = possibleCorners[1];
+
+		// set cell diagonal distance
+		CellDiagonal = Mathf.Sqrt(cellSizeX * cellSizeX + cellSizeY * cellSizeY);
 
 		if(mazeInstance.cellScaleY > mazeInstance.cellScaleX)
         {

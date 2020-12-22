@@ -11,6 +11,7 @@ public class CCTVCamera : MonoBehaviour
     float rotationSpeed;
 
     public bool ShowFOV { get => fov.canDraw; set => fov.canDraw = value; }
+    public Transform Aim => aim;
 
     void Awake()
     {

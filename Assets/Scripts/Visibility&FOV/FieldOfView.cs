@@ -60,9 +60,11 @@ public class FieldOfView : MonoBehaviour
 
 	IEnumerator FindTargetsWithDelay(float delay)
 	{
+		var cachedDelay = new WaitForSeconds(delay);
+
 		while (true)
 		{
-			yield return new WaitForSeconds(delay);
+			yield return cachedDelay;
 			FindVisibleTargets();
 		}
 	}

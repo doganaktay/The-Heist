@@ -904,7 +904,7 @@ MonoBehaviour:
   pathfinder: {fileID: 0}
   wallDropPercent: 0.1
   passableWallPercent: 0.25
-  displayCellID: 0
+  displayCellID: 1
 --- !u!4 &600934098
 Transform:
   m_ObjectHideFlags: 0
@@ -2029,7 +2029,16 @@ MonoBehaviour:
   camPrefab: {fileID: 1256946515726315964, guid: 42f317d2e92734c889e8437465deb9cc,
     type: 3}
   testCam: {fileID: 1832719464}
+  targetMask:
+    serializedVersion: 2
+    m_Bits: 256
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 512
+  testRadius: 50
+  camDisplacementPercent: 1
   maze: {fileID: 0}
+  camCount: 10
 --- !u!1 &1683019512
 GameObject:
   m_ObjectHideFlags: 0
@@ -2968,7 +2977,7 @@ PrefabInstance:
     - target: {fileID: 1256946515726315954, guid: 42f317d2e92734c889e8437465deb9cc,
         type: 3}
       propertyPath: m_Name
-      value: TryoutCamera
+      value: Test Cam
       objectReference: {fileID: 0}
     - target: {fileID: 1256946515726315955, guid: 42f317d2e92734c889e8437465deb9cc,
         type: 3}
@@ -3024,11 +3033,6 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1256946515726315966, guid: 42f317d2e92734c889e8437465deb9cc,
-        type: 3}
-      propertyPath: m_Enabled
-      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 42f317d2e92734c889e8437465deb9cc, type: 3}
