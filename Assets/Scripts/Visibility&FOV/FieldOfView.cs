@@ -34,6 +34,7 @@ public class FieldOfView : MonoBehaviour
 
 	public bool canDraw = true;
 	bool meshCleared = false;
+	public bool IsStatic { get; set; } = false;
 
 	List<Vector3> viewPoints = new List<Vector3>();
 	Vector3[] vertices;
@@ -55,6 +56,9 @@ public class FieldOfView : MonoBehaviour
 		zOffset = transform.parent.transform.position.z;
 
 		StartCoroutine("FindTargetsWithDelay", .35f);
+
+		if (IsStatic)
+			DrawFieldOfView();
 	}
 
 
@@ -71,15 +75,18 @@ public class FieldOfView : MonoBehaviour
 
     private void LateUpdate()
 	{
-        if (canDraw)
+        if (!IsStatic)
         {
-            DrawFieldOfView();
-            meshCleared = false;
-        }
-        else if (!meshCleared)
-        {
-            viewMesh.Clear();
-            meshCleared = true;
+			if (canDraw)
+			{
+				DrawFieldOfView();
+				meshCleared = false;
+			}
+			else if (!meshCleared)
+			{
+				viewMesh.Clear();
+				meshCleared = true;
+			}
         }
     }
 

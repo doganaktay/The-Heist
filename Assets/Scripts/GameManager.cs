@@ -29,7 +29,11 @@ public class GameManager : MonoBehaviour
 	public static Player player;
 	public Maze mazePrefab;
 	private Maze mazeInstance;
-	public GameObject layout, spawnedObjects;
+	public GameObject layout, spawnedObjects, cctvHolder;
+
+	private static MazeCell startCell, endCell;
+	public static MazeCell StartCell => startCell;
+	public static MazeCell EndCell => endCell;
 
 	private void Start()
 	{
@@ -65,6 +69,9 @@ public class GameManager : MonoBehaviour
 		possibleCorners.Shuffle();
 		var selectedStart = possibleCorners[0];
 		var selectedEnd = possibleCorners[1];
+
+		startCell = mazeInstance.cells[selectedStart.x, selectedStart.y];
+		endCell = mazeInstance.cells[selectedEnd.x, selectedEnd.y];
 
 		// set cell diagonal distance
 		CellDiagonal = Mathf.Sqrt(cellSizeX * cellSizeX + cellSizeY * cellSizeY);
@@ -169,25 +176,18 @@ public class GameManager : MonoBehaviour
 		areafinder.FindAreas();
 		propagationModule.BuildConnectivityGrid();
 		areafinder.SetPassableWalls();
-	}
+        //cctv.PlaceSecurityCameras();
+    }
 
 	public void RestartGame()
 	{		
 		Destroy(mazeInstance.gameObject);
 		Destroy(player.gameObject);
 
-		ClearObjectHolder(layout);
-		ClearObjectHolder(spawnedObjects);
+		layout.ClearChildren();
+		spawnedObjects.ClearChildren();
+		cctvHolder.ClearChildren(1);
 
         BeginGame();
 	}
-
-	void ClearObjectHolder(GameObject holder)
-    {
-		for (int i=0; i < holder.transform.childCount; i++)
-        {
-			var t = holder.transform.GetChild(i);
-			Destroy(t.gameObject);
-        }
-    }
 }

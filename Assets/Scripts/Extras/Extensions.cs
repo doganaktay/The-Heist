@@ -104,4 +104,19 @@ public static class Extensions
 
         return color;
     }
+
+    public static void ClearChildren(this GameObject holder, int index = 0)
+    {
+        if (index < 0)
+        {
+            Debug.LogError("Index can't be less than zero.");
+            return;
+        }
+
+        for (; index < holder.transform.childCount; index++)
+        {
+            var t = holder.transform.GetChild(index);
+            UnityEngine.Object.Destroy(t.gameObject);
+        }
+    }
 }
