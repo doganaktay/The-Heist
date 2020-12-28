@@ -140,7 +140,14 @@ public class CCTV : MonoBehaviour
                 //    $" {Vector2.Dot(-sortedSpots[i].direction, placed.Aim.up)}, check result: {shareView}");
 
                 if (lineOfSight || (distance <= defaultViewRadius && shareView))
+                {
                     isPlaceable = false;
+
+                    //Debug.Log($"({sortedSpots[i].coords.x},{sortedSpots[i].coords.y}) is unplaceable due to {placed.gameObject.name}" +
+                    //$" lineOfSight: {lineOfSight} || DistAndViewAngle: {distance <= defaultViewRadius && shareView} WasInRange: {inRange} with distance {distance} checking {current} against {placed.transform.position}");
+
+                    break;
+                }
             }
 
             if (isPlaceable)
@@ -152,9 +159,7 @@ public class CCTV : MonoBehaviour
                 float viewAngle = GetViewAngle();
                 float viewRadius = GetViewRadius();
 
-                //bool isStatic = Random.value > camRotChance.max || sortedSpots[i].maxViewAngle < viewAngle;
-                bool isStatic = sortedSpots[i].maxViewAngle < viewAngle;
-                Debug.Log($"{cam.gameObject.name} is Static: {isStatic} with {sortedSpots[i].maxViewAngle} less than {viewAngle}");
+                bool isStatic = Random.value > camRotChance.max || sortedSpots[i].maxViewAngle < viewAngle;
 
                 if (isStatic)
                 {
@@ -165,7 +170,7 @@ public class CCTV : MonoBehaviour
                     float rotMin = (sortedSpots[i].maxViewAngle / 2f) - (viewAngle / 2f);
                     float rotMax = (sortedSpots[i].maxViewAngle / 2f) - (viewAngle / 2f);
                     MinMaxData rotLimits = new MinMaxData(rotMin, rotMax);
-                    
+
                     float rotSpeed = GetRotSpeed();
                     float waitTime = GetWaitTime();
 

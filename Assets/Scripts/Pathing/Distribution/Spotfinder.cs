@@ -21,7 +21,7 @@ public class Spotfinder : MonoBehaviour
     public void DeterminePlacement()
     {
         FindAvailableSpots();
-        PlaceRandom();
+        PickSpotsRandom();
         DetermineTilePlacement();
     }
 
@@ -90,7 +90,7 @@ public class Spotfinder : MonoBehaviour
                     }
                 }
 
-                if (connectedCount >= maze.cells[i, j].connectedCells.Count - 1)
+                if (connectedCount >= 1)
                 {
                     maze.cells[i, j].isPlaceable = true;
                     if (!availableSpots.Contains(maze.cells[i, j]))
@@ -120,7 +120,7 @@ public class Spotfinder : MonoBehaviour
         }
     }
 
-    void PlaceRandom()
+    void PickSpotsRandom()
     {
         var count = placeCount;
 
@@ -128,7 +128,7 @@ public class Spotfinder : MonoBehaviour
 
         while(availableSpots.Count > 0 && count > 0)
         {
-            int random = Random.Range(0, availableSpots.Count);
+            int random = Random.Range(0, availableSpots.Count);            
 
             if(pathfinder.TryNeighbourPaths(availableSpots[random]))
             {
@@ -136,22 +136,16 @@ public class Spotfinder : MonoBehaviour
 
                 placedSpots.Add(availableSpots[random]);
 
-                HashSet<MazeCell> temp = new HashSet<MazeCell>();
-
                 foreach (var cell in availableSpots[random].connectedCells)
                 {
-                    if (cell.state > 1)
-                    {
-                        cell.connectedCells.Remove(availableSpots[random]);
-                        cell.placedConnectedCells.Add(availableSpots[random]);
-                        temp.Add(cell);                        
-                    }
+                    cell.connectedCells.Remove(availableSpots[random]);
+                    cell.placedConnectedCells.Add(availableSpots[random]);
                 }
 
-                foreach(var t in temp)
+                foreach (var cell in availableSpots[random].placedConnectedCells)
                 {
-                    availableSpots[random].connectedCells.Remove(t);
-                    availableSpots[random].placedConnectedCells.Add(t);
+                    cell.connectedCells.Remove(availableSpots[random]);
+                    cell.placedConnectedCells.Add(availableSpots[random]);
                 }
 
                 count--;
@@ -160,16 +154,60 @@ public class Spotfinder : MonoBehaviour
             availableSpots[random].isPlaceable = false;
             availableSpots.Remove(availableSpots[random]);
         }
+
+        foreach(var spot in placedSpots)
+        {
+            //if (HasDiagonalDisconnect(spot))
+            //    Debug.Log($"{spot.gameObject.name} has diagonal disconnect");
+        }
+    }
+
+    private bool HasDiagonalDisconnect(MazeCell cell)
+    {
+        var length = MazeDirections.allVectors.Length;
+        for (int i = 0; i < length; i += 2)
+        {
+            var xpos = cell.pos.x + MazeDirections.allVectors[i].x;
+            var ypos = cell.pos.y + MazeDirections.allVectors[i].y;
+
+            if (xpos < 0 || ypos < 0 || xpos > maze.size.x - 1 || ypos > maze.size.y - 1)
+                continue;
+
+            var xdiagonal = cell.pos.x + MazeDirections.allVectors[(i + 1) % length].x;
+            var ydiagonal = cell.pos.y + MazeDirections.allVectors[(i + 1) % length].y;
+
+            if (xdiagonal < 0 || ydiagonal < 0 || xdiagonal > maze.size.x - 1 || ydiagonal > maze.size.y - 1)
+                continue;
+
+            var xnext = cell.pos.x + MazeDirections.allVectors[(i + 2) % length].x;
+            var ynext = cell.pos.y + MazeDirections.allVectors[(i + 2) % length].y;
+
+            if (xnext < 0 || ynext < 0 || xnext > maze.size.x - 1 || xnext > maze.size.y - 1)
+                continue;
+
+            if (!cell.connectedCells.Contains(maze.cells[xpos, ypos]) || !cell.connectedCells.Contains(maze.cells[xnext, ynext]))
+            {
+                //Debug.Log($"{cell.gameObject.name} does not contain two connected neighbours");
+                continue;
+            }
+
+            bool areConnected = maze.cells[xpos, ypos].connectedCells.Contains(maze.cells[xdiagonal, ydiagonal])
+                             && maze.cells[xnext, ynext].connectedCells.Contains(maze.cells[xdiagonal, ydiagonal]);
+
+            if (!areConnected)
+                return true;
+        }
+
+        return false;
     }
 
     private void DetermineTilePlacement()
     {
+        DetermineNeighbourBits();
+
         foreach(var spot in placedSpots)
         {
-            DetermineNeighbourBits(spot);
             Tile tileToPlace = SetTile(spot);
-
-            //Debug.Log("Cell:" + spot.gameObject.name + " cardinal bits: " + spot.cardinalBits + " diagonal bits: " + spot.diagonalBits);
 
             if (tileToPlace != null)
             {
@@ -204,141 +242,69 @@ public class Spotfinder : MonoBehaviour
             }
         }
 
-        if(candidates.Count == 1)
+        foreach(var candidate in candidates)
         {
-            return candidates[0];
-        }
-        else
-        {
-            foreach(var candidate in candidates)
-            {
-                int test = candidate.selectedRule.diagonal & spot.diagonalBits;
+            bool test = (candidate.selectedRule.diagonal & spot.diagonalBits) == candidate.selectedRule.diagonal;
 
-                if (test != 0 && candidate.selectedRule.diagonal != 0)
-                    return candidate;
-            }
-
-            foreach(var candidate in candidates)
-            {
-                if (candidate.selectedRule.diagonal == 0)
-                    return candidate;
-            }
+            if (test)
+                return candidate;
         }
 
         Debug.Log("No candidate found for: " + spot.gameObject.name + " with candidate count of: " + candidates.Count);
         return null;
     }
 
-    private void DetermineNeighbourBits(MazeCell cell)
+    private void DetermineNeighbourBits()
     {
-        cell.cardinalBits = 0;
-        cell.diagonalBits = 0;
-
-        for(int i = 0; i < MazeDirections.cardinalVectors.Length; i++)
+        for (int i = 0; i < maze.size.x; i++)
         {
-            var xpos = cell.pos.x + MazeDirections.cardinalVectors[i].x;
-            var ypos = cell.pos.y + MazeDirections.cardinalVectors[i].y;
-
-            if (xpos < 0 || ypos < 0 || xpos > maze.size.x - 1 || ypos > maze.size.y - 1)
-                continue;
-
-            var neighbour = maze.cells[xpos, ypos];
-
-            if(i == 0 && (cell.connectedCells.Contains(neighbour) || cell.placedConnectedCells.Contains(neighbour)))
+            for (int j = 0; j < maze.size.y; j++)
             {
-                if (cell.connectedCells.Contains(neighbour))
-                    cell.cardinalBits |= 1 << 0;
+                var cell = maze.cells[i, j];
 
-                var xdiagonal = cell.pos.x + MazeDirections.diagonalVectors[i].x;
-                var ydiagonal = cell.pos.y + MazeDirections.diagonalVectors[i].y;
+                cell.cardinalBits = 0;
+                cell.diagonalBits = 0;
 
-                if (xdiagonal < 0 || ydiagonal < 0 || xdiagonal > maze.size.x - 1 || ydiagonal > maze.size.y - 1)
-                    continue;
+                for (int k = 0; k < MazeDirections.cardinalVectors.Length; k++)
+                {
+                    var xpos = cell.pos.x + MazeDirections.cardinalVectors[k].x;
+                    var ypos = cell.pos.y + MazeDirections.cardinalVectors[k].y;
 
-                var diagonal = maze.cells[xdiagonal, ydiagonal];
+                    if (xpos < 0 || ypos < 0 || xpos > maze.size.x - 1 || ypos > maze.size.y - 1)
+                        continue;
 
-                if (diagonal.state > 1)
-                    continue;
+                    var neighbour = maze.cells[xpos, ypos];
 
-                var xnext = cell.pos.x + MazeDirections.cardinalVectors[(i + 1) % MazeDirections.cardinalVectors.Length].x;
-                var ynext = cell.pos.y + MazeDirections.cardinalVectors[(i + 1) % MazeDirections.cardinalVectors.Length].y;
-                var next = maze.cells[xnext, ynext];
+                    if (cell.connectedCells.Contains(neighbour) || cell.placedConnectedCells.Contains(neighbour))
+                    //if (cell.connectedCells.Contains(neighbour))
+                    {
+                        if (cell.connectedCells.Contains(neighbour))
+                            cell.cardinalBits |= 1 << k;
+                        //Debug.Log($"{cell.gameObject.name} has {1 << k} added to cardinal bits for neighbour at ({xpos},{ypos})");
 
-                if (neighbour.connectedCells.Contains(diagonal) && diagonal.connectedCells.Contains(next)
-                    && (next.connectedCells.Contains(cell) || next.placedConnectedCells.Contains(cell)))
-                    cell.diagonalBits |= 1 << 0;
-            }
-            else if (i == 1 && (cell.connectedCells.Contains(neighbour) || cell.placedConnectedCells.Contains(neighbour)))
-            {
-                if(cell.connectedCells.Contains(neighbour))
-                    cell.cardinalBits |= 1 << 1;
+                        var xdiagonal = cell.pos.x + MazeDirections.diagonalVectors[k].x;
+                        var ydiagonal = cell.pos.y + MazeDirections.diagonalVectors[k].y;
 
-                var xdiagonal = cell.pos.x + MazeDirections.diagonalVectors[i].x;
-                var ydiagonal = cell.pos.y + MazeDirections.diagonalVectors[i].y;
+                        if (xdiagonal < 0 || ydiagonal < 0 || xdiagonal > maze.size.x - 1 || ydiagonal > maze.size.y - 1)
+                            continue;
 
-                if (xdiagonal < 0 || ydiagonal < 0 || xdiagonal > maze.size.x - 1 || ydiagonal > maze.size.y - 1)
-                    continue;
+                        var diagonal = maze.cells[xdiagonal, ydiagonal];
 
-                var diagonal = maze.cells[xdiagonal, ydiagonal];
+                        if (diagonal.state > 1)
+                            continue;
 
-                if (diagonal.state > 1)
-                    continue;
+                        var xnext = cell.pos.x + MazeDirections.cardinalVectors[(k + 1) % MazeDirections.cardinalVectors.Length].x;
+                        var ynext = cell.pos.y + MazeDirections.cardinalVectors[(k + 1) % MazeDirections.cardinalVectors.Length].y;
+                        var next = maze.cells[xnext, ynext];
 
-                var xnext = cell.pos.x + MazeDirections.cardinalVectors[(i + 1) % MazeDirections.cardinalVectors.Length].x;
-                var ynext = cell.pos.y + MazeDirections.cardinalVectors[(i + 1) % MazeDirections.cardinalVectors.Length].y;
-                var next = maze.cells[xnext, ynext];
-
-                if (neighbour.connectedCells.Contains(diagonal) && diagonal.connectedCells.Contains(next)
-                    && (next.connectedCells.Contains(cell) || next.placedConnectedCells.Contains(cell)))
-                    cell.diagonalBits |= 1 << 1;
-            }
-            else if (i == 2 && (cell.connectedCells.Contains(neighbour) || cell.placedConnectedCells.Contains(neighbour)))
-            {
-                if (cell.connectedCells.Contains(neighbour))
-                    cell.cardinalBits |= 1 << 2;
-
-                var xdiagonal = cell.pos.x + MazeDirections.diagonalVectors[i].x;
-                var ydiagonal = cell.pos.y + MazeDirections.diagonalVectors[i].y;
-
-                if (xdiagonal < 0 || ydiagonal < 0 || xdiagonal > maze.size.x - 1 || ydiagonal > maze.size.y - 1)
-                    continue;
-
-                var diagonal = maze.cells[xdiagonal, ydiagonal];
-
-                if (diagonal.state > 1)
-                    continue;
-
-                var xnext = cell.pos.x + MazeDirections.cardinalVectors[(i + 1) % MazeDirections.cardinalVectors.Length].x;
-                var ynext = cell.pos.y + MazeDirections.cardinalVectors[(i + 1) % MazeDirections.cardinalVectors.Length].y;
-                var next = maze.cells[xnext, ynext];
-
-                if (neighbour.connectedCells.Contains(diagonal) && diagonal.connectedCells.Contains(next)
-                    && (next.connectedCells.Contains(cell) || next.placedConnectedCells.Contains(cell)))
-                    cell.diagonalBits |= 1 << 2;
-            }
-            else if (i == 3 && (cell.connectedCells.Contains(neighbour) || cell.placedConnectedCells.Contains(neighbour)))
-            {
-                if (cell.connectedCells.Contains(neighbour))
-                    cell.cardinalBits |= 1 << 3;
-
-                var xdiagonal = cell.pos.x + MazeDirections.diagonalVectors[i].x;
-                var ydiagonal = cell.pos.y + MazeDirections.diagonalVectors[i].y;
-
-                if (xdiagonal < 0 || ydiagonal < 0 || xdiagonal > maze.size.x - 1 || ydiagonal > maze.size.y - 1)
-                    continue;
-
-                var diagonal = maze.cells[xdiagonal, ydiagonal];
-
-                if (diagonal.state > 1)
-                    continue;
-
-                var xnext = cell.pos.x + MazeDirections.cardinalVectors[(i + 1) % MazeDirections.cardinalVectors.Length].x;
-                var ynext = cell.pos.y + MazeDirections.cardinalVectors[(i + 1) % MazeDirections.cardinalVectors.Length].y;
-                var next = maze.cells[xnext, ynext];
-
-                if (neighbour.connectedCells.Contains(diagonal) && diagonal.connectedCells.Contains(next)
-                    && (next.connectedCells.Contains(cell) || next.placedConnectedCells.Contains(cell)))
-                    cell.diagonalBits |= 1 << 3;
+                        if (neighbour.connectedCells.Contains(diagonal) && next.connectedCells.Contains(diagonal)
+                            && (cell.connectedCells.Contains(next) || cell.placedConnectedCells.Contains(next)))
+                        {
+                            cell.diagonalBits |= 1 << k;
+                            //Debug.Log($"{cell.gameObject.name} has {1 << k} added to diagonal bits for neighbour at ({xdiagonal},{ydiagonal})");
+                        }
+                    }
+                }
             }
         }
     }

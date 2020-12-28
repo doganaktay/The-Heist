@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 [RequireComponent(typeof(FieldOfView))]
@@ -67,25 +68,18 @@ public class CCTVCamera : MonoBehaviour
         var limit = Random.value < 0.5f ? rotationLimits.min : rotationLimits.max;
         var delay = new WaitForSeconds(waitTime);
 
+        yield return new WaitForSeconds(Random.Range(0f, waitTime));
+
         while (true)
         {
             var current = aim.rotation;
             var end = Quaternion.Euler(0, 0, limit);
-
-            //var current = aim.rotation.eulerAngles.z;
-
-            Debug.DrawRay(transform.position + Vector3.back * 3f, Quaternion.Euler(0, 0, limit) * Vector3.up * 20f, Color.red, waitTime);
 
             var t = 0f;
             while(aim.rotation != Quaternion.Euler(0, 0, limit) && t < 1.01f)
             {
                 t += rotationSpeed * Time.deltaTime;
                 aim.rotation = Quaternion.Slerp(current, end, t);
-
-                //t += rotationSpeed * Time.deltaTime;
-                //float z = Mathf.Lerp(current, limit, t);
-
-                //aim.rotation = Quaternion.Euler(0, 0, z);
 
                 yield return null;
             }
@@ -94,8 +88,6 @@ public class CCTVCamera : MonoBehaviour
                 limit = rotationLimits.max;
             else
                 limit = rotationLimits.min;
-
-            Debug.Log($"{gameObject.name} completed rotation. Now going to rotate from {current} to {limit}");
 
             yield return delay;
         }
@@ -129,4 +121,69 @@ public class CCTVCamera : MonoBehaviour
         return Mathf.Abs(temp);
     }
 
+    public Vector3 GetCoverageCenter()
+    {
+        var meshPoints = fov.GetFOVSnapshot();
+        Vector3 total = Vector3.zero;
+
+        for(int i = 0; i < meshPoints.Count; i++)
+        {
+            total = new Vector3(total.x + meshPoints[i].x, total.y + meshPoints[i].y, total.z + meshPoints[i].z);
+        }
+
+        return total / meshPoints.Count;
+    }
+
+    public List<Vector3> GetTopDirections()
+    {
+        var temp = new List<Vector3>();
+
+        for(int i = 0; i < Mathf.RoundToInt(rotationLimits.max - rotationLimits.min); i++)
+        {
+            var hit = Physics2D.Raycast(transform.position, Quaternion.Euler(0, 0, rotationLimits.min + i) * Vector3.up, fov.viewRadius, fov.obstacleMask);
+
+            Vector2 freeDir = Quaternion.Euler(0, 0, rotationLimits.min + i) * Vector2.up * fov.viewRadius;
+            var point = hit.collider == null ? (Vector2)transform.position + freeDir : hit.point;
+            var cell = Physics2D.OverlapCircle(point, 1f, 1 << 10);
+
+            if (cell != null && cell.gameObject.GetComponentInParent<MazeCell>().state > 1)
+                continue;
+
+            if (hit.collider == null)
+            {
+                temp.Add(freeDir);
+            }
+            else
+            {
+                temp.Add(hit.point - (Vector2)transform.position);
+            }
+        }
+
+        return temp.OrderByDescending(x => x.sqrMagnitude).ToList();
+    }
+
+    private void OnDrawGizmos()
+    {
+        var list = GetTopDirections();
+        Color tester = new Color(0, 0, 0, 1);
+        var temp = tester;
+
+        if (list.Count == 0)
+            Debug.Log($"empty candidate list for {gameObject.name}");
+
+        int i = 0;
+        for(; i < 50 && i < list.Count; )
+        {
+            tester = Color.Lerp(temp, Color.red, i / 50f);
+            Debug.DrawRay(transform.position, list[i], tester);
+            Gizmos.color = Color.blue;
+            Gizmos.DrawWireSphere(transform.position + list[i], GameManager.CellDiagonal / 4f);
+            i++;
+        }
+
+        var center = GetCoverageCenter();
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(center, 5f);
+        Gizmos.color = Color.white;
+    }
 }

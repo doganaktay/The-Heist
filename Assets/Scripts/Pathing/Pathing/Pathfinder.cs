@@ -84,12 +84,16 @@ public class Pathfinder : MonoBehaviour
         if (candidate.state == 0 && areafinder.GetLowCellArea(candidate.areaIndex).Count == 1)
             return true;
 
+        foreach (var connected in candidate.placedConnectedCells)
+        {
+            if (connected.connectedCells.Count == 1)
+                return false;
+        }
+
         foreach (var connected in candidate.connectedCells)
         {
             if (connected.connectedCells.Count == 1)
                 return false;
-            if (connected.state > 1)
-                continue;
 
             int pathIndex = 1;
 
@@ -125,7 +129,7 @@ public class Pathfinder : MonoBehaviour
 
                     foreach (MazeCell cell in currentCell.connectedCells)
                     {
-                        if (cell == candidate || cell.state > 1) { continue; }
+                        if (cell == candidate) { continue; }
 
                         if (!cell.visited[pathIndex] && cell.state == 1)
                         {
@@ -209,6 +213,8 @@ public class Pathfinder : MonoBehaviour
                 }
             }
         }
+
+        Debug.Log($"All walkable cells connected to {candidate.gameObject.name} have alternate paths, will place here");
 
         return true;
     }

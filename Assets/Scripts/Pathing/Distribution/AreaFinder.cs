@@ -151,8 +151,6 @@ public class AreaFinder : MonoBehaviour
                         MazeDirections.RemoveWall(wall);
                         maze.wallsInScene.Remove(wall);
                         simulation.RemoveWallFromSimulation(wall.gameObject);
-
-                        cell.connectedCells.Add(neighbour);
                     }
                 }
             }
@@ -179,8 +177,6 @@ public class AreaFinder : MonoBehaviour
                         MazeDirections.RemoveWall(wall);
                         maze.wallsInScene.Remove(wall);
                         simulation.RemoveWallFromSimulation(wall.gameObject);
-
-                        cell.connectedCells.Add(neighbour);
                     }
                 }
             }

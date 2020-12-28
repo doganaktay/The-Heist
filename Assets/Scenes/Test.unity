@@ -904,7 +904,7 @@ MonoBehaviour:
   pathfinder: {fileID: 0}
   wallDropPercent: 0.1
   passableWallPercent: 0.25
-  displayCellID: 0
+  displayCellID: 1
 --- !u!4 &600934098
 Transform:
   m_ObjectHideFlags: 0
@@ -2029,24 +2029,24 @@ MonoBehaviour:
   camPrefab: {fileID: 1256946515726315964, guid: 42f317d2e92734c889e8437465deb9cc,
     type: 3}
   testCam: {fileID: 1832719464}
+  maze: {fileID: 0}
   targetMask:
     serializedVersion: 2
     m_Bits: 256
   obstacleMask:
     serializedVersion: 2
     m_Bits: 512
+  camCount: 10
   defaultViewRadius: 50
   camDisplacementPercent: 0.3
   defaultViewAngle: 60
-  defaultRotSpeed: 0.5
-  defaultWaitTime: 2
+  defaultRotSpeed: 0.25
+  defaultWaitTime: 5
   defaultRotChance: 1
   paramDeviation: 0.25
   biasMultipliers:
     min: 1
     max: 1
-  maze: {fileID: 0}
-  camCount: 10
 --- !u!1 &1683019512
 GameObject:
   m_ObjectHideFlags: 0
