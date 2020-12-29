@@ -214,8 +214,6 @@ public class Pathfinder : MonoBehaviour
             }
         }
 
-        Debug.Log($"All walkable cells connected to {candidate.gameObject.name} have alternate paths, will place here");
-
         return true;
     }
 
