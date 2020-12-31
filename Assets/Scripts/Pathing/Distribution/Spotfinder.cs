@@ -131,7 +131,7 @@ public class Spotfinder : MonoBehaviour
         {
             int random = Random.Range(0, availableSpots.Count);            
 
-            if(pathfinder.TryNeighbourPaths(availableSpots[random]))
+            if(pathfinder.TryNeighbourPaths(availableSpots[random]) && !HasDiagonalDisconnect(availableSpots[random]))
             {
                 availableSpots[random].state = 2;
 
@@ -158,13 +158,11 @@ public class Spotfinder : MonoBehaviour
 
         placedSpots = placedSpots.OrderByDescending(x => x.cardinalBits + x.diagonalBits).ToList();
 
-        foreach(var spot in placedSpots)
-        {
-            Debug.Log($"Checking disconnect for {spot.gameObject.name}");
-
-            if (HasDiagonalDisconnect(spot))
-                Debug.LogError($"{spot.gameObject.name} has diagonal disconnect");
-        }
+        //foreach(var spot in placedSpots)
+        //{
+        //    if (HasDiagonalDisconnect(spot))
+        //        Debug.LogError($"{spot.gameObject.name} has diagonal disconnect");
+        //}
     }
 
     private bool HasDiagonalDisconnect(MazeCell cell)
@@ -176,39 +174,25 @@ public class Spotfinder : MonoBehaviour
             var ypos = cell.pos.y + MazeDirections.allVectors[i].y;
 
             if (xpos < 0 || ypos < 0 || xpos > maze.size.x - 1 || ypos > maze.size.y - 1)
-            {
-                //Debug.LogError($"({xpos},{ypos}) is out of bounds");
                 continue;
-            }
 
             var xdiagonal = cell.pos.x + MazeDirections.allVectors[(i + 1) % length].x;
             var ydiagonal = cell.pos.y + MazeDirections.allVectors[(i + 1) % length].y;
 
             if (xdiagonal < 0 || ydiagonal < 0 || xdiagonal > maze.size.x - 1 || ydiagonal > maze.size.y - 1)
-            {
-                //Debug.LogError($"({xdiagonal},{ydiagonal}) is out of bounds");
                 continue;
-            }
 
             var xnext = cell.pos.x + MazeDirections.allVectors[(i + 2) % length].x;
             var ynext = cell.pos.y + MazeDirections.allVectors[(i + 2) % length].y;
 
             if (xnext < 0 || ynext < 0 || xnext > maze.size.x - 1 || ynext > maze.size.y - 1)
-            {
-                //Debug.LogError($"({xnext},{ynext}) is out of bounds");
                 continue;
-            }
 
             if (!cell.connectedCells.Contains(maze.cells[xpos, ypos]) || !cell.connectedCells.Contains(maze.cells[xnext, ynext]))
-            {
-                //Debug.LogError($"({cell.pos.x},{cell.pos.y}) is not connected to either ({xpos},{ypos}) or ({xnext},{ynext})");
                 continue;
-            }
 
             bool areConnected = maze.cells[xpos, ypos].connectedCells.Contains(maze.cells[xdiagonal, ydiagonal])
                              && maze.cells[xnext, ynext].connectedCells.Contains(maze.cells[xdiagonal, ydiagonal]);
-
-            //Debug.LogError($"Checking for ({cell.pos.x},{cell.pos.y}) => ({xpos},{ypos}) is connected to ({xnext},{ynext}): {areConnected}");
 
             if (!areConnected)
                 return true;
