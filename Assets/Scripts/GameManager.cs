@@ -120,6 +120,7 @@ public class GameManager : MonoBehaviour
 
 		// pass references to CCTV
 		cctv.maze = mazeInstance;
+		cctv.simulation = physicsSim;
 
 		// initialize and pass references to text overlay
 		textOverlay.maze = mazeInstance;

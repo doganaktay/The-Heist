@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEngine;
 
 [RequireComponent(typeof(FieldOfView))]
-public class CCTVCamera : MonoBehaviour
+public class CCTVCamera : MonoBehaviour, ISimulateable, IProjectileTarget
 {
     FieldOfView fov;
     Transform aim;
@@ -12,10 +12,25 @@ public class CCTVCamera : MonoBehaviour
     float rotationSpeed;
     MinMaxData rotationLimits;
     float waitTime;
+    Coroutine rotateCamRoutine;
 
     public bool IsStatic { get => fov.IsStatic; set => fov.IsStatic = value; }
     public bool ShowFOV { get => fov.canDraw; set => fov.canDraw = value; }
     public Transform Aim => aim;
+
+    // interface members
+    public GameObject Instance { get => gameObject; }
+    public int SyncTransformIndex { get; } = 0;
+    public bool IsDynamic { get; set; } = true;
+    public bool IsDestructible { get; set; } = true;
+
+    public void TakeHit()
+    {
+        fov.ClearMesh();
+        fov.enabled = false;
+        StopCoroutine(rotateCamRoutine);
+        Debug.Log("CCTV Camera hit");
+    }
 
     void Awake()
     {
@@ -60,7 +75,7 @@ public class CCTVCamera : MonoBehaviour
         SetCamRotLimits(new MinMaxData(aim.rotation.eulerAngles.z - rotLimits.min, aim.rotation.eulerAngles.z + rotLimits.max));
         SetCamWaitTime(waitTime);
 
-        StartCoroutine(RotateCam());
+        rotateCamRoutine = StartCoroutine(RotateCam());
     }
 
     IEnumerator RotateCam()
@@ -150,13 +165,9 @@ public class CCTVCamera : MonoBehaviour
                 continue;
 
             if (hit.collider == null)
-            {
                 temp.Add(freeDir);
-            }
             else
-            {
                 temp.Add(hit.point - (Vector2)transform.position);
-            }
         }
 
         return temp.OrderByDescending(x => x.sqrMagnitude).ToList();
@@ -172,7 +183,7 @@ public class CCTVCamera : MonoBehaviour
             Debug.Log($"empty candidate list for {gameObject.name}");
 
         int i = 0;
-        for(; i < 50 && i < list.Count; )
+        for(; i < 5 && i < list.Count; )
         {
             tester = Color.Lerp(temp, Color.red, i / 50f);
             Debug.DrawRay(transform.position, list[i], tester);

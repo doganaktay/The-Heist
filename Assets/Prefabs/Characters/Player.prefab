@@ -323,7 +323,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1420787822162895559}
   - component: {fileID: 7996706470434021523}
-  - component: {fileID: 3559934821376139114}
   - component: {fileID: 447034769133315995}
   - component: {fileID: 7925979547997160563}
   - component: {fileID: 1492204798581725389}
@@ -401,27 +400,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!50 &3559934821376139114
-Rigidbody2D:
-  serializedVersion: 4
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7495380814707733899}
-  m_BodyType: 1
-  m_Simulated: 1
-  m_UseFullKinematicContacts: 0
-  m_UseAutoMass: 0
-  m_Mass: 10
-  m_LinearDrag: 0
-  m_AngularDrag: 0.05
-  m_GravityScale: 1
-  m_Material: {fileID: 0}
-  m_Interpolate: 1
-  m_SleepingMode: 1
-  m_CollisionDetection: 1
-  m_Constraints: 4
 --- !u!58 &447034769133315995
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -455,6 +433,7 @@ MonoBehaviour:
     min: 25
     max: 50
   turnSpeed: 0.5
+  aim: {fileID: 0}
   projectilePrefab: {fileID: 372506298171578869, guid: 3f7dd9ebfb0ea4133bfb93dfe5f47185,
     type: 3}
   soundBombPrefab: {fileID: -8828769137660388836, guid: a36dba4683cd143d7a515737ecccc028,
@@ -463,11 +442,7 @@ MonoBehaviour:
   simulation: {fileID: 0}
   trajectory: {fileID: 0}
   spawnedObjectHolder: {fileID: 0}
-  walkSpeed: 25
-  runSpeed: 50
   maze: {fileID: 0}
-  cam: {fileID: 0}
-  aim: {fileID: 0}
   aimUp: {x: 0, y: 0, z: 0}
   spinIncrement: 10
   canDrawTrajectory: 0

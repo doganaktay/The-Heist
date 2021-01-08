@@ -19,7 +19,6 @@ public class PhysicsSim : MonoBehaviour
 
     Projectile projectileCopy;
     Player playerCopy;
-    Rigidbody2D playerCopyRb;
     Transform playerCopyTransform;
     Rigidbody2D projectileCopyRb;
 
@@ -28,6 +27,7 @@ public class PhysicsSim : MonoBehaviour
     Scene simulation;
 
     Dictionary<GameObject, GameObject> objectPairs = new Dictionary<GameObject, GameObject>();
+    List<(Transform original, Transform copy)> transformPairsToSync = new List<(Transform original, Transform copy)>();
 
     void Start()
     {
@@ -40,12 +40,26 @@ public class PhysicsSim : MonoBehaviour
     void Update()
     {
         playerCopyTransform.position = player.transform.position;
+        SyncTransforms();
+    }
+
+    void SyncTransforms()
+    {
+        foreach(var pair in transformPairsToSync)
+        {
+            pair.copy.position = pair.original.position;
+            pair.copy.rotation = pair.original.rotation;
+        }
     }
 
     public void ConstructSimulationScene()
     {
         if (sceneHolder != null)
+        {
             Destroy(sceneHolder);
+            objectPairs.Clear();
+            transformPairsToSync.Clear();
+        }
 
         // create an empty holder object for easy destruction of all simulated objects prior to reconstruction
         sceneHolder = new GameObject();
@@ -65,11 +79,6 @@ public class PhysicsSim : MonoBehaviour
         playerCopyTransform.localScale = player.transform.localScale;
         playerCopyTransform.parent = sceneHolder.transform;
         playerCopy.name = "Player Copy";
-
-        // cache and set up simulation rigidbody
-        playerCopyRb = playerCopy.GetComponent<Rigidbody2D>();
-        playerCopyRb.isKinematic = true;
-        playerCopyRb.collisionDetectionMode = CollisionDetectionMode2D.Discrete;
 
         // destroy children unnecessary for simulation
         Destroy(playerCopy.transform.GetChild(2).gameObject);
@@ -155,12 +164,67 @@ public class PhysicsSim : MonoBehaviour
         }
     }
 
-    public void RemoveWallFromSimulation(GameObject wall)
+    public void AddToSim<T>(T sim) where T : ISimulateable
     {
-        if (objectPairs.ContainsKey(wall))
-            Destroy(objectPairs[wall]);
+        var goCopy = Instantiate(sim.Instance);
 
-        objectPairs.Remove(wall);
+        if (sim.IsDynamic)
+        {
+            if (sim.SyncTransformIndex > -1)
+                transformPairsToSync.Add((sim.Instance.transform.GetChild(sim.SyncTransformIndex), goCopy.transform.GetChild(sim.SyncTransformIndex)));
+            else
+                transformPairsToSync.Add((sim.Instance.transform, goCopy.transform));
+        }
+
+        var components = goCopy.GetComponents<MonoBehaviour>();
+        foreach (var c in components)
+            c.enabled = false;
+
+        SceneManager.MoveGameObjectToScene(goCopy, simulation);
+        goCopy.transform.parent = sceneHolder.transform;
+        goCopy.name = sim.Instance.name + " Copy";
+
+        foreach (var r in goCopy.GetComponentsInChildren<Renderer>())
+            r.enabled = false;
+
+        objectPairs.Add(sim.Instance, goCopy);
+    }
+
+    public void AddToSim<T>(List<T> sims) where T : ISimulateable
+    {
+        foreach (var sim in sims)
+        {
+            var goCopy = Instantiate(sim.Instance);
+
+            if (sim.IsDynamic)
+            {
+                if (sim.SyncTransformIndex > -1)
+                    transformPairsToSync.Add((sim.Instance.transform.GetChild(sim.SyncTransformIndex), goCopy.transform.GetChild(sim.SyncTransformIndex)));
+                else
+                    transformPairsToSync.Add((sim.Instance.transform, goCopy.transform));
+            }
+
+            var components = goCopy.GetComponents<MonoBehaviour>();
+            foreach (var c in components)
+                c.enabled = false;
+
+            SceneManager.MoveGameObjectToScene(goCopy, simulation);
+            goCopy.transform.parent = sceneHolder.transform;
+            goCopy.name = sim.Instance.name + " Copy";
+
+            foreach (var r in goCopy.GetComponentsInChildren<Renderer>())
+                r.enabled = false;
+
+            objectPairs.Add(sim.Instance, goCopy);
+        }
+    }
+
+    public void RemoveObjectFromSimulation(GameObject go)
+    {
+        if (objectPairs.ContainsKey(go))
+            Destroy(objectPairs[go]);
+
+        objectPairs.Remove(go);
     }
 
     public void SimulateProjectile(ProjectileSO so, Vector2 dir, Vector3 pos, float spin = 0)

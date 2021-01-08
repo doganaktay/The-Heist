@@ -83,7 +83,7 @@ public class AreaFinder : MonoBehaviour
             MazeDirections.RemoveWall(ordered[0]);
             maze.wallsInScene.Remove(ordered[0]);
             availableWallsForDrop.Remove(ordered[0]);
-            simulation.RemoveWallFromSimulation(ordered[0].gameObject);
+            simulation.RemoveObjectFromSimulation(ordered[0].gameObject);
 
             pathfinder.NewPath();
             FindAreas();
@@ -150,7 +150,7 @@ public class AreaFinder : MonoBehaviour
                         var wall = (MazeCellWall)cell.GetEdge((MazeDirection)i);
                         MazeDirections.RemoveWall(wall);
                         maze.wallsInScene.Remove(wall);
-                        simulation.RemoveWallFromSimulation(wall.gameObject);
+                        simulation.RemoveObjectFromSimulation(wall.gameObject);
                     }
                 }
             }
@@ -176,7 +176,7 @@ public class AreaFinder : MonoBehaviour
                         var wall = (MazeCellWall)cell.GetEdge((MazeDirection)i);
                         MazeDirections.RemoveWall(wall);
                         maze.wallsInScene.Remove(wall);
-                        simulation.RemoveWallFromSimulation(wall.gameObject);
+                        simulation.RemoveObjectFromSimulation(wall.gameObject);
                     }
                 }
             }

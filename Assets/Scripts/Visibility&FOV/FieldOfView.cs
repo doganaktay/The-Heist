@@ -90,6 +90,12 @@ public class FieldOfView : MonoBehaviour
         }
     }
 
+	public void ClearMesh()
+	{
+		viewMesh.Clear();
+		meshCleared = true;
+	}
+
 	private void FindVisibleTargets()
 	{
 		visibleTargets.Clear();

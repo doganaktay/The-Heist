@@ -12,6 +12,8 @@ public class CCTV : MonoBehaviour
     CCTVCamera testCam;
     public Maze maze;
     private List<CCTVCamera> cameras = new List<CCTVCamera>();
+    [HideInInspector]
+    public PhysicsSim simulation;
 
     [Header("Masks")]
     [SerializeField]
@@ -113,8 +115,7 @@ public class CCTV : MonoBehaviour
 
         var sortedSpots = GetSortedCameraSpots();
 
-        int j = 0;
-        for (int i = 0; j < camCount && i < sortedSpots.Count; i++)
+        for (int i = 0, j = 0; j < camCount && i < sortedSpots.Count; i++)
         {
             var current = sortedSpots[i].position;
             bool isPlaceable = true;
@@ -136,16 +137,9 @@ public class CCTV : MonoBehaviour
                 bool lineOfSight = !Physics2D.Linecast(current, placed.transform.position, obstacleMask);
                 bool shareView = Vector2.Dot(-sortedSpots[i].direction, placed.Aim.up) > -Mathf.Epsilon;
 
-                //Debug.Log($"Dot product of {-sortedSpots[i].direction} for position ({sortedSpots[i].coords.x},{sortedSpots[i].coords.y}) and {placed.Aim.up} of {placed.gameObject.name}:" +
-                //    $" {Vector2.Dot(-sortedSpots[i].direction, placed.Aim.up)}, check result: {shareView}");
-
                 if (lineOfSight || (distance <= defaultViewRadius && shareView))
                 {
                     isPlaceable = false;
-
-                    //Debug.Log($"({sortedSpots[i].coords.x},{sortedSpots[i].coords.y}) is unplaceable due to {placed.gameObject.name}" +
-                    //$" lineOfSight: {lineOfSight} || DistAndViewAngle: {distance <= defaultViewRadius && shareView} WasInRange: {inRange} with distance {distance} checking {current} against {placed.transform.position}");
-
                     break;
                 }
             }
@@ -179,10 +173,13 @@ public class CCTV : MonoBehaviour
 
                 cameras.Add(cam);
 
-                //Debug.Log($"Cam placed at Cell {sortedSpots[i].coords.x},{sortedSpots[i].coords.y} with direction {-sortedSpots[i].direction} has a coverage of {sortedSpots[i].coverage}");
-
                 j++;
             }
+        }
+
+        foreach(var cam in cameras)
+        {
+            simulation.AddToSim(cam as ISimulateable);
         }
 
         testCam.gameObject.SetActive(false);
@@ -198,7 +195,7 @@ public class CCTV : MonoBehaviour
             {
                 var current = maze.cells[i, j];
 
-                if (current.connectedCells.Count + current.placedConnectedCells.Count > 3 || current.specialConnectedCells.Count != 0)
+                if (current.connectedCells.Count + current.placedConnectedCells.Count > 3 || current.specialConnectedCells.Count > 0)
                     continue;
 
                 var possiblePositions = GetPossibleCamPositions(current);
@@ -234,19 +231,6 @@ public class CCTV : MonoBehaviour
 
     private List<(Vector3 position, Vector3 direction, float maxViewAngle)> GetPossibleCamPositions(MazeCell cell)
     {
-        // 0001 - 1011 => 0,-1
-        // 0010 - 0111 => -1, 0
-        // 0100 - 1110 => 0, 1
-        // 1000 - 1101 => 1, 0
-        // ----
-        // 0011 => -1. -1
-        // 0110 => -1, 1
-        // 1100 => 1, 1
-        // 1001 => 1, -1
-        // ----
-        // 0101 => -1, 0 | 1, 0
-        // 1010 => 0, 1 | 0, -1
-
         List<Vector3> displacementDirs = new List<Vector3>();
         List<float> maxViewAngles = new List<float>();
 
@@ -255,9 +239,6 @@ public class CCTV : MonoBehaviour
         foreach(var set in CamPosVectors)
         {
             bool testSame = ((cell.allNeighbourBits ^ set.mask) & ~diagonalMask) == 0;
-
-            //Debug.Log($"{cell.gameObject.name} checking bitfield value {System.Convert.ToString(cell.allNeighbourBits, 2)} against mask {System.Convert.ToString(set.mask, 2)}" +
-            //          $" with result {System.Convert.ToString((cell.allNeighbourBits ^ set.mask), 2)}. Test passes: {testSame} Adding direction: {set.direction}");
 
             if (testSame)
             {
@@ -271,10 +252,7 @@ public class CCTV : MonoBehaviour
         foreach (var dir in displacementDirs)
         {
             positions.Add(cell.transform.position + dir * camDisplacement);
-            //Debug.Log($"{cell.gameObject.name}: Position added with displacement {dir} * {camDisplacement} where cell diagonal is {GameManager.CellDiagonal}");
         }
-
-        //Debug.Log($"{positions.Count} possible placement(s) for {cell.gameObject.name}");
 
         List<(Vector3 position, Vector3 direction, float maxViewAngle)> results = new List<(Vector3 position, Vector3 direction, float maxViewAngle)>();
 

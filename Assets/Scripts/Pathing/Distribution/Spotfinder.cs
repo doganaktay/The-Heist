@@ -157,12 +157,6 @@ public class Spotfinder : MonoBehaviour
         }
 
         placedSpots = placedSpots.OrderByDescending(x => x.cardinalBits + x.diagonalBits).ToList();
-
-        //foreach(var spot in placedSpots)
-        //{
-        //    if (HasDiagonalDisconnect(spot))
-        //        Debug.LogError($"{spot.gameObject.name} has diagonal disconnect");
-        //}
     }
 
     private bool HasDiagonalDisconnect(MazeCell cell)

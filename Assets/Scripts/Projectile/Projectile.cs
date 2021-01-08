@@ -96,7 +96,14 @@ public class Projectile : MonoBehaviour
                 rb.Sleep();
             }
             else
+            {
+                IProjectileTarget target = collision.gameObject.GetComponentInParent<IProjectileTarget>();
+
+                if (target != null)
+                    target.TakeHit();
+
                 Destroy(gameObject);
+            }
         }        
     }
 

@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 32632257}
   - component: {fileID: 32632258}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: Sprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -94,7 +94,7 @@ GameObject:
   - component: {fileID: 1256946515726315966}
   - component: {fileID: 1256946515726315965}
   - component: {fileID: 1256946515726315964}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: CCTVCamera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -213,7 +213,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1256946515811456413}
   - component: {fileID: 1619566619138162347}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: ForwardAim
   m_TagString: Untagged
   m_Icon: {fileID: 0}
