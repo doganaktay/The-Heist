@@ -94,6 +94,7 @@ GameObject:
   - component: {fileID: 1256946515726315966}
   - component: {fileID: 1256946515726315965}
   - component: {fileID: 1256946515726315964}
+  - component: {fileID: -8996358480331391396}
   m_Layer: 14
   m_Name: CCTVCamera
   m_TagString: Untagged
@@ -191,6 +192,8 @@ MonoBehaviour:
   aim: {fileID: 0}
   zOffset: 0
   canDraw: 1
+  detectionTime: 5
+  detectionIsCumulative: 0
 --- !u!114 &1256946515726315964
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -201,6 +204,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 47f979162f6f04d799d59248b59c52f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &-8996358480331391396
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1256946515726315954}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7832fa6c7ce264e6699f3feafa641d98, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &1256946515811456412

@@ -76,7 +76,7 @@
 
 			fixed4 frag(v2f IN) : SV_Target
 			{
-				fixed4 c = tex2D(_MainTex, IN.uv) * IN.color;
+				fixed4 c = IN.color;
 				fixed shadow = SHADOW_ATTENUATION(IN);
 
 				// setting up basic lambert lighting
@@ -159,7 +159,7 @@
 
 			fixed4 frag(v2f IN) : SV_Target
 			{
-				fixed4 c = tex2D(_MainTex, IN.uv) * IN.color;
+				fixed4 c = IN.color;
 				fixed shadow = SHADOW_ATTENUATION(IN);
 
 				// setting up basic lambert lighting

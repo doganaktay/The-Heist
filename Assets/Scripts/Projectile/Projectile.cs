@@ -67,10 +67,10 @@ public class Projectile : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D collision)
     {
-        if((isSimulated && lastStepCount == simulation.currentStepCount) || (!isSimulated && lastStepCount == Time.frameCount))
-            return;
-        else
-            lastStepCount = isSimulated? simulation.currentStepCount : Time.frameCount;
+        //if((isSimulated && lastStepCount == simulation.currentStepCount) || (!isSimulated && lastStepCount == Time.frameCount))
+        //    return;
+        //else
+        //    lastStepCount = isSimulated? simulation.currentStepCount : Time.frameCount;
 
         bounceCount--;
         bool impact = false;
@@ -89,8 +89,15 @@ public class Projectile : MonoBehaviour
 
         if (bounceCount <= 0 || impact)
         {
+            bounceCount = 0;
+
             if (isSimulated)
             {
+                if (impact)
+                    trajectory.SetImpactColor();
+                else
+                    trajectory.SetLimitColor();
+
                 transform.position = new Vector3(5000, 5000, 0);
                 rb.velocity = Vector2.zero;
                 rb.Sleep();

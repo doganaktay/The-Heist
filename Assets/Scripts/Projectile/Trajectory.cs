@@ -5,6 +5,10 @@ using UnityEngine;
 [RequireComponent(typeof(MeshFilter))]
 public class Trajectory : MonoBehaviour
 {
+    [SerializeField]
+    Color hitLimitColor, impactColor;
+    Renderer myRenderer;
+
     public List<Vector3> points = new List<Vector3>();
     public List<Vector3> dirs = new List<Vector3>();
     public float width;
@@ -27,6 +31,7 @@ public class Trajectory : MonoBehaviour
         meshFilter = GetComponent<MeshFilter>();
         sharedMesh = meshFilter.sharedMesh = new Mesh();
         sharedMesh.name = "Trajectory";
+        myRenderer = GetComponent<Renderer>();
     }
 
     public void DrawTrajectory()
@@ -75,7 +80,6 @@ public class Trajectory : MonoBehaviour
         lineMesh.normals = normals;
         lineMesh.SetUVs(0, uv);
         lineMesh.SetTriangles(triangles, 0);
-        lineMesh.RecalculateNormals();
 
         // generate circles
         projMesh.Clear();
@@ -121,7 +125,6 @@ public class Trajectory : MonoBehaviour
         projMesh.normals = circleNormals;
         projMesh.SetUVs(0, circleUV);
         projMesh.SetTriangles(circleTriangles, 0);
-        projMesh.RecalculateNormals();
 
         CombineInstance[] combine = new CombineInstance[2];
         combine[0].mesh = lineMesh;
@@ -131,6 +134,9 @@ public class Trajectory : MonoBehaviour
 
         meshFilter.sharedMesh.CombineMeshes(combine);
     }
+
+    public void SetImpactColor() => myRenderer.sharedMaterial.color = impactColor;
+    public void SetLimitColor() => myRenderer.sharedMaterial.color = hitLimitColor;
 
     void OnDrawGizmos()
     {

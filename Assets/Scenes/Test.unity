@@ -2654,6 +2654,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3e04b203f6a641e6b528f845026261b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  hitLimitColor: {r: 0.33610713, g: 0.55282325, b: 0.8584906, a: 0.78431374}
+  impactColor: {r: 0.8207547, g: 0.19744569, b: 0.19744569, a: 0.8627451}
   points: []
   dirs: []
   width: 0

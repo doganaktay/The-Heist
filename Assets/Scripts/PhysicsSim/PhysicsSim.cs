@@ -39,7 +39,6 @@ public class PhysicsSim : MonoBehaviour
 
     void Update()
     {
-        playerCopyTransform.position = player.transform.position;
         SyncTransforms();
     }
 
@@ -88,6 +87,7 @@ public class PhysicsSim : MonoBehaviour
         playerCopy.GetComponent<Renderer>().enabled = false;
 
         objectPairs.Add(player.gameObject, playerCopy.gameObject);
+        transformPairsToSync.Add((player.transform, playerCopyTransform));
 
         // add dummy projectile to simulation
         projectileCopy = Instantiate(player.projectilePrefab);

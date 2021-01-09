@@ -8,6 +8,7 @@ using UnityEngine;
 [RequireComponent(typeof(MeshFilter)), RequireComponent(typeof(MeshRenderer))]
 public class FieldOfView : MonoBehaviour
 {
+	[Header("Mesh Settings")]
 	public float viewRadius;
 	[Range(0, 360)]
 	public float viewAngle;
@@ -40,8 +41,21 @@ public class FieldOfView : MonoBehaviour
 	Vector3[] vertices;
 	List<int> triangles;
 
+	[Header("Detection Settings")]
+	[SerializeField] float detectionTime;
+	public float DetectionTime { get => detectionTime; }
+	float exposureTime;
+	float detectionPercent;
+	[SerializeField] bool detectionIsCumulative;
+	public bool DetectionIsCumulative { get => detectionIsCumulative; }
+	Coroutine targetDetection;
+	PerObjectMaterialProperties props;
+	bool isDetecting;
+
 	void Start()
 	{
+		props = GetComponent<PerObjectMaterialProperties>();
+
 		// manually sized vertex array and tri list
 		vertices = new Vector3[800];
 		triangles = new List<int>(2400);
@@ -73,6 +87,24 @@ public class FieldOfView : MonoBehaviour
 		}
 	}
 
+    private void Update()
+    {
+		if (CanSeePlayer() && !isDetecting)
+			targetDetection = StartCoroutine(DetectTarget());
+		else if (!CanSeePlayer() && isDetecting)
+        {
+			isDetecting = false;
+
+			StopCoroutine(targetDetection);
+
+			if (!detectionIsCumulative)
+            {
+				exposureTime = 0f;
+				props.SetBlendFactor(0f);
+            }
+		}
+    }
+
     private void LateUpdate()
 	{
         if (!IsStatic)
@@ -88,6 +120,28 @@ public class FieldOfView : MonoBehaviour
 				meshCleared = true;
 			}
         }
+    }
+
+	IEnumerator DetectTarget()
+    {
+		isDetecting = true;
+
+		while (isDetecting && detectionPercent <= 1f)
+        {
+			Debug.Log($"{gameObject.name} is detecting player");
+
+			exposureTime += Time.deltaTime;
+			detectionPercent = exposureTime / detectionTime;
+
+			if (detectionPercent > 1f)
+				detectionPercent = 1f;
+
+			props.SetBlendFactor(detectionPercent);
+
+			yield return null;
+        }
+
+		isDetecting = false;
     }
 
 	public void ClearMesh()
@@ -149,9 +203,6 @@ public class FieldOfView : MonoBehaviour
 
         viewMesh.vertices = vertices;
         viewMesh.SetTriangles(triangles, 0);
-
-        // recalculation is expensive and mesh has correct normals from triangle indices
-        //viewMesh.RecalculateNormals();
     }
 
     private void ConstructViewMesh()

@@ -97,7 +97,7 @@ namespace Archi.Touch
                         TouchUI.instance.ResumeGame();
                     }
                 }
-                else
+                else if (DTouch.instances[0].FindFinger(1).age > 0.5f)
                 {
                     player.LaunchProjectile();
                 }
@@ -156,7 +156,7 @@ namespace Archi.Touch
                 float rot = Mathf.Atan2(diff.y, diff.x) * Mathf.Rad2Deg;
                 player.aim.transform.localRotation = Quaternion.Euler(0f, 0f, rot - 90f);
 
-                if((finger.screenPos - finger.lastScreenPos).sqrMagnitude > 0.001f || player.lineReset)
+                if((finger.screenPos - finger.lastScreenPos).sqrMagnitude > 0.1f || player.lineReset)
                 {
                     player.SetTrajectory();
                 }
