@@ -206,8 +206,7 @@ public class Spotfinder : MonoBehaviour
             if (tileToPlace != null)
             {
                 var go = Instantiate(tileToPlace.tile);
-                go.transform.position = new Vector3(spot.transform.position.x, spot.transform.position.y,
-                                                    spot.transform.position.z - spotHeight / 2);
+                go.transform.position = spot.transform.position;
                 go.transform.rotation = Quaternion.Euler(go.transform.rotation.x, go.transform.rotation.y, go.transform.rotation.z + tileToPlace.selectedRule.rotation);
                 Vector3 scale = tileToPlace.selectedRule.rotation % 180f == 0 ?
                                 new Vector3(maze.cellScaleX, maze.cellScaleY, 1f) : new Vector3(maze.cellScaleY, maze.cellScaleX, 1f);

@@ -3,8 +3,9 @@
     Properties
 	{
 		[PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
-		_Color ("Tint", Color) = (1,1,1,1)
-		[MaterialToggle] PixelSnap ("Pixel snap", Float) = 0
+		_BaseColor ("Base Color", Color) = (1,1,1,1)
+		_SecondaryColor ("Secondary Color", Color) = (1,1,1,1)
+		_BlendFactor("Blend Factor", Range(0,1)) = 0.0
 	}
 
 	SubShader
@@ -20,29 +21,40 @@
 
 		Cull Off
 		Lighting Off
-		ZWrite Off
-		Blend One OneMinusSrcAlpha
+		//ZWrite Off
+		//Blend One OneMinusSrcAlpha
 
 		Pass
 		{
 		CGPROGRAM
+			#pragma multi_compile_instancing
 			#pragma vertex vert
 			#pragma fragment frag
-			#pragma multi_compile _ PIXELSNAP_ON
 			#include "UnityCG.cginc"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/UnityInstancing.hlsl"
+
+			UNITY_INSTANCING_BUFFER_START(UnityPerMaterial)	
+				UNITY_DEFINE_INSTANCED_PROP(fixed4, _BaseColor)
+                UNITY_DEFINE_INSTANCED_PROP(fixed4,_SecondaryColor)
+                UNITY_DEFINE_INSTANCED_PROP(float, _BlendFactor)
+            UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 			
 			struct appdata_t
 			{
 				float4 vertex   : POSITION;
 				float4 color    : COLOR;
 				float2 texcoord : TEXCOORD0;
+				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
 
 			struct v2f
 			{
 				float4 vertex   : SV_POSITION;
-				fixed4 color    : COLOR;
+				fixed4 colorBase : COLOR;
+				fixed4 colorSecondary : COLOR1;
 				float2 texcoord  : TEXCOORD0;
+				float blendFactor : TEXCOORD1;
+				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
 			
 			fixed4 _Color;
@@ -50,35 +62,28 @@
 			v2f vert(appdata_t IN)
 			{
 				v2f OUT;
+				UNITY_SETUP_INSTANCE_ID(IN);
+                UNITY_TRANSFER_INSTANCE_ID(IN,OUT);
 				OUT.vertex = UnityObjectToClipPos(IN.vertex);
 				OUT.texcoord = IN.texcoord;
-				OUT.color = IN.color * _Color;
-				#ifdef PIXELSNAP_ON
-				OUT.vertex = UnityPixelSnap (OUT.vertex);
-				#endif
+				OUT.colorBase = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseColor);
+				OUT.colorSecondary = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _SecondaryColor);
+				OUT.blendFactor = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BlendFactor);
 
 				return OUT;
 			}
 
 			sampler2D _MainTex;
-			sampler2D _AlphaTex;
-			float _AlphaSplitEnabled;
 
 			fixed4 SampleSpriteTexture (float2 uv)
 			{
 				fixed4 color = tex2D (_MainTex, uv);
-
-#if UNITY_TEXTURE_ALPHASPLIT_ALLOWED
-				if (_AlphaSplitEnabled)
-					color.a = tex2D (_AlphaTex, uv).r;
-#endif //UNITY_TEXTURE_ALPHASPLIT_ALLOWED
-
 				return color;
 			}
 
 			fixed4 frag(v2f IN) : SV_Target
 			{
-				fixed4 c = SampleSpriteTexture (IN.texcoord) * IN.color;
+				fixed4 c = SampleSpriteTexture (IN.texcoord) * IN.colorBase;
 				c.rgb *= c.a;
 				return c;
 			}
