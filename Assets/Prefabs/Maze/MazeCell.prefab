@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 4822291132458970061}
   - component: {fileID: 5445300952015151703}
   - component: {fileID: 2953031827834697180}
+  - component: {fileID: 3948231573157738216}
   m_Layer: 10
   m_Name: Cell
   m_TagString: Untagged
@@ -59,7 +60,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 65b3918e82f364b4b865b11624b0191c, type: 2}
+  - {fileID: 2100000, guid: bc9394c144b5045fd928415d69c42a18, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -94,6 +95,20 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &3948231573157738216
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2646760498622617443}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7832fa6c7ce264e6699f3feafa641d98, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  BaseColor: {r: 1, g: 0.99215686, b: 0.84313726, a: 1}
+  SecondaryColor: {r: 0.25943398, g: 0.28905466, b: 1, a: 1}
 --- !u!1 &3116785791752703771
 GameObject:
   m_ObjectHideFlags: 0
@@ -158,6 +173,7 @@ MonoBehaviour:
   placeableNeighbourCount: 0
   cardinalBits: 0
   diagonalBits: 0
+  allNeighbourBits: 0
   travelCost: 0
 --- !u!61 &4087401115876208777
 BoxCollider2D:

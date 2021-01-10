@@ -11,9 +11,9 @@
 	{
 		Tags
 		{ 
-			"Queue"="Transparent" 
+			"Queue"="Geometry" 
 			"IgnoreProjector"="True" 
-			"RenderType"="Transparent" 
+			"RenderType"="Opaque" 
 			"PreviewType"="Plane"
 			"CanUseSpriteAtlas"="True"
 		}

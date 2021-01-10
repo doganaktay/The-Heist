@@ -18,6 +18,8 @@ public class MazeCell : FastPriorityQueueNode
 	public bool[] visited;
 	public bool searched = false;
 
+	PerObjectMaterialProperties props;
+
 	// actually connected cells
 	public HashSet<MazeCell> connectedCells = new HashSet<MazeCell>();
 	// connected cells with placement on them
@@ -50,12 +52,9 @@ public class MazeCell : FastPriorityQueueNode
 
     void Awake()
     {
-        mat = transform.GetChild(0).GetComponent<Renderer>().material;
-		initialColor = mat.color;
+		props = GetComponentInChildren<PerObjectMaterialProperties>();
 
         visited = new bool[searchSize];
-		//for(int i = 0; i < visited.Length; i++)
-		//{ visited[i] = false; }
 		exploredFrom = new MazeCell[searchSize];
 		distanceFromStart = new int[searchSize];
     }
@@ -149,15 +148,16 @@ public class MazeCell : FastPriorityQueueNode
 
 	public void IndicateAOE(Color aoeColor)
     {
-		requestedIndicatorColors.Add(aoeColor);
-		mat.color = MixIndicatorColors();
+
+		//requestedIndicatorColors.Add(aoeColor);
+		props.SetSecondaryColor();
     }
 
 	public void ClearAOE(Color aoeColor)
     {
-		requestedIndicatorColors.Remove(aoeColor);
-		mat.color = MixIndicatorColors();
-    }
+		//requestedIndicatorColors.Remove(aoeColor);
+		props.SetBaseColor();
+	}
 
 	private Color MixIndicatorColors()
     {

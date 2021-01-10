@@ -3,93 +3,72 @@
     Properties
 	{
 		[PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
-		[MaterialToggle] PixelSnap ("Pixel snap", Float) = 0
-		_ColorIndex("Current Color Index", Int) = 0
 		_BaseColor ("Base Color", Color) = (1,1,1,1)
-		_PathColor ("Path Color", Color) = (1,1,1,1)
-		_SecondaryPathColor ("Secondary Path Color", Color) = (1,1,1,1)
-		_HighlightColor ("Highlight Color", Color) = (1,1,1,1)
-		_Speed ("Speed", Float) = 1
-		_PathIndex ("Path Index", Float) = 0
-		_PathCount ("Path Count", Float) = 0
-		_HighlightCount ("Highlight Count", Float) = 5
+		_SecondaryColor ("Secondary Color", Color) = (1,1,1,1)
+		_BlendFactor ("Blend Factor", Range(0,1)) = 0
 	}
 
 	SubShader
 	{
 		Tags
 		{ 
-			"Queue"="Transparent" 
+			"Queue"="Geometry" 
 			"IgnoreProjector"="True" 
-			"RenderType"="Transparent" 
+			"RenderType"="Geometry" 
 			"PreviewType"="Plane"
 			"CanUseSpriteAtlas"="True"
 		}
 
 		Cull Off
 		Lighting Off
-		ZWrite Off
+		
 		Blend One OneMinusSrcAlpha
 
 		Pass
 		{
 		CGPROGRAM
+			#pragma multi_compile_instancing
 			#pragma vertex vert
 			#pragma fragment frag
-			#pragma multi_compile _ PIXELSNAP_ON
 			#include "UnityCG.cginc"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/UnityInstancing.hlsl"
 
-			fixed4 _BaseColor;
-			fixed4 _PathColor;
-			fixed4 _SecondaryPathColor;
-			fixed4 _HighlightColor;
-			int _ColorIndex;
-			float  _Speed, _RestartTime, _HighlightCount, _PathIndex, _PathCount;
-
-			//custom methods
-			fixed4 selectColor(int i)
-			{
-				if(i == 0)
-					return _BaseColor;
-				if(i == 1)
-					return _PathColor;
-				if(i == 2)
-					return _SecondaryPathColor;
-				if(i == 3)
-					return _HighlightColor;
-
-				return fixed4(0,0,0,0);
-			}
-			//end custom methods
+			UNITY_INSTANCING_BUFFER_START(UnityPerMaterial)	
+				UNITY_DEFINE_INSTANCED_PROP(fixed4, _BaseColor)
+                UNITY_DEFINE_INSTANCED_PROP(fixed4,_SecondaryColor)
+                UNITY_DEFINE_INSTANCED_PROP(float, _BlendFactor)
+            UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 
 			struct appdata_t
 			{
 				float4 vertex   : POSITION;
 				float4 color    : COLOR;
 				float2 texcoord : TEXCOORD0;
+				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
 
 			struct v2f
 			{
 				float4 vertex   : SV_POSITION;
-				fixed4 color    : COLOR;
+				fixed4 colorBase : COLOR;
+				fixed4 colorSecondary : COLOR1;
 				float2 texcoord  : TEXCOORD0;
+				float blendFactor : TEXCOORD1;
+				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
 
 			sampler2D _MainTex;
-			//float4 _MainTex_TexelSize;
-			sampler2D _AlphaTex;
-			float _AlphaSplitEnabled;
 
 			v2f vert(appdata_t IN)
 			{
 				v2f OUT;
+				UNITY_SETUP_INSTANCE_ID(IN);
+                UNITY_TRANSFER_INSTANCE_ID(IN,OUT);
 				OUT.vertex = UnityObjectToClipPos(IN.vertex);
 				OUT.texcoord = (IN.texcoord-0.5);
-				OUT.color = IN.color * selectColor(_ColorIndex);
-				#ifdef PIXELSNAP_ON
-				OUT.vertex = UnityPixelSnap (OUT.vertex);
-				#endif
+				OUT.colorBase = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseColor);
+				OUT.colorSecondary = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _SecondaryColor);
+				OUT.blendFactor = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BlendFactor);
 
 				return OUT;
 			}
@@ -99,44 +78,14 @@
 			{
 				fixed4 color = tex2D (_MainTex, uv);
 
-			#if UNITY_TEXTURE_ALPHASPLIT_ALLOWED
-				if (_AlphaSplitEnabled)
-					color.a = tex2D (_AlphaTex, uv).r;
-			#endif //UNITY_TEXTURE_ALPHASPLIT_ALLOWED
-
 				return color;
 			}
 
 			fixed4 frag(v2f IN) : SV_Target
 			{
-				if(_PathIndex == 0 && _ColorIndex > 1)
-					return selectColor(0);
-
-				float time = (_Time.y - _RestartTime) * _Speed;
-				float count = fmod(time, _PathCount + _HighlightCount);
-				float t;
-
-				if(_PathIndex >= count - _HighlightCount && _PathIndex < count)
-					t = 1 - pow((count - _PathIndex) / _HighlightCount,1.0/1.5); // taking the pow with a fractional exp for smoother blend
-				else
-					t = 0;
-
-				fixed4 c = SampleSpriteTexture (IN.texcoord) * IN.color;
-
-				if(_ColorIndex > 0)
-				{
-					fixed4 baseC = selectColor(0);
-					c = lerp(baseC, c, t);
-				}
-
-				// Get the colors of the surrounding pixels
-                //fixed4 up = tex2D(_MainTex, IN.texcoord + fixed2(0, _MainTex_TexelSize.y));
-                //fixed4 down = tex2D(_MainTex, IN.texcoord - fixed2(0, _MainTex_TexelSize.y));
-                //fixed4 left = tex2D(_MainTex, IN.texcoord - fixed2(_MainTex_TexelSize.x, 0));
-                //fixed4 right = tex2D(_MainTex, IN.texcoord + fixed2(_MainTex_TexelSize.x, 0));
-
-				
-
+				UNITY_SETUP_INSTANCE_ID(IN);
+				fixed4 lerpColor = lerp(IN.colorBase, IN.colorSecondary, IN.blendFactor);
+				fixed4 c = SampleSpriteTexture (IN.texcoord) * lerpColor;
 				c.rgb *= c.a;
 				return c;
 			}
