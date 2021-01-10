@@ -104,7 +104,6 @@ public class AreaFinder : MonoBehaviour
             availableWallsForDrop.Remove(ordered[ordered.Count - 1].Item2);
 
             ordered[ordered.Count - 1].Item2.AddSpecialPassage();
-            ordered[ordered.Count - 1].Item2.transform.GetChild(1).GetComponent<Renderer>().material.color = new Color(0.34f, 0.92f, 0.11f, 1f);
 
             ordered.RemoveAt(ordered.Count - 1);
 

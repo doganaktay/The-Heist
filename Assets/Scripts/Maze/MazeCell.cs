@@ -18,6 +18,7 @@ public class MazeCell : FastPriorityQueueNode
 	public bool[] visited;
 	public bool searched = false;
 
+	[SerializeField]
 	PerObjectMaterialProperties props;
 
 	// actually connected cells
@@ -52,8 +53,6 @@ public class MazeCell : FastPriorityQueueNode
 
     void Awake()
     {
-		props = GetComponentInChildren<PerObjectMaterialProperties>();
-
         visited = new bool[searchSize];
 		exploredFrom = new MazeCell[searchSize];
 		distanceFromStart = new int[searchSize];

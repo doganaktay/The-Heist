@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-[DisallowMultipleComponent]
+[DisallowMultipleComponent, RequireComponent(typeof(Renderer))]
 public class PerObjectMaterialProperties : MonoBehaviour
 {
     static readonly int baseColorId = Shader.PropertyToID("_BaseColor");
@@ -18,8 +18,9 @@ public class PerObjectMaterialProperties : MonoBehaviour
     private void Awake()
     {
         if (block == null)
-            block = new MaterialPropertyBlock();
+        { block = new MaterialPropertyBlock(); Debug.Log($"{gameObject.name} creating new material property block"); }
 
+        block.Clear();
         block.SetColor(baseColorId, BaseColor);
         myRenderer = GetComponent<Renderer>();
         myRenderer.SetPropertyBlock(block);
@@ -31,7 +32,7 @@ public class PerObjectMaterialProperties : MonoBehaviour
         //myRenderer.GetPropertyBlock(block);
 
         block.SetColor(baseColorId, BaseColor);
-        SetBlendFactor(0f);
+        block.SetFloat(blendFactorId, 0f);
         myRenderer.SetPropertyBlock(block);
     }
 
@@ -39,15 +40,19 @@ public class PerObjectMaterialProperties : MonoBehaviour
     {
         //block.Clear();
         //myRenderer.GetPropertyBlock(block);
+
         block.SetColor(secondaryColorId, SecondaryColor);
-        SetBlendFactor(1f);
+        block.SetFloat(blendFactorId, 1f);
         myRenderer.SetPropertyBlock(block);
+
+        Debug.Log($"Setting secondary color for {gameObject.name}");
     }
 
     public void SetBlendFactor(float factor)
     {
         //block.Clear();
         //myRenderer.GetPropertyBlock(block);
+
         block.SetFloat(blendFactorId, factor);
         myRenderer.SetPropertyBlock(block);
     }

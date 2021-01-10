@@ -189,6 +189,8 @@ MonoBehaviour:
   aim: {fileID: 5284805516819639897}
   zOffset: 0
   canDraw: 1
+  detectionTime: 0
+  detectionIsCumulative: 0
 --- !u!23 &7211249540777734857
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -248,6 +250,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7832fa6c7ce264e6699f3feafa641d98, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  BaseColor: {r: 0, g: 0.9248903, b: 1, a: 0.5882353}
+  SecondaryColor: {r: 1, g: 0, b: 0.4276967, a: 1}
 --- !u!1 &7711345819983671743
 GameObject:
   m_ObjectHideFlags: 0
