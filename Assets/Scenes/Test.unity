@@ -1978,10 +1978,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   areafinder: {fileID: 0}
-  patrolPrefab: {fileID: -8045927754576532818, guid: aaab0ca4958f545f492213de7b26129a,
+  aiPrefab: {fileID: -8045927754576532818, guid: aaab0ca4958f545f492213de7b26129a,
     type: 3}
-  patrols: []
-  patrolCount: 1
+  activeAIs: []
+  aiTypeName: Patrol
+  aiCount: 1
 --- !u!1 &1623977388
 GameObject:
   m_ObjectHideFlags: 0

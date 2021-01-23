@@ -75,8 +75,8 @@ public class CCTVCamera : MonoBehaviour, ISimulateable, IProjectileTarget
         rotEuler.z = GetTopDirectionAngles()[0].angle;
         aim.rotation = Quaternion.Euler(rotEuler);
 
-        //Debug.Log($"{gameObject.name} rot min: {rotationLimits.min} max: {rotationLimits.max} current: {aim.eulerAngles.z}" +
-        //    $" Setting angle to {rotEuler.z} with top coverage of {GetTopDirectionAngles()[0].coverage} cells");
+        Debug.Log($"{gameObject.name} rot min: {rotationLimits.min} max: {rotationLimits.max} current: {aim.eulerAngles.z}" +
+            $" Setting angle to {rotEuler.z} with top coverage of {GetTopDirectionAngles()[0].coverage} cells");
 
         IsStatic = true;
         fov.DrawFieldOfView();

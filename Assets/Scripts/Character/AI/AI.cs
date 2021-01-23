@@ -14,6 +14,13 @@ public class AI : Character
     [SerializeField]
     MinMaxData waitTime;
 
+    [HideInInspector]
+    public AIManager manager;
+
+    public bool CanSeePlayer { get => fieldOfView.CanSeePlayer(); }
+    public bool IsAlert { get; private set; }
+    public float AwarenessDistance { get => fieldOfView.viewRadius; }
+
     protected override void Start()
     {
         base.Start();
