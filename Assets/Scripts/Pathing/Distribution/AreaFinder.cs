@@ -88,8 +88,6 @@ public class AreaFinder : MonoBehaviour
             pathfinder.NewPath();
             FindAreas();
         }
-
-        Debug.Log($"Walls in scene {maze.wallsInScene.Count} Available for drop {availableWallsForDrop.Count}");
     }
 
     public void SetPassableWalls()

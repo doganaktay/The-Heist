@@ -50,15 +50,15 @@ public class CCTV : MonoBehaviour
 
     private void OnEnable()
     {
-        GameManager.MazeGenFinished += CalculateSystemParams;
+        GameManager.MazeGenFinished += SetupCCTV;
     }
 
     private void OnDisable()
     {
-        GameManager.MazeGenFinished -= CalculateSystemParams;
+        GameManager.MazeGenFinished -= SetupCCTV;
     }
 
-    private void CalculateSystemParams()
+    private void SetupCCTV()
     {
         camDisplacement = GameManager.CellDiagonal / 2f * camDisplacementPercent;
 
@@ -75,6 +75,14 @@ public class CCTV : MonoBehaviour
         camRotSpeed = GetLimits(defaultRotSpeed);
         camWaitTime = GetLimits(defaultWaitTime);
         camRotChance = GetLimits(defaultRotChance);
+
+        StartCoroutine(PlaceCams());
+    }
+
+    IEnumerator PlaceCams()
+    {
+        yield return null;
+        PlaceSecurityCameras();
     }
 
     private MinMaxData GetLimits(float original)
@@ -96,14 +104,16 @@ public class CCTV : MonoBehaviour
         public Vector3 direction;
         public float coverage;
         public float maxViewAngle;
+        public int coveredCellCount;
 
-        public CamSpotData(IntVector2 coords, Vector3 position, Vector3 direction, float coverage, float maxViewAngle)
+        public CamSpotData(IntVector2 coords, Vector3 position, Vector3 direction, float coverage, float maxViewAngle, int coveredCellCount)
         {
             this.coords = coords;
             this.position = position;
             this.direction = direction;
             this.coverage = coverage;
             this.maxViewAngle = maxViewAngle;
+            this.coveredCellCount = coveredCellCount;
         }
     }
 
@@ -120,7 +130,7 @@ public class CCTV : MonoBehaviour
             var current = sortedSpots[i].position;
             bool isPlaceable = true;
 
-            bool canSeeStart = Vector2.Distance(current, GameManager.StartCell.transform.position) <= defaultViewRadius
+            bool canSeeStart = Vector2.Distance(current, GameManager.StartCell.transform.position) <= camViewRadius.max
                                && !Physics2D.Linecast(current, GameManager.StartCell.transform.position, obstacleMask);
 
             if (canSeeStart)
@@ -154,16 +164,16 @@ public class CCTV : MonoBehaviour
                 float viewRadius = GetViewRadius();
 
                 bool isStatic = Random.value > camRotChance.max || sortedSpots[i].maxViewAngle < viewAngle;
+                float rotMin = (sortedSpots[i].maxViewAngle / 2f) - (viewAngle / 2f);
+                float rotMax = (sortedSpots[i].maxViewAngle / 2f) - (viewAngle / 2f);
+                MinMaxData rotLimits = new MinMaxData(rotMin, rotMax);
 
                 if (isStatic)
                 {
-                    cam.InitCam(viewRadius, viewAngle, zAngle);
+                    cam.InitCam(viewRadius, viewAngle, zAngle, rotLimits);
                 }
                 else
                 {
-                    float rotMin = (sortedSpots[i].maxViewAngle / 2f) - (viewAngle / 2f);
-                    float rotMax = (sortedSpots[i].maxViewAngle / 2f) - (viewAngle / 2f);
-                    MinMaxData rotLimits = new MinMaxData(rotMin, rotMax);
 
                     float rotSpeed = GetRotSpeed();
                     float waitTime = GetWaitTime();
@@ -204,6 +214,7 @@ public class CCTV : MonoBehaviour
                 Vector2 position = Vector2.zero;
                 Vector2 direction = Vector2.zero;
                 float viewAngle = 0f;
+                int coveredCellCount = 0;
 
                 foreach (var pos in possiblePositions)
                 {
@@ -218,15 +229,16 @@ public class CCTV : MonoBehaviour
                         position = pos.position;
                         direction = pos.direction;
                         viewAngle = pos.maxViewAngle;
+                        coveredCellCount = testCam.GetCellsInView().Count;
                     }
                 }
 
-                var data = new CamSpotData(new IntVector2(i, j), position, direction, topCoverage, viewAngle);
+                var data = new CamSpotData(new IntVector2(i, j), position, direction, topCoverage, viewAngle, coveredCellCount);
                 sorted.Add(data);
             }
         }
 
-        return sorted.OrderByDescending(x => x.coverage).ToList();
+        return sorted.OrderByDescending(x => x.coveredCellCount).ToList();
     }
 
     private List<(Vector3 position, Vector3 direction, float maxViewAngle)> GetPossibleCamPositions(MazeCell cell)

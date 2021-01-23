@@ -18,7 +18,7 @@ public class PerObjectMaterialProperties : MonoBehaviour
     private void Awake()
     {
         if (block == null)
-        { block = new MaterialPropertyBlock(); Debug.Log($"{gameObject.name} creating new material property block"); }
+            block = new MaterialPropertyBlock();
 
         block.Clear();
         block.SetColor(baseColorId, BaseColor);
@@ -28,8 +28,8 @@ public class PerObjectMaterialProperties : MonoBehaviour
 
     public void SetBaseColor()
     {
-        //block.Clear();
-        //myRenderer.GetPropertyBlock(block);
+        block.Clear();
+        myRenderer.GetPropertyBlock(block);
 
         block.SetColor(baseColorId, BaseColor);
         block.SetFloat(blendFactorId, 0f);
@@ -38,20 +38,18 @@ public class PerObjectMaterialProperties : MonoBehaviour
 
     public void SetSecondaryColor()
     {
-        //block.Clear();
-        //myRenderer.GetPropertyBlock(block);
+        block.Clear();
+        myRenderer.GetPropertyBlock(block);
 
         block.SetColor(secondaryColorId, SecondaryColor);
         block.SetFloat(blendFactorId, 1f);
         myRenderer.SetPropertyBlock(block);
-
-        Debug.Log($"Setting secondary color for {gameObject.name}");
     }
 
     public void SetBlendFactor(float factor)
     {
-        //block.Clear();
-        //myRenderer.GetPropertyBlock(block);
+        block.Clear();
+        myRenderer.GetPropertyBlock(block);
 
         block.SetFloat(blendFactorId, factor);
         myRenderer.SetPropertyBlock(block);

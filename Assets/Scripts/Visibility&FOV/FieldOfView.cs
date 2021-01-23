@@ -71,8 +71,8 @@ public class FieldOfView : MonoBehaviour
 
 		StartCoroutine("FindTargetsWithDelay", .35f);
 
-		if (IsStatic)
-			DrawFieldOfView();
+		//if (IsStatic)
+		//	DrawFieldOfView();
 	}
 
 
@@ -128,8 +128,6 @@ public class FieldOfView : MonoBehaviour
 
 		while (isDetecting && detectionPercent <= 1f)
         {
-			Debug.Log($"{gameObject.name} is detecting player");
-
 			exposureTime += Time.deltaTime;
 			detectionPercent = exposureTime / detectionTime;
 
@@ -178,7 +176,7 @@ public class FieldOfView : MonoBehaviour
 		return false;
     }
 
-	void DrawFieldOfView()
+	public void DrawFieldOfView()
     {
         ConstructViewMesh();
 

@@ -43,6 +43,9 @@ public class MazeCell : FastPriorityQueueNode
 
 	List<Color> requestedIndicatorColors = new List<Color>();
 
+	[HideInInspector]
+	public bool HasCCTVCoverage { get; set; } = false;
+
 	// for keeping track of items placed on cell
 	public Dictionary<PlaceableItemType, PlaceableItem> placedItems = new Dictionary<PlaceableItemType, PlaceableItem>();
 
@@ -177,4 +180,11 @@ public class MazeCell : FastPriorityQueueNode
 						 tempG / requestedIndicatorColors.Count,
 						 tempB / requestedIndicatorColors.Count);
     }
+
+#if UNITY_EDITOR
+	public void PrintCellInfo()
+    {
+		Debug.Log($"{gameObject.name} State: {state} Neighbors - Connected: {connectedCells.Count} Placed: {placedConnectedCells.Count} Special: {specialConnectedCells.Count}");
+    }
+#endif
 }

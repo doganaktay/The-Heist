@@ -13,6 +13,8 @@ public class CCTVCamera : MonoBehaviour, ISimulateable, IProjectileTarget
     MinMaxData rotationLimits;
     float waitTime;
     Coroutine rotateCamRoutine;
+    [SerializeField][Tooltip("Used to iterate the sweep search for possible placement angle")]
+    int placementAngleResolution = 1;
 
     public bool IsStatic { get => fov.IsStatic; set => fov.IsStatic = value; }
     public bool ShowFOV { get => fov.canDraw; set => fov.canDraw = value; }
@@ -28,8 +30,9 @@ public class CCTVCamera : MonoBehaviour, ISimulateable, IProjectileTarget
     {
         fov.ClearMesh();
         fov.enabled = false;
-        StopCoroutine(rotateCamRoutine);
-        Debug.Log("CCTV Camera hit");
+
+        if(rotateCamRoutine != null)
+            StopCoroutine(rotateCamRoutine);
     }
 
     void Awake()
@@ -51,7 +54,7 @@ public class CCTVCamera : MonoBehaviour, ISimulateable, IProjectileTarget
         SetCamViewAngle(viewAngle);
     }
 
-    public void InitCam(float viewDistance, float viewAngle, float lookDirAngle)
+    public void InitCam(float viewDistance, float viewAngle, float lookDirAngle, MinMaxData rotLimits)
     {
         Vector3 rotEuler = aim.rotation.eulerAngles;
         rotEuler.z = lookDirAngle;
@@ -59,8 +62,24 @@ public class CCTVCamera : MonoBehaviour, ISimulateable, IProjectileTarget
 
         SetCamViewDistance(viewDistance);
         SetCamViewAngle(viewAngle);
+        SetCamRotLimits(new MinMaxData(aim.rotation.eulerAngles.z - rotLimits.min, aim.rotation.eulerAngles.z + rotLimits.max));
+
+        StartCoroutine(SetFinalAngle());
+    }
+
+    IEnumerator SetFinalAngle()
+    {
+        yield return null;
+
+        Vector3 rotEuler = aim.rotation.eulerAngles;
+        rotEuler.z = GetTopDirectionAngles()[0].angle;
+        aim.rotation = Quaternion.Euler(rotEuler);
+
+        //Debug.Log($"{gameObject.name} rot min: {rotationLimits.min} max: {rotationLimits.max} current: {aim.eulerAngles.z}" +
+        //    $" Setting angle to {rotEuler.z} with top coverage of {GetTopDirectionAngles()[0].coverage} cells");
 
         IsStatic = true;
+        fov.DrawFieldOfView();
     }
 
     public void InitCam(float viewDistance, float viewAngle, float lookDirAngle, MinMaxData rotLimits, float rotSpeed, float waitTime)
@@ -149,52 +168,93 @@ public class CCTVCamera : MonoBehaviour, ISimulateable, IProjectileTarget
         return total / meshPoints.Count;
     }
 
-    public List<Vector3> GetTopDirections()
+    public List<(float angle, int coverage)> GetTopDirectionAngles()
     {
-        var temp = new List<Vector3>();
+        var temp = new List<(float angle, int coverage)>();
 
-        for(int i = 0; i < Mathf.RoundToInt(rotationLimits.max - rotationLimits.min); i++)
+        for(int i = 0; i < Mathf.RoundToInt(rotationLimits.max - rotationLimits.min); i += placementAngleResolution)
         {
-            var hit = Physics2D.Raycast(transform.position, Quaternion.Euler(0, 0, rotationLimits.min + i) * Vector3.up, fov.viewRadius, fov.obstacleMask);
+            var cellsInView = GetCellsInView(rotationLimits.min + i);
+            var count = cellsInView.Count;
 
-            Vector2 freeDir = Quaternion.Euler(0, 0, rotationLimits.min + i) * Vector2.up * fov.viewRadius;
-            var point = hit.collider == null ? (Vector2)transform.position + freeDir : hit.point;
-            var cell = Physics2D.OverlapCircle(point, 1f, 1 << 10);
-
-            if (cell != null && cell.gameObject.GetComponentInParent<MazeCell>().state > 1)
-                continue;
-
-            if (hit.collider == null)
-                temp.Add(freeDir);
-            else
-                temp.Add(hit.point - (Vector2)transform.position);
+            temp.Add((rotationLimits.min + i, count));
         }
 
-        return temp.OrderByDescending(x => x.sqrMagnitude).ToList();
+        return temp.OrderByDescending(x => x.coverage).ToList();
     }
+
+    public List<MazeCell> GetCellsInView()
+    {
+        List<Collider2D> cells = new List<Collider2D>();
+        ContactFilter2D filter = new ContactFilter2D();
+        filter.layerMask = 1<<10;
+        filter.useLayerMask = true;
+        filter.useTriggers = true;
+        Physics2D.OverlapCircle(transform.position, fov.viewRadius, filter, results: cells);
+
+        var cellsInView = new List<MazeCell>();
+
+        foreach(var cell in cells)
+        {
+            var mazeCell = cell.GetComponent<MazeCell>();
+            var hit = Physics2D.Linecast(transform.position, cell.transform.position, fov.obstacleMask);
+            if (hit.collider == null && Vector2.Distance(transform.position, cell.transform.position) <= fov.viewRadius
+                && mazeCell.state < 2)
+                cellsInView.Add(mazeCell);
+        }
+        
+        return cellsInView;
+    }
+
+    public List<MazeCell> GetCellsInView(float angle)
+    {
+        List<Collider2D> cells = new List<Collider2D>();
+        ContactFilter2D filter = new ContactFilter2D();
+        filter.layerMask = 1 << 10;
+        filter.useLayerMask = true;
+        filter.useTriggers = true;
+        Physics2D.OverlapCircle(transform.position, fov.viewRadius, filter, results: cells);
+
+        var cellsInView = new List<MazeCell>();
+
+        foreach (var cell in cells)
+        {
+            Vector2 cellDir = cell.transform.position - transform.position;
+            //float cellAngle = Mathf.Atan2(cellDir.y, cellDir.x) * Mathf.Rad2Deg - 90f;
+            //cellAngle *= -1f;
+            float cellAngle = (Mathf.Atan2(cellDir.y, cellDir.x) * Mathf.Rad2Deg + 360f - 90f) % 360f;
+            bool isInFOV = cellAngle >= angle - fov.viewAngle / 2f && cellAngle <= angle + fov.viewAngle / 2f;
+
+            var mazeCell = cell.GetComponent<MazeCell>();
+            var hit = Physics2D.Linecast(transform.position, cell.transform.position, fov.obstacleMask);
+            if (hit.collider == null && Vector2.Distance(transform.position, cell.transform.position) <= fov.viewRadius
+                && mazeCell.state < 2 && isInFOV)
+                cellsInView.Add(mazeCell);
+        }
+
+        return cellsInView;
+    }
+
+    bool firstTime = true;
+    Color randomColor;
 
     private void OnDrawGizmos()
     {
-        var list = GetTopDirections();
-        Color tester = new Color(0, 0, 0, 1);
-        var temp = tester;
+        var list = GetCellsInView();
 
-        if (list.Count == 0)
-            Debug.Log($"empty candidate list for {gameObject.name}");
-
-        int i = 0;
-        for(; i < 5 && i < list.Count; )
+        if (firstTime)
         {
-            tester = Color.Lerp(temp, Color.red, i / 50f);
-            Debug.DrawRay(transform.position, list[i], tester);
-            Gizmos.color = Color.blue;
-            Gizmos.DrawWireSphere(transform.position + list[i], GameManager.CellDiagonal / 4f);
-            i++;
+            randomColor = new Color(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f), 1f);
+            Gizmos.color = randomColor;
+            firstTime = false;
         }
 
-        var center = GetCoverageCenter();
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(center, 5f);
-        Gizmos.color = Color.white;
+        int i = 0;
+        for(; i < list.Count; )
+        {
+            Gizmos.color = randomColor;
+            Gizmos.DrawWireSphere(list[i].transform.position, GameManager.CellDiagonal / 4f);
+            i++;
+        }
     }
 }

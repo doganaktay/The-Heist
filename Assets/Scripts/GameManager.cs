@@ -177,7 +177,6 @@ public class GameManager : MonoBehaviour
 		areafinder.FindAreas();
 		propagationModule.BuildConnectivityGrid();
 		areafinder.SetPassableWalls();
-        //cctv.PlaceSecurityCameras();
     }
 
 	public void RestartGame()

@@ -2043,7 +2043,7 @@ MonoBehaviour:
   defaultViewAngle: 60
   defaultRotSpeed: 0.25
   defaultWaitTime: 5
-  defaultRotChance: 1
+  defaultRotChance: 0
   paramDeviation: 0.25
   biasMultipliers:
     min: 1
