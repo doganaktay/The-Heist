@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59583e96fa9924fef8b7d5543080953e, type: 3}
+  m_Name: settings
+  m_EditorClassIdentifier: 
+  DimLevel: 108.34763
+  BorderHighlightColor: {r: 0.8220443, g: 0.14017442, b: 0.8490566, a: 1}
+  EnableMiniMap: 0
+  LastRunTimeStamp: 1
+  FailureIcon: {fileID: 21300000, guid: ac42565bc97574203809aa016296db2d, type: 3}
+  SuccessIcon: {fileID: 21300000, guid: 97e0f4a40ccd8472aac7c127e6829d1a, type: 3}
+  RunningIcon: {fileID: 21300000, guid: 0c6de023e4f044648a8b6e58ab3b3564, type: 3}
+  DefaultStyleProperties:
+    Script: {fileID: 0}
+    TitleBarColor: {r: 0.09411765, g: 0.70980394, b: 0.9137255, a: 0.003921569}
+    Icon: {fileID: 21300000, guid: 8ddf55f72ab6244589d4e9e801c96744, type: 3}
+    IsDecorator: 0
+    InvertResult: 0
+  MainStyleProperties: []
+  OverrideStyleProperties: []

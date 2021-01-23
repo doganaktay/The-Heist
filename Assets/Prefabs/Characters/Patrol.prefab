@@ -53,6 +53,7 @@ MonoBehaviour:
     max: 20
   turnSpeed: 0.6
   aim: {fileID: 0}
+  aimOverrideTarget: {fileID: 0}
   fieldOfView: {fileID: 3954462537585510568}
   body: {fileID: 5833953138234766926}
   lookSpeed:
@@ -61,6 +62,9 @@ MonoBehaviour:
   waitTime:
     min: 5
     max: 10
+  maintainAlertTime: 5
+  manager: {fileID: 0}
+  newBehaviorType: 0
 --- !u!212 &4575945924325056854
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -189,8 +193,9 @@ MonoBehaviour:
   aim: {fileID: 5284805516819639897}
   zOffset: 0
   canDraw: 1
-  detectionTime: 0
+  detectionTime: 2
   detectionIsCumulative: 0
+  lastKnownPlayerPos: {x: 0, y: 0, z: 0}
 --- !u!23 &7211249540777734857
 MeshRenderer:
   m_ObjectHideFlags: 0

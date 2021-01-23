@@ -51,6 +51,8 @@ public class FieldOfView : MonoBehaviour
 	Coroutine targetDetection;
 	PerObjectMaterialProperties props;
 	bool isDetecting;
+	public bool HasAcquiredTarget { get; set; } = false;
+	public MazeCell lastKnownPlayerPos;
 
 	void Start()
 	{
@@ -102,6 +104,8 @@ public class FieldOfView : MonoBehaviour
 				exposureTime = 0f;
 				props.SetBlendFactor(0f);
             }
+
+			lastKnownPlayerPos = GameManager.player.CurrentCell;
 		}
     }
 
@@ -138,6 +142,8 @@ public class FieldOfView : MonoBehaviour
 
 			yield return null;
         }
+
+		HasAcquiredTarget = true;
 
 		isDetecting = false;
     }

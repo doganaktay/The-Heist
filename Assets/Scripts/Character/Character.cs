@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -23,6 +24,10 @@ public abstract class Character : MonoBehaviour
     protected MazeCell nextCell;
     protected Coroutine currentMovement;
     [HideInInspector] public Transform aim; // used if Character has aim for LookAt
+    [HideInInspector] public bool AimOverride { get; set; } = false;
+    [HideInInspector] public Transform aimOverrideTarget;
+
+    public Action PositionChange;
 
     protected virtual void Start()
     {
@@ -34,6 +39,9 @@ public abstract class Character : MonoBehaviour
         TrackPosition();
         if (isOnGrid && hasChanged)
             ManageCallbacks();
+
+        if (AimOverride)
+            transform.LookAt2D(aimOverrideTarget, turnSpeed * 2f);
     }
 
     void TrackPosition()
@@ -42,7 +50,6 @@ public abstract class Character : MonoBehaviour
 
         if (hitCount > 0)
         {
-
             float dist = Mathf.Infinity;
             int closestIndex = 0;
             for (int i = 0; i < hitCount; i++)
@@ -70,6 +77,8 @@ public abstract class Character : MonoBehaviour
             NotificationModule.RemoveListener(lastCell.pos, HandleNotification);
         if(currentCell != null)
             NotificationModule.AddListener(currentCell.pos, HandleNotification);
+
+        PositionChange?.Invoke();
             
         hasChanged = false;
     }
@@ -123,29 +132,34 @@ public abstract class Character : MonoBehaviour
     {
         isMoving = true;
 
+#if UNITY_EDITOR
         for (int j = 0; j < path.Count - 1; j++)
         {
             Debug.DrawLine(path[j].transform.position, path[j + 1].transform.position, Color.red, 5f);
         }
+#endif
 
         int i = path[0] == currentCell ? 1 : 0;
         while (i < path.Count)
         {
             nextCell = path[i];
 
-            if(aim != null)
-                aim.LookAt2D(nextCell.transform, turnSpeed);
-            else
-                transform.LookAt2D(nextCell.transform, turnSpeed);
+            if (!AimOverride)
+            {
+                if(aim != null)
+                    aim.LookAt2D(nextCell.transform, turnSpeed);
+                else
+                    transform.LookAt2D(nextCell.transform, turnSpeed);
+            }
 
             transform.position = Vector2.MoveTowards(transform.position, nextCell.transform.position, speed * Time.deltaTime);
 
             if (transform.position == nextCell.transform.position)
-            {
                 i++;
-            }
 
+#if UNITY_EDITOR
             Debug.DrawLine(transform.position, nextCell.transform.position, Color.blue, 5f);
+#endif
 
             yield return null;
         }

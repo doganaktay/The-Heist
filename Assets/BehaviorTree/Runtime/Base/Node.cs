@@ -47,11 +47,14 @@ namespace Archi.BT
 
         protected bool HasNoValidChild()
         {
+            var hasNoValidChild = ChildNodes.Count == 0 || ChildNodes[0] == null;
+
 #if UNITY_EDITOR
-            Debug.Log($"Node {Name} has no valid child");
+            if(hasNoValidChild)
+                Debug.Log($"Node {Name} has no valid child");
 #endif
 
-            return ChildNodes.Count == 0 || ChildNodes[0] == null;
+            return hasNoValidChild;
         }
         
         #endregion

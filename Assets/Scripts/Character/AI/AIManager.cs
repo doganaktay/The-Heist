@@ -4,12 +4,13 @@ using UnityEngine;
 
 public class AIManager : MonoBehaviour
 {
-    public AreaFinder areafinder;
     public AI aiPrefab;
     [SerializeField]
     protected string aiTypeName;
     public int aiCount = 3;
 
+    [HideInInspector]
+    public AreaFinder areafinder;
     [HideInInspector]
     public List<AI> activeAIs = new List<AI>();
 
@@ -77,7 +78,7 @@ public class AIManager : MonoBehaviour
 
     private void OnGUI()
     {
-        if (GUI.Button(new Rect(10, 10, 80, 60), "New Patrol"))
+        if (GUI.Button(new Rect(10, 10, 80, 60), $"New {aiTypeName}"))
             CreateNewAI();
     }
 

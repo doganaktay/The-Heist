@@ -1977,12 +1977,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a3b7ecd736734316beffcc9dfc84ea5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  areafinder: {fileID: 0}
   aiPrefab: {fileID: -8045927754576532818, guid: aaab0ca4958f545f492213de7b26129a,
     type: 3}
-  activeAIs: []
   aiTypeName: Patrol
   aiCount: 1
+  areafinder: {fileID: 0}
+  activeAIs: []
 --- !u!1 &1623977388
 GameObject:
   m_ObjectHideFlags: 0
@@ -2038,7 +2038,7 @@ MonoBehaviour:
   obstacleMask:
     serializedVersion: 2
     m_Bits: 512
-  camCount: 10
+  camCount: 1
   defaultViewRadius: 50
   camDisplacementPercent: 0.3
   defaultViewAngle: 60

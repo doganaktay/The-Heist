@@ -3,20 +3,26 @@ using System.Collections.Generic;
 using UnityEngine;
 using Archi.BT;
 
-public class CanSeePlayer : Condition
+public class Wander : Node
 {
     private AI owner;
 
-    public CanSeePlayer(AI owner) : base($"Can see player?")
+    public Wander(AI owner)
     {
         this.owner = owner;
+        Name = "Wander";
     }
 
     protected override void OnReset() { }
 
     protected override NodeStatus OnRun()
     {
-        Debug.Log($"Can see player: {owner.CanSeePlayer}");
-        return owner.CanSeePlayer ? NodeStatus.Success : NodeStatus.Failure;
+        if(EvaluationCount == 0)
+        {
+            owner.SetBehaviorType(BehaviorType.Wander);
+            return NodeStatus.Running;
+        }
+
+        return NodeStatus.Success;
     }
 }
