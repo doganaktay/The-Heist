@@ -11,6 +11,10 @@ public class Patrol : AI
                             new Sequence("Chase Player",
                                 new CanSeePlayer(this),
                                 new Chase(this)),
+                            new Sequence("Handle Alert",
+                                new IsAlert(this),
+                                new HasSearchTarget(this),
+                                new Check(this)),
                             new Selector($"{gameObject.name} Wander",
                                 new Wander(this)));
     }

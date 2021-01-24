@@ -79,7 +79,7 @@ public abstract class Character : MonoBehaviour
             NotificationModule.AddListener(currentCell.pos, HandleNotification);
 
         PositionChange?.Invoke();
-            
+
         hasChanged = false;
     }
 

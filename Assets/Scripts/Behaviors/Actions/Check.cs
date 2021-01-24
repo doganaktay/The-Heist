@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using Archi.BT;
 
-public class Chase : Node
+public class Check : Node
 {
     private AI owner;
 
-    public Chase(AI owner)
+    public Check(AI owner)
     {
         this.owner = owner;
-        Name = "Chase";
+        Name = "Check Cell";
     }
 
     protected override void OnReset() { }
@@ -19,7 +19,7 @@ public class Chase : Node
     {
         if (EvaluationCount == 0)
         {
-            owner.SetBehaviorData(new BehaviorData(BehaviorType.Chase, FOVType.Chase));
+            owner.SetBehaviorData(new BehaviorData(BehaviorType.Check, FOVType.Alert));
             return NodeStatus.Running;
         }
 

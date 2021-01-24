@@ -92,7 +92,10 @@ public class FieldOfView : MonoBehaviour
     private void Update()
     {
 		if (CanSeePlayer() && !isDetecting)
+        {
 			targetDetection = StartCoroutine(DetectTarget());
+			lastKnownPlayerPos = GameManager.player.CurrentCell;
+		}
 		else if (!CanSeePlayer() && isDetecting)
         {
 			isDetecting = false;
@@ -104,8 +107,6 @@ public class FieldOfView : MonoBehaviour
 				exposureTime = 0f;
 				props.SetBlendFactor(0f);
             }
-
-			lastKnownPlayerPos = GameManager.player.CurrentCell;
 		}
     }
 

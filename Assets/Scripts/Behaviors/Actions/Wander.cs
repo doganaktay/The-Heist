@@ -19,7 +19,7 @@ public class Wander : Node
     {
         if(EvaluationCount == 0)
         {
-            owner.SetBehaviorType(BehaviorType.Wander);
+            owner.SetBehaviorData(new BehaviorData(BehaviorType.Wander, FOVType.Regular, true));
             return NodeStatus.Running;
         }
 

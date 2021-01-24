@@ -14,9 +14,6 @@ public class CanSeePlayer : Condition
 
     protected override void OnReset() { }
 
-    protected override NodeStatus OnRun()
-    {
-        Debug.Log($"Can see player: {owner.CanSeePlayer}");
-        return owner.CanSeePlayer ? NodeStatus.Success : NodeStatus.Failure;
-    }
+    protected override NodeStatus OnRun() => owner.CanSeePlayer ? NodeStatus.Success : NodeStatus.Failure;
+
 }

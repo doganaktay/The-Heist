@@ -7,15 +7,17 @@ public enum BehaviorType
 {
     Disabled = -1,
     Wander,
+    Check,
     Alert,
     Chase
 }
 
 public enum FOVType
 {
+    Disabled = -1,
     Regular,
     Alert,
-    Chasing
+    Chase
 }
 
 public abstract class AI : Character, IBehaviorTree
@@ -36,16 +38,18 @@ public abstract class AI : Character, IBehaviorTree
     [HideInInspector]
     public AIManager manager;
 
-    public bool CanSeePlayer { get => fieldOfView.CanSeePlayer(); }
+    public bool CanSeePlayer { get => fieldOfView.CanSeePlayer() || (GameManager.player.transform.position - transform.position).sqrMagnitude < GameManager.CellDiagonal * GameManager.CellDiagonal; }
     public bool IsAlert { get; private set; }
     public float AwarenessDistance { get => fieldOfView.viewRadius; }
     public bool IsActive { get; private set; }
+    public bool HasSearchTarget { get => fieldOfView.lastKnownPlayerPos != null; }
+    public MazeCell SearchTarget { get => GameManager.player.CurrentCell; }
 
     public NodeBase BehaviorTree { get ; set; }
     Coroutine behaviourTreeRoutine;
     YieldInstruction btWaitTime = new WaitForSeconds(.1f);
-    BehaviorType currentBehaviorType;
-    public BehaviorType newBehaviorType;
+    BehaviorData lastBehaviorData;
+    BehaviorData currentBehaviorData;
 
     Coroutine currentAction;
 
@@ -74,6 +78,16 @@ public abstract class AI : Character, IBehaviorTree
             TakeBehaviorAction();
             initialized = true;
         }
+
+        if (CanSeePlayer)
+        {
+            aimOverrideTarget = GameManager.player.transform;
+            AimOverride = true;
+        }
+        else
+        {
+            AimOverride = false;
+        }
     }
 
     void OnDestroy()
@@ -99,9 +113,9 @@ public abstract class AI : Character, IBehaviorTree
 
     bool CheckForBehaviorChange()
     {
-        if (currentBehaviorType != newBehaviorType)
+        if (lastBehaviorData.type != currentBehaviorData.type || (currentBehaviorData.isRepeating && !IsActive))
         {
-            currentBehaviorType = newBehaviorType;
+            lastBehaviorData = currentBehaviorData;
             return true;
         }
         else
@@ -113,26 +127,28 @@ public abstract class AI : Character, IBehaviorTree
         if (currentAction != null)
             StopCoroutine(currentAction);
 
-        switch (currentBehaviorType)
+        switch (currentBehaviorData.type)
         {
             case BehaviorType.Wander:
                 currentAction = StartCoroutine(Wander());
-                SetFOV(FOVType.Regular);
-                AimOverride = false;
+                break;
+
+            case BehaviorType.Check:
+                if (SearchTarget != null)
+                    currentAction = StartCoroutine(GoTo(SearchTarget, true));
                 break;
 
             case BehaviorType.Chase:
                 currentAction = StartCoroutine(Chase());
-                SetFOV(FOVType.Chasing);
-                aimOverrideTarget = GameManager.player.transform;
-                AimOverride = true;
                 break;
         }
+
+        SetFOV(currentBehaviorData.fovType);
     }
 
-    public void SetBehaviorType(BehaviorType type)
+    public void SetBehaviorData(BehaviorData data)
     {
-        newBehaviorType = type;
+        currentBehaviorData = data;
     }
 
     #endregion
@@ -228,7 +244,22 @@ public abstract class AI : Character, IBehaviorTree
         }
 
         IsActive = false;
-        Debug.Log($"{gameObject.name} caught player!");
+    }
+
+    IEnumerator GoTo(MazeCell cell, bool shouldRun = false)
+    {
+        IsActive = true;
+
+        ShouldRun = shouldRun;
+
+        Move(cell);
+
+        yield return null;
+
+        while (isMoving)
+            yield return null;
+
+        IsActive = false;
     }
 
     #endregion
