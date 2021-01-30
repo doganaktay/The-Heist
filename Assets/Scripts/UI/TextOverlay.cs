@@ -28,6 +28,10 @@ public class TextOverlay : MonoBehaviour
                     rect.sizeDelta = new Vector2(maze.cellScaleX, maze.cellScaleY);
                     rect.position = new Vector3(rect.position.x, rect.position.y - 1f, rect.position.z - 20f);
                 }
+                else
+                {
+                    cellTexts[k, j].text = "";
+                }
                 maze.cells[k, j].cellText = cellTexts[k, j];
             }
         }

@@ -14,6 +14,6 @@ public class HasSearchTarget : Condition
 
     protected override void OnReset() { }
 
-    protected override NodeStatus OnRun() => owner.HasSearchTarget ? NodeStatus.Success : NodeStatus.Failure;
+    protected override NodeStatus OnRun() => owner.HasSearchTarget && !owner.SearchTarget.isOld ? NodeStatus.Success : NodeStatus.Failure;
 
 }

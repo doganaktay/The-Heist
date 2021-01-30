@@ -57,14 +57,14 @@ MonoBehaviour:
   fieldOfView: {fileID: 3954462537585510568}
   body: {fileID: 5833953138234766926}
   lookSpeed:
-    min: 0.5
-    max: 2
+    min: 0.1
+    max: 0.5
   waitTime:
-    min: 5
-    max: 10
-  maintainAlertTime: 10
+    min: 2
+    max: 3
+  maintainAlertTime: 20
+  maintainAlertTimeIncrement: 5
   manager: {fileID: 0}
-  currentBehaviorType: 0
 --- !u!212 &4575945924325056854
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -189,11 +189,11 @@ MonoBehaviour:
   meshResolution: 1
   edgeResolveIterations: 1
   edgeDstThreshold: 0.1
-  maskCutawayDst: 0
+  maskCutawayDst: 0.1
   aim: {fileID: 5284805516819639897}
   zOffset: 0
   canDraw: 1
-  detectionTime: 1
+  detectionTime: 2
   detectionIsCumulative: 0
   lastKnownPlayerPos: {fileID: 0}
 --- !u!23 &7211249540777734857

@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Diagnostics;
 
 public class Propagation : MonoBehaviour
 {
@@ -56,9 +55,6 @@ public class Propagation : MonoBehaviour
 
     public List<MazeCell> Propagate(MazeCell center, float initialStrength, float minViableStrength)
     {
-        Stopwatch timer = new Stopwatch();
-        timer.Start();
-
         List<MazeCell> requestedAreaOfEffect = new List<MazeCell>();
 
         Array.Clear(isSearched, 0, isSearched.Length);
@@ -119,8 +115,6 @@ public class Propagation : MonoBehaviour
             }
         }
 
-        timer.Stop();
-        UnityEngine.Debug.Log($"Propagation time: {timer.ElapsedMilliseconds}ms");
 
         return requestedAreaOfEffect;
     }

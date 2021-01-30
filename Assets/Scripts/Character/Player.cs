@@ -70,6 +70,11 @@ public class Player : Character
             instances.Remove(this);
     }
 
+    protected override void HandleNotification(CellNotificationData data)
+    {
+        Debug.Log($"{gameObject.name} at {currentCell.pos.x},{currentCell.pos.y} is handling notification with {data.priority} priority, {data.signalStrength} signal strength, centered at {data.signalCenter.gameObject.name}");
+    }
+
     #endregion MonoBehaviour
 
     #region Projectile

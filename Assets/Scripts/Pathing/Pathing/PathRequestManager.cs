@@ -8,7 +8,7 @@ public class PathRequestManager : MonoBehaviour
 {
     Queue<PathResult> results = new Queue<PathResult>();
 
-    static PathRequestManager instance;
+    public static PathRequestManager instance;
     Pathfinder pathfinder;
 
     void Awake()
@@ -40,6 +40,11 @@ public class PathRequestManager : MonoBehaviour
             instance.pathfinder.FindPath(request, instance.FinishedProcessingPath);
         };
         threadStart.Invoke();
+    }
+
+    public static List<MazeCell> RequestPathImmediate(MazeCell start, MazeCell end, PathLayer pathLayer = PathLayer.Base)
+    {
+        return instance.pathfinder.GetAStarPath(pathLayer, start, end);
     }
 
     public void FinishedProcessingPath(PathResult result)

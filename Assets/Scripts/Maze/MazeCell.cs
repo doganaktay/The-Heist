@@ -28,7 +28,128 @@ public class MazeCell : FastPriorityQueueNode
 	// cells only connected through special connections through walls (like grates)
 	public HashSet<MazeCell> specialConnectedCells = new HashSet<MazeCell>();
 
-	public MazeCell[] exploredFrom;
+    #region Corridors and Rooms
+
+    // for use in identifying corridors and islands
+    public bool IsGraphConnection { get; private set; }
+	public Dictionary<int, List<MazeCell>> graphConnections;
+	public List<int> GetAreaIndices() => new List<int>(graphConnections.Keys);
+	public int AreaCount { get => graphConnections.Keys.Count; }
+
+	public int LastIndexAddedToQueue { get; set; } = -1;
+
+	int unexploredDirectionCount = -1;
+	public int UnexploredDirectionCount
+    {
+        get
+        {
+			if (unexploredDirectionCount < 0)
+				return connectedCells.Count;
+			else
+				return unexploredDirectionCount;
+		}
+	
+		set => unexploredDirectionCount = value;
+	}
+
+	public bool HasMadeConnection(MazeCell target)
+    {
+		Debug.Log($"Checking for connection in {graphConnections.Keys.Count} keys");
+
+		foreach(var g in graphConnections.Values)
+        {
+			Debug.Log($"Checking for connection in {g.Count} ends");
+
+			foreach (var end in g)
+            {
+				Debug.Log($"{gameObject.name} checking {target.gameObject.name} against {end.gameObject.name} for a connection");
+
+				if (end == target)
+					return true;
+            }
+        }
+
+		Debug.Log($"{gameObject.name} has no connection to {target.gameObject.name}");
+
+		return false;
+    }
+
+	public void SetGraphConnections(int index, List<MazeCell> cells)
+    {
+		if(graphConnections == null)
+			graphConnections = new Dictionary<int, List<MazeCell>>();
+
+		if (cells.Contains(this))
+			IsGraphConnection = true;
+
+		if (!graphConnections.ContainsKey(index))
+			graphConnections.Add(index, new List<MazeCell>(cells));
+		else
+			graphConnections[index] = new List<MazeCell>(cells);
+
+		//UnexploredDirectionCount = AreaCount;
+	}
+	public void AddGraphConnection(int index, MazeCell cell)
+	{
+		if (!graphConnections.ContainsKey(index))
+        {
+			Debug.Log($"{gameObject.name} does not belong to area {index}");
+        }
+        else
+        {
+			if(!graphConnections[index].Contains(cell))
+				graphConnections[index].Add(cell);
+        }
+	}
+	public List<MazeCell> GetConnections()
+    {
+		if (!IsGraphConnection)
+			return graphConnections[GetAreaIndices()[0]];
+        else
+        {
+			var connections = new List<MazeCell>();
+
+			foreach(var set in graphConnections)
+            {
+				foreach(var item in set.Value)
+                {
+					connections.Add(item);
+                }
+            }
+
+			return connections;
+        }
+    }
+	public List<MazeCell> GetConnections(int index, bool avoid = true)
+    {
+		if (!IsGraphConnection)
+        {
+			Debug.Log($"{gameObject.name} is not a connection point, returning the cell's end nodes");
+			return graphConnections[GetAreaIndices()[0]];
+		}
+        else
+        {
+			var connections = new List<MazeCell>();
+
+			foreach (var set in graphConnections)
+			{
+                if ((avoid && set.Key == index) || (!avoid && set.Key != index))
+					continue;
+                
+
+				foreach (var item in set.Value)
+				{
+					connections.Add(item);
+				}
+			}
+
+			return connections;
+		}
+    }
+
+    #endregion
+
+    public MazeCell[] exploredFrom;
 	public int[] distanceFromStart;
 
 	public int searchSize = 10; // should be same as search size in pathfinder script

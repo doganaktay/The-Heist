@@ -7,6 +7,7 @@ public enum BehaviorType
 {
     Disabled = -1,
     Wander,
+    Investigate,
     Check,
     Alert,
     Chase
@@ -32,18 +33,21 @@ public abstract class AI : Character, IBehaviorTree
     MinMaxData waitTime;
     [SerializeField]
     float maintainAlertTime = 5f;
+    [SerializeField]
+    float maintainAlertTimeIncrement = 5f;
     float alertTimer = 0f;
     bool initialized = false;
 
     [HideInInspector]
     public AIManager manager;
 
-    public bool CanSeePlayer { get => fieldOfView.CanSeePlayer() || (GameManager.player.transform.position - transform.position).sqrMagnitude < GameManager.CellDiagonal * GameManager.CellDiagonal; }
+    public bool CanSeePlayer { get => fieldOfView.CanSeePlayer() || PlayerIsVeryClose(); }
     public bool IsAlert { get; private set; }
     public float AwarenessDistance { get => fieldOfView.viewRadius; }
     public bool IsActive { get; private set; }
     public bool HasSearchTarget { get => fieldOfView.lastKnownPlayerPos != null; }
-    public MazeCell SearchTarget { get => GameManager.player.CurrentCell; }
+    private (MazeCell target, bool isOld) searchTarget;
+    public (MazeCell target, bool isOld) SearchTarget { get => searchTarget ; set => searchTarget = value; }
 
     public NodeBase BehaviorTree { get ; set; }
     Coroutine behaviourTreeRoutine;
@@ -83,6 +87,7 @@ public abstract class AI : Character, IBehaviorTree
         {
             aimOverrideTarget = GameManager.player.transform;
             AimOverride = true;
+            searchTarget = (GameManager.player.CurrentCell, false);
         }
         else
         {
@@ -125,7 +130,10 @@ public abstract class AI : Character, IBehaviorTree
     void TakeBehaviorAction()
     {
         if (currentAction != null)
+        {
             StopCoroutine(currentAction);
+            IsActive = false;
+        }
 
         switch (currentBehaviorData.type)
         {
@@ -134,8 +142,12 @@ public abstract class AI : Character, IBehaviorTree
                 break;
 
             case BehaviorType.Check:
-                if (SearchTarget != null)
-                    currentAction = StartCoroutine(GoTo(SearchTarget, true));
+                if (searchTarget.target != null)
+                    currentAction = StartCoroutine(GoTo(searchTarget.target, true));
+                break;
+
+            case BehaviorType.Investigate:
+                currentAction = StartCoroutine(Investigate(searchTarget.target));
                 break;
 
             case BehaviorType.Chase:
@@ -143,7 +155,7 @@ public abstract class AI : Character, IBehaviorTree
                 break;
         }
 
-        SetFOV(currentBehaviorData.fovType);
+        SetFOV(currentBehaviorData.fovType);        
     }
 
     public void SetBehaviorData(BehaviorData data)
@@ -200,6 +212,8 @@ public abstract class AI : Character, IBehaviorTree
         var lookSpeed = Random.Range(this.lookSpeed.min, this.lookSpeed.max);
         var lookCurrent = 0f;
 
+        Debug.Log($"{gameObject.name} starting {waitTime} second look around");
+
         while (waitTime > 0)
         {
             lookCurrent += Time.deltaTime;
@@ -215,11 +229,20 @@ public abstract class AI : Character, IBehaviorTree
                 targetRot = randomRot * currentRot;
                 lookSpeed = Random.Range(this.lookSpeed.min, this.lookSpeed.max);
                 lookCurrent = 0f;
+
+                yield return new WaitForSeconds(Random.Range(1f, 3f));
             }
 
             waitTime -= Time.deltaTime;
             yield return null;
         }
+    }
+
+    Quaternion GetRandomRotation()
+    {
+
+
+        return Quaternion.Euler(0f, 0f, 0f);
     }
 
     IEnumerator Chase()
@@ -246,7 +269,7 @@ public abstract class AI : Character, IBehaviorTree
         IsActive = false;
     }
 
-    IEnumerator GoTo(MazeCell cell, bool shouldRun = false)
+    IEnumerator GoTo(MazeCell cell, bool shouldRun = false, bool lookAroundOnArrival = false)
     {
         IsActive = true;
 
@@ -259,12 +282,54 @@ public abstract class AI : Character, IBehaviorTree
         while (isMoving)
             yield return null;
 
+        if (lookAroundOnArrival)
+            yield return LookAround();
+
+        searchTarget.isOld = true;
+        IsActive = false;
+    }
+
+    IEnumerator Investigate(MazeCell center)
+    {
+        IsActive = true;
+
+        var possiblePositions = Propagation.instance.Propagate(center, 100000, 10);
+        var pathToPos = PathRequestManager.RequestPathImmediate(currentCell, searchTarget.target);
+        var pathToPlayer = PathRequestManager.RequestPathImmediate(searchTarget.target, GameManager.player.CurrentCell);
+
+        var final = new List<MazeCell>();
+
+        foreach(var pos in possiblePositions)
+        {
+            if (!pathToPos.Contains(pos) && pathToPlayer.Contains(pos))
+                final.Add(pos);
+        }
+
+        Debug.Log($"{gameObject.name} will investigate {final.Count} positions.");
+
+        while (IsAlert)
+        {
+            if (final.Count == 0)
+            {
+                Debug.Log("No position to investigate");
+                break;
+            }
+
+            var dest = final[Random.Range(0, final.Count)];
+
+            Debug.Log($"Investigating {dest.gameObject.name}");
+
+            yield return GoTo(dest, false, true);
+        }
+
+        yield return null;
+
         IsActive = false;
     }
 
     #endregion
 
-    #region Trackers
+    #region Utilities and Trackers
 
     IEnumerator TrackAlertStatus()
     {
@@ -285,13 +350,22 @@ public abstract class AI : Character, IBehaviorTree
                     yield return null;
                 }
 
-                if(!CanSeePlayer)
+                if (!CanSeePlayer)
+                {
                     IsAlert = false;
+                    maintainAlertTime += maintainAlertTimeIncrement;
+                }
             }
 
             yield return null;
         }
     }
+
+    bool PlayerIsVeryClose() =>
+        IsAlert
+        && (GameManager.player.transform.position - transform.position).sqrMagnitude < GameManager.CellDiagonal * GameManager.CellDiagonal
+        && !Physics2D.Raycast(transform.position, GameManager.player.transform.position - transform.position, GameManager.CellDiagonal, fieldOfView.obstacleMask);
+    
 
     #endregion
 }

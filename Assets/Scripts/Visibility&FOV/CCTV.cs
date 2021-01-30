@@ -296,12 +296,4 @@ public class CCTV : MonoBehaviour
         ( 1 << 2 | 1 << 6, new Vector2(0, -1), 180f),
         ( 1 << 0 | 1 << 2 | 1 << 4 | 1 << 6, new Vector2(0,0), 360f)
     };
-
-    private void OnGUI()
-    {
-        if (GUI.Button(new Rect(10, 250, 80, 60), "Place Cameras"))
-            PlaceSecurityCameras();
-    }
-
-
 }

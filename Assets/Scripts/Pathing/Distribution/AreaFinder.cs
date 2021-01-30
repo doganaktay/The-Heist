@@ -571,7 +571,5 @@ public class AreaFinder : MonoBehaviour
             DropWalls();
         if (GUI.Button(new Rect(10, 130, 80, 60), "Pass Walls"))
             SetPassableWalls();
-        if (GUI.Button(new Rect(10, 190, 80, 60), "Find Paths"))
-            DetermineSinglePaths();
     }
 }

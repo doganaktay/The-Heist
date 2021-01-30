@@ -36,15 +36,14 @@ public abstract class Character : MonoBehaviour
     
     protected virtual void Update()
     {
-        TrackPosition();
-        if (isOnGrid && hasChanged)
+        if (isOnGrid && TrackPosition())
             ManageCallbacks();
 
         if (AimOverride)
             transform.LookAt2D(aimOverrideTarget, turnSpeed * 2f);
     }
 
-    void TrackPosition()
+    bool TrackPosition()
     {
         int hitCount = Physics2D.OverlapCircleNonAlloc(transform.position, 1f, results: posHits, cellLayerMask);
 
@@ -62,13 +61,16 @@ public abstract class Character : MonoBehaviour
                 }
             }
 
-            if (posHits[closestIndex] == previousHit) { return; }
+            if (posHits[closestIndex] == previousHit) { return false; }
 
             previousHit = posHits[closestIndex];
             lastCell = currentCell;
             currentCell = posHits[closestIndex].GetComponent<MazeCell>();
-            hasChanged = true;
+
+            return true;
         }
+
+        return false;
     }
 
     void ManageCallbacks()
@@ -79,14 +81,9 @@ public abstract class Character : MonoBehaviour
             NotificationModule.AddListener(currentCell.pos, HandleNotification);
 
         PositionChange?.Invoke();
-
-        hasChanged = false;
     }
 
-    protected virtual void HandleNotification(CellNotificationData data)
-    {
-        Debug.Log($"{gameObject.name} at {currentCell.pos.x},{currentCell.pos.y} is handling notification with {data.priority} priority, {data.signalStrength} signal strength, centered at {data.signalCenter.gameObject.name}");
-    }
+    protected abstract void HandleNotification(CellNotificationData data);
 
     #region Movement
 
