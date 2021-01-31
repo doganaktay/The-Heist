@@ -6,7 +6,7 @@ using TMPro;
 
 public class MazeCell : FastPriorityQueueNode
 {
-    public IntVector2 pos;
+	public IntVector2 pos;
 	public int areaIndex;
 	public int state = 0;
 	public int row, col;
@@ -28,10 +28,11 @@ public class MazeCell : FastPriorityQueueNode
 	// cells only connected through special connections through walls (like grates)
 	public HashSet<MazeCell> specialConnectedCells = new HashSet<MazeCell>();
 
-    #region Corridors and Rooms
+	#region Corridors and Rooms
 
-    // for use in identifying corridors and islands
-    public bool IsGraphConnection { get; private set; }
+	// for use in identifying corridors and islands
+	public bool IsGraphConnection { get; private set; }
+	public bool IsLockedConnection { get; set; } = false;
 	public Dictionary<int, List<MazeCell>> graphConnections;
 	public List<int> GetAreaIndices() => new List<int>(graphConnections.Keys);
 	public int AreaCount { get => graphConnections.Keys.Count; }
@@ -40,36 +41,59 @@ public class MazeCell : FastPriorityQueueNode
 
 	int unexploredDirectionCount = -1;
 	public int UnexploredDirectionCount
-    {
-        get
-        {
+	{
+		get
+		{
 			if (unexploredDirectionCount < 0)
 				return connectedCells.Count;
 			else
 				return unexploredDirectionCount;
 		}
-	
+
 		set => unexploredDirectionCount = value;
 	}
 
+	public bool IsInternalCorner()
+	{
+		for (int i = 0; i < CornerBitPatterns.Length; i++)
+		{
+			Debug.Log($"{gameObject.name} Checking {Convert.ToString(cardinalBits, 2)} & {Convert.ToString(CornerBitPatterns[i].cardinal << i, 2)} " +
+				$"and {Convert.ToString(diagonalBits, 2)} & {Convert.ToString(CornerBitPatterns[i].diagonal << i, 2)}");
+
+			if (diagonalBits == 0)
+				continue;
+
+			if ((cardinalBits & CornerBitPatterns[i].cardinal) == CornerBitPatterns[i].cardinal
+				&& (diagonalBits & CornerBitPatterns[i].diagonal) == CornerBitPatterns[i].diagonal)
+				return true;
+		}
+
+		return false;
+	}
+
+	static (int cardinal, int diagonal)[] CornerBitPatterns = new(int cardinal, int diagonal)[]
+	{
+		(1 << 0 | 1 << 1, 1 << 0),
+		(1 << 1 | 1 << 2, 1 << 1),
+		(1 << 2 | 1 << 3, 1 << 2),
+		(1 << 3 | 1 << 0, 1 << 3)
+
+	};
+
 	public bool HasMadeConnection(MazeCell target)
     {
-		Debug.Log($"Checking for connection in {graphConnections.Keys.Count} keys");
-
 		foreach(var g in graphConnections.Values)
         {
-			Debug.Log($"Checking for connection in {g.Count} ends");
-
 			foreach (var end in g)
             {
-				Debug.Log($"{gameObject.name} checking {target.gameObject.name} against {end.gameObject.name} for a connection");
+				//Debug.Log($"{gameObject.name} checking {target.gameObject.name} against {end.gameObject.name} for a connection");
 
 				if (end == target)
 					return true;
             }
         }
 
-		Debug.Log($"{gameObject.name} has no connection to {target.gameObject.name}");
+		//Debug.Log($"{gameObject.name} has no connection to {target.gameObject.name}");
 
 		return false;
     }
@@ -101,6 +125,13 @@ public class MazeCell : FastPriorityQueueNode
 				graphConnections[index].Add(cell);
         }
 	}
+
+	public void RemoveGraphConnections(int index)
+    {
+		if (graphConnections.ContainsKey(index))
+			graphConnections.Remove(index);
+    }
+
 	public List<MazeCell> GetConnections()
     {
 		if (!IsGraphConnection)

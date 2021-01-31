@@ -2116,7 +2116,7 @@ MonoBehaviour:
   obstacleMask:
     serializedVersion: 2
     m_Bits: 512
-  camCount: 0
+  camCount: 5
   defaultViewRadius: 50
   camDisplacementPercent: 0.3
   defaultViewAngle: 60
