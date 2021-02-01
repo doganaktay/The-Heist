@@ -28,14 +28,15 @@ public class MazeCell : FastPriorityQueueNode
 	// cells only connected through special connections through walls (like grates)
 	public HashSet<MazeCell> specialConnectedCells = new HashSet<MazeCell>();
 
-	#region Corridors and Rooms
+	#region Graph
 
 	// for use in identifying corridors and islands
 	public bool IsGraphConnection { get; private set; }
 	public bool IsLockedConnection { get; set; } = false;
-	public Dictionary<int, List<MazeCell>> graphConnections;
-	public List<int> GetAreaIndices() => new List<int>(graphConnections.Keys);
-	public int AreaCount { get => graphConnections.Keys.Count; }
+	public Dictionary<int, (List<MazeCell> all, List<MazeCell> ends)> graphAreas;
+	public List<int> GetAreaIndices() => new List<int>(graphAreas.Keys);
+	public int AreaCount { get => graphAreas.Keys.Count; }
+	public bool IsDeadEnd => connectedCells.Count == 1;
 
 	public int LastIndexAddedToQueue { get; set; } = -1;
 
@@ -57,9 +58,6 @@ public class MazeCell : FastPriorityQueueNode
 	{
 		for (int i = 0; i < CornerBitPatterns.Length; i++)
 		{
-			Debug.Log($"{gameObject.name} Checking {Convert.ToString(cardinalBits, 2)} & {Convert.ToString(CornerBitPatterns[i].cardinal << i, 2)} " +
-				$"and {Convert.ToString(diagonalBits, 2)} & {Convert.ToString(CornerBitPatterns[i].diagonal << i, 2)}");
-
 			if (diagonalBits == 0)
 				continue;
 
@@ -82,9 +80,9 @@ public class MazeCell : FastPriorityQueueNode
 
 	public bool HasMadeConnection(MazeCell target)
     {
-		foreach(var g in graphConnections.Values)
+		foreach(var g in graphAreas.Values)
         {
-			foreach (var end in g)
+			foreach (var end in g.ends)
             {
 				//Debug.Log($"{gameObject.name} checking {target.gameObject.name} against {end.gameObject.name} for a connection");
 
@@ -98,52 +96,113 @@ public class MazeCell : FastPriorityQueueNode
 		return false;
     }
 
-	public void SetGraphConnections(int index, List<MazeCell> cells)
+	public void SetGraphArea(int index, List<MazeCell> all, List<MazeCell> ends)
     {
-		if(graphConnections == null)
-			graphConnections = new Dictionary<int, List<MazeCell>>();
+		if (graphAreas == null)
+			graphAreas = new Dictionary<int, (List<MazeCell> all, List<MazeCell> ends)>();
 
-		if (cells.Contains(this))
+		if (ends.Contains(this))
 			IsGraphConnection = true;
 
-		if (!graphConnections.ContainsKey(index))
-			graphConnections.Add(index, new List<MazeCell>(cells));
+		if (!graphAreas.ContainsKey(index))
+			graphAreas.Add(index, (new List<MazeCell>(all), new List<MazeCell>(ends)));
 		else
-			graphConnections[index] = new List<MazeCell>(cells);
+			graphAreas[index] = (new List<MazeCell>(all), new List<MazeCell>(ends));
 
 		//UnexploredDirectionCount = AreaCount;
 	}
-	public void AddGraphConnection(int index, MazeCell cell)
-	{
-		if (!graphConnections.ContainsKey(index))
-        {
-			Debug.Log($"{gameObject.name} does not belong to area {index}");
-        }
-        else
-        {
-			if(!graphConnections[index].Contains(cell))
-				graphConnections[index].Add(cell);
-        }
-	}
 
-	public void RemoveGraphConnections(int index)
+	public void AddToGraphArea(int index, List<MazeCell> area, List<MazeCell> ends = null)
     {
-		if (graphConnections.ContainsKey(index))
-			graphConnections.Remove(index);
+        if (!graphAreas.ContainsKey(index))
+        {
+			Debug.Log($"{gameObject.name} does not have a graph key for {index}");
+			return;
+        }
+
+		graphAreas[index].all.AddRange(area);
+
+		if(ends != null)
+			graphAreas[index].ends.AddRange(ends);
     }
 
-	public List<MazeCell> GetConnections()
+	public void RemoveGraphArea(int index)
+    {
+		if (graphAreas.ContainsKey(index))
+			graphAreas.Remove(index);
+    }
+
+	public int GetSmallestAreaIndex(int indexToIgnore = -1)
+    {
+		int lowestIndex = -1;
+
+		// exaggerating value for min check
+		int areaCount = 1000;
+
+		foreach(var part in graphAreas)
+        {
+			if (indexToIgnore > -1 && part.Key == indexToIgnore)
+				continue;
+
+			if(part.Value.all.Count < areaCount)
+            {
+				areaCount = part.Value.all.Count;
+				lowestIndex = part.Key;
+            }
+        }
+
+		if(lowestIndex < 0)
+        {
+			Debug.Log($"Smallest area index not found for {gameObject.name}");
+			return -1;
+        }
+
+		return lowestIndex;
+    }
+
+	public int GetLargestAreaIndex(int indexToIgnore = -1)
+	{
+		int highestIndex = -1;
+
+		// exaggerating value for min check
+		int areaCount = 0;
+
+		foreach (var part in graphAreas)
+		{
+			if (indexToIgnore > -1 && part.Key == indexToIgnore)
+				continue;
+
+			if (part.Value.all.Count > areaCount)
+			{
+				areaCount = part.Value.all.Count;
+				highestIndex = part.Key;
+			}
+		}
+
+		if (highestIndex < 0)
+		{
+			Debug.Log($"Largest area index not found for {gameObject.name}");
+			return -1;
+		}
+
+		return highestIndex;
+	}
+
+	public List<MazeCell> GetConnections(bool includeSelf = false)
     {
 		if (!IsGraphConnection)
-			return graphConnections[GetAreaIndices()[0]];
+			return new List<MazeCell>(graphAreas[GetAreaIndices()[0]].ends);
         else
         {
 			var connections = new List<MazeCell>();
 
-			foreach(var set in graphConnections)
+			foreach(var set in graphAreas)
             {
-				foreach(var item in set.Value)
+				foreach(var item in set.Value.ends)
                 {
+					if (!includeSelf && item == this)
+						continue;
+
 					connections.Add(item);
                 }
             }
@@ -151,32 +210,63 @@ public class MazeCell : FastPriorityQueueNode
 			return connections;
         }
     }
-	public List<MazeCell> GetConnections(int index, bool avoid = true)
+
+	public List<MazeCell> GetConnections(int index, bool includeSelf = false)
     {
 		if (!IsGraphConnection)
         {
-			Debug.Log($"{gameObject.name} is not a connection point, returning the cell's end nodes");
-			return graphConnections[GetAreaIndices()[0]];
-		}
-        else
-        {
+			var existingIndex = GetAreaIndices()[0];
+
+			if (index != existingIndex)
+				Debug.Log($"{gameObject.name} does not belong to {index} returning only available index at {existingIndex}");
+
+			return new List<MazeCell>(graphAreas[existingIndex].ends);
+        }
+		else
+		{
 			var connections = new List<MazeCell>();
 
-			foreach (var set in graphConnections)
+			foreach (var item in graphAreas[index].ends)
 			{
-                if ((avoid && set.Key == index) || (!avoid && set.Key != index))
+				if (!includeSelf && item == this)
 					continue;
-                
 
-				foreach (var item in set.Value)
+				connections.Add(item);
+			}
+
+			return connections;
+		}
+	}
+
+	public List<MazeCell> GetOtherConnections(int index)
+    {
+		if (!IsGraphConnection)
+		{
+			Debug.LogError($"{gameObject.name} is not a connection point. Returning ends of area");
+
+			return new List<MazeCell>(graphAreas[GetAreaIndices()[0]].ends);
+		}
+		else
+		{
+			var connections = new List<MazeCell>();
+
+			foreach (var set in graphAreas)
+			{
+				if (index == set.Key)
+					continue;
+
+				foreach (var item in set.Value.ends)
 				{
+					if (item == this)
+						continue;
+
 					connections.Add(item);
 				}
 			}
 
 			return connections;
 		}
-    }
+	}
 
     #endregion
 
@@ -226,13 +316,7 @@ public class MazeCell : FastPriorityQueueNode
 
 	private int initializedEdgeCount;
 
-	public bool IsFullyInitialized
-	{
-		get
-		{
-			return initializedEdgeCount == MazeDirections.Count;
-		}
-	}
+	public bool IsFullyInitialized => initializedEdgeCount == MazeDirections.Count;
 
 	public MazeDirection RandomUninitializedDirection
 	{
@@ -297,6 +381,12 @@ public class MazeCell : FastPriorityQueueNode
 
 	public void DisplayText(string text)
     {
+		cellText.text = text;
+    }
+
+	public void DisplayText(string text, Color color)
+    {
+		cellText.color = color;
 		cellText.text = text;
     }
 
