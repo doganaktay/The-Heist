@@ -170,7 +170,7 @@ public class CorridorFinder : MonoBehaviour
                         i++;
                 }
 
-                if (i == 1 || (i == 2 && GraphAreas[coveredIndex].all.Count > 3))
+                if (i == 1 || (i == 2 && GraphAreas[coveredIndex].all.Count >= 3))
                 {
                     temp.Add(coveredIndex);
                 }
@@ -244,7 +244,7 @@ public class CorridorFinder : MonoBehaviour
                     mergeIndices.Add((area.Key, connectedIndices[0]));
                 }
             }
-            else if(junctionCount == 2 && area.Value.all.Count == 3)
+            else if (junctionCount == 2 && area.Value.all.Count == 3)
             {
 
             }
