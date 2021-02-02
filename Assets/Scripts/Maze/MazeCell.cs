@@ -34,9 +34,10 @@ public class MazeCell : FastPriorityQueueNode
 	public bool IsGraphConnection { get; private set; }
 	public bool IsLockedConnection { get; set; } = false;
 	public Dictionary<int, (List<MazeCell> all, List<MazeCell> ends)> graphAreas;
-	public List<int> GetAreaIndices() => new List<int>(graphAreas.Keys);
-	public int AreaCount { get => graphAreas.Keys.Count; }
+	public List<int> GetGraphAreaIndices() => new List<int>(graphAreas.Keys);
+	public int GraphAreaCount => graphAreas.Keys.Count;
 	public bool IsDeadEnd => connectedCells.Count == 1;
+	public bool IsJunction => IsGraphConnection && graphAreas.Keys.Count > 1;
 
 	public int LastIndexAddedToQueue { get; set; } = -1;
 
@@ -84,14 +85,10 @@ public class MazeCell : FastPriorityQueueNode
         {
 			foreach (var end in g.ends)
             {
-				//Debug.Log($"{gameObject.name} checking {target.gameObject.name} against {end.gameObject.name} for a connection");
-
 				if (end == target)
 					return true;
             }
         }
-
-		//Debug.Log($"{gameObject.name} has no connection to {target.gameObject.name}");
 
 		return false;
     }
@@ -108,8 +105,6 @@ public class MazeCell : FastPriorityQueueNode
 			graphAreas.Add(index, (new List<MazeCell>(all), new List<MazeCell>(ends)));
 		else
 			graphAreas[index] = (new List<MazeCell>(all), new List<MazeCell>(ends));
-
-		//UnexploredDirectionCount = AreaCount;
 	}
 
 	public void AddToGraphArea(int index, List<MazeCell> area, List<MazeCell> ends = null)
@@ -191,7 +186,7 @@ public class MazeCell : FastPriorityQueueNode
 	public List<MazeCell> GetConnections(bool includeSelf = false)
     {
 		if (!IsGraphConnection)
-			return new List<MazeCell>(graphAreas[GetAreaIndices()[0]].ends);
+			return new List<MazeCell>(graphAreas[GetGraphAreaIndices()[0]].ends);
         else
         {
 			var connections = new List<MazeCell>();
@@ -215,7 +210,7 @@ public class MazeCell : FastPriorityQueueNode
     {
 		if (!IsGraphConnection)
         {
-			var existingIndex = GetAreaIndices()[0];
+			var existingIndex = GetGraphAreaIndices()[0];
 
 			if (index != existingIndex)
 				Debug.Log($"{gameObject.name} does not belong to {index} returning only available index at {existingIndex}");
@@ -238,13 +233,15 @@ public class MazeCell : FastPriorityQueueNode
 		}
 	}
 
+	public int GetOtherConnectionCount(int index) => GetOtherConnections(index).Count;
+
 	public List<MazeCell> GetOtherConnections(int index)
     {
 		if (!IsGraphConnection)
 		{
 			Debug.LogError($"{gameObject.name} is not a connection point. Returning ends of area");
 
-			return new List<MazeCell>(graphAreas[GetAreaIndices()[0]].ends);
+			return new List<MazeCell>(graphAreas[GetGraphAreaIndices()[0]].ends);
 		}
 		else
 		{
@@ -267,6 +264,33 @@ public class MazeCell : FastPriorityQueueNode
 			return connections;
 		}
 	}
+
+	public int GetAreaCellCount(int index = -1) => GetAreaCells(index).Count;
+
+	public List<MazeCell> GetAreaCells(int index = -1)
+    {
+		if(index == -1)
+        {
+			if (IsJunction)
+            {
+				Debug.LogError($"Junction {gameObject.name} received an area cell request without an index, returning null");
+				return null;
+            }
+
+			return new List<MazeCell>(graphAreas[GetGraphAreaIndices()[0]].all);
+        }
+        else
+        {
+			if (!graphAreas.ContainsKey(index))
+            {
+				Debug.Log($"{gameObject.name} received area cell request for {index} but does not contain the key, returning null");
+				return null;
+            }
+
+			return new List<MazeCell>(graphAreas[index].all);
+		}
+
+    }
 
     #endregion
 

@@ -15,6 +15,16 @@ public class CorridorFinder : MonoBehaviour
     bool[,] visited;
     static Dictionary<int, (List<MazeCell> all, List<MazeCell> ends)> GraphAreas;
 
+    private void Awake()
+    {
+        GameManager.MazeGenFinished += CreateGraph;
+    }
+
+    private void OnDisable()
+    {
+        GameManager.MazeGenFinished -= CreateGraph;
+    }
+
     public void CreateGraph()
     {
         GraphAreas = new Dictionary<int, (List<MazeCell> all, List<MazeCell> ends)>();
@@ -191,16 +201,12 @@ public class CorridorFinder : MonoBehaviour
             foreach(var indexToMerge in indicesToMerge)
             {
                 if (GraphAreas.ContainsKey(indexToMerge))
-                {
                     GraphAreas.Remove(indexToMerge);
-                    Debug.Log($"Removing {indexToMerge} from partitions");
-                }
             }
 
             if (!GraphAreas.ContainsKey(index))
             {
-                GraphAreas.Add(index, (currentArea, ends));
-                Debug.Log($"Adding {index} to partitions");
+                GraphAreas.Add(index, (new List<MazeCell>(currentArea), new List<MazeCell>(ends)));
             }
 
             index++;
@@ -215,27 +221,39 @@ public class CorridorFinder : MonoBehaviour
 
         // PASS 3
 
-        //var endsToSearch = new List<MazeCell>();
+        List<(int from, int to)> mergeIndices = new List<(int from, int to)>();
 
-        //foreach(var cell in maze.cells)
-        //{
-        //    if (cell.state > 1 || cell.graphAreas.Count == 1)
-        //        continue;
-
-        //    endsToSearch.Add(cell);
-        //}
-
-        foreach(var area in GraphAreas)
+        foreach (var area in GraphAreas)
         {
-            var junctionCount = GetJunctionCount(area.Key);
+            var junctionCount = GetJunctionCellCount(area.Key);
+            var connectedIndexCount = GetConnectedIndexCount(area.Key);
 
-            if(junctionCount == 1)
+            Debug.Log($"Index {area.Key} has {area.Value.all.Count} cells and {connectedIndexCount} connections with {area.Value.ends.Count} ends and {junctionCount} junctions");
+
+            if (junctionCount == 1 && area.Value.all.Count == 2)
             {
-                var connectedIndices = GetConnectedIndices(area.Key);
-                MergeAreas(area.Key, connectedIndices[0]);
+                bool isConnectedToSingleArea = true;
 
-                Debug.Log($"Merging area {area.Key} to {connectedIndices[0]}");
+                foreach (var cell in area.Value.ends)
+                    if (cell.GraphAreaCount > 2)
+                        isConnectedToSingleArea = false;
+
+                if (isConnectedToSingleArea)
+                {
+                    var connectedIndices = GetConnectedIndices(area.Key);
+                    mergeIndices.Add((area.Key, connectedIndices[0]));
+                }
             }
+            else if(junctionCount == 2 && area.Value.all.Count == 3)
+            {
+
+            }
+        }
+
+        foreach (var pair in mergeIndices)
+        {
+            Debug.Log($"Merging area {pair.from} to {pair.to}");
+            MergeAreas(pair.from, pair.to);
         }
 
         // DISPLAY
@@ -274,22 +292,20 @@ public class CorridorFinder : MonoBehaviour
         if (currentCell.connectedCells.Count < 3 || (currentCell.connectedCells.Count >= 3 && currentCell.UnexploredDirectionCount == 1))
             visited[currentCell.pos.x, currentCell.pos.y] = true;
 
-        currentArea.Add(currentCell);
+        if(!currentArea.Contains(currentCell))
+            currentArea.Add(currentCell);
 
         int count = currentCell.connectedCells.Count;
 
         if (count == 1)
         {
-            ends.Add(currentCell);
-
-            //Debug.Log($"{currentCell.gameObject.name} added as an end with {count} connection");
+            if(!ends.Contains(currentCell))
+                ends.Add(currentCell);
 
             if (currentArea.Count == 1)
                 foreach (var cell in currentCell.connectedCells)
-                {
-                    //Debug.Log($"{currentCell.gameObject.name} triggering first search on {cell.gameObject.name}");
                     SearchCell(cell, currentCell);
-                }
+                
         }
         else if (count == 2)
         {
@@ -298,19 +314,13 @@ public class CorridorFinder : MonoBehaviour
                 if (cameFrom != null && cell == cameFrom)
                     continue;
 
-                //Debug.Log($"{currentCell.gameObject.name} triggering recursive search on {cell.gameObject.name}");
                 SearchCell(cell, currentCell);
             }
         }
         else
         {
             if (!ends.Contains(currentCell))
-            {
                 ends.Add(currentCell);
-
-                //Debug.Log($"{currentCell.gameObject.name} added as an end with {count} connection");
-            }
-
 
             if(currentArea.Count == 1)
             {
@@ -318,7 +328,6 @@ public class CorridorFinder : MonoBehaviour
                 {
                     if ((cell.connectedCells.Count < 3 && !visited[cell.pos.x, cell.pos.y]) || (cell.connectedCells.Count >= 3 && !currentCell.HasMadeConnection(cell)))
                     {
-                        //Debug.Log($"{currentCell.gameObject.name} triggering first search on {cell.gameObject.name}");
                         SearchCell(cell, currentCell);
                         break;
                     }
@@ -327,18 +336,11 @@ public class CorridorFinder : MonoBehaviour
 
             if(currentCell.UnexploredDirectionCount > 0)
                 currentCell.UnexploredDirectionCount--;
-            //Debug.Log($"{currentCell.gameObject.name} has one direction removed, down from {currentCell.UnexploredDirectionCount + 1} to {currentCell.UnexploredDirectionCount}");
 
             if (currentCell.UnexploredDirectionCount > 0 && currentCell.LastIndexAddedToQueue != index)
             {
-                //Debug.Log($"{currentCell.gameObject.name} has {currentCell.UnexploredDirectionCount} unexplored directions left. Adding to queue");
-
                 frontier.Enqueue(currentCell);
                 currentCell.LastIndexAddedToQueue = index;
-            }
-            else
-            {
-                //Debug.Log($"{currentCell.gameObject.name} has no unexplored directions left or was already added at this index. Not added to queue");
             }
         }
     }
@@ -350,9 +352,10 @@ public class CorridorFinder : MonoBehaviour
 
         visited[currentCell.pos.x, currentCell.pos.y] = true;
 
-        currentArea.Add(currentCell);
+        if(!currentArea.Contains(currentCell))
+            currentArea.Add(currentCell);
 
-        if (currentCell.IsLockedConnection)
+        if (currentCell.IsLockedConnection && !ends.Contains(currentCell))
             ends.Add(currentCell);
 
         foreach (var key in currentCell.graphAreas.Keys)
@@ -366,8 +369,8 @@ public class CorridorFinder : MonoBehaviour
     {
         var junctionCells = GetJunctionCells(from, to);
 
-        var endsToMerge = GraphAreas[from].ends;
-        var cellsToMerge = GraphAreas[from].all;
+        var endsToMerge = new List<MazeCell>(GraphAreas[from].ends);
+        var cellsToMerge = new List<MazeCell>(GraphAreas[from].all);
 
         foreach (var cell in junctionCells)
         {
@@ -375,20 +378,26 @@ public class CorridorFinder : MonoBehaviour
             cellsToMerge.Remove(cell);
         }
 
-        foreach(var cell in GraphAreas[to].all)
-            cell.AddToGraphArea(to, GraphAreas[from].all, endsToMerge);
+        foreach(var cell in GraphAreas[to].all.ToList())
+            cell.AddToGraphArea(to, cellsToMerge, endsToMerge);
 
         GraphAreas[to].all.AddRange(cellsToMerge);
         GraphAreas[to].ends.AddRange(endsToMerge);
 
-        foreach(var cell in GraphAreas[from].all)
+        foreach(var cell in GraphAreas[from].all.ToList())
         {
-            cell.graphAreas.Add(to, (GraphAreas[to].all, GraphAreas[to].ends));
+            if(!cell.graphAreas.ContainsKey(to))
+                cell.graphAreas.Add(to, (GraphAreas[to].all, GraphAreas[to].ends));
+
             cell.graphAreas.Remove(from);
         }
 
         GraphAreas.Remove(from);
-        Debug.Log($"index {from} removed from partitions");
+    }
+
+    int GetJunctionCellCount(int from, int to)
+    {
+        return GetJunctionCells(from, to).Count;
     }
 
     List<MazeCell> GetJunctionCells(int from, int to)
@@ -405,15 +414,25 @@ public class CorridorFinder : MonoBehaviour
         return junctionCells;
     }
 
-    int GetJunctionCount(int index)
+    int GetJunctionCellCount(int index)
     {
-        int count = 0;
+        return GetJunctionCells(index).Count;
+    }
 
-        foreach (var cell in GraphAreas[index].ends)
-            if (cell.graphAreas.Count > 1)
-                count++;
+    List<MazeCell> GetJunctionCells(int index)
+    {
+        var junctionCells = new List<MazeCell>();
 
-        return count;
+        foreach (var end in GraphAreas[index].ends)
+            if (end.graphAreas.Count > 1)
+                junctionCells.Add(end);
+
+        return junctionCells;
+    }
+
+    int GetConnectedIndexCount(int index)
+    {
+        return GetConnectedIndices(index).Count;
     }
 
     List<int> GetConnectedIndices(int index)
@@ -422,9 +441,13 @@ public class CorridorFinder : MonoBehaviour
 
         foreach(var cell in GraphAreas[index].ends)
         {
+            //Debug.Log($"Searching {cell.gameObject.name} for indices connected except {index}");
+
             foreach (var key in cell.graphAreas.Keys)
-                if (key != index)
+            {
+                if (key != index && !indices.Contains(key))
                     indices.Add(key);
+            }
         }
 
         return indices;
