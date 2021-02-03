@@ -21,7 +21,7 @@ public class GameManager : MonoBehaviour
 	public Pathfinder pathfinder;
 	public AreaFinder areafinder;
 	public Spotfinder spotfinder;
-	public CorridorFinder corridorFinder;
+	public GraphFinder graphFinder;
 	public Propagation propagationModule;
 	public PatrolManager patrolManager;
 	public CCTV cctv;
@@ -111,7 +111,7 @@ public class GameManager : MonoBehaviour
 		spotfinder.layout = layout;
 
 		// pass references to corridor finder
-		corridorFinder.maze = mazeInstance;
+		graphFinder.maze = mazeInstance;
 
 		// pass references to propagation calculator
 		Propagation.maze = mazeInstance;

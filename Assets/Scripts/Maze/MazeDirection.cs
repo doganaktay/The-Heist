@@ -78,6 +78,27 @@ public static class MazeDirections
 		return rotations[(int)direction];
 	}
 
+	public static int RotatePattern(this int pattern, int bitCount, int rotationCount)
+    {
+		int rotatedPattern = pattern;
+
+		for(int i = 0; i < rotationCount; i++)
+        {
+			int rshift = rotatedPattern >> (bitCount - 1);
+			int lshift = rotatedPattern << 1;
+
+			int mask = 0;
+			for(int j = 0; j < bitCount; j++)
+            {
+				mask |= 1 << j;
+            }
+
+			rotatedPattern = (rshift | lshift) & mask;
+		}
+
+		return rotatedPattern;
+    }
+
 	// MazeCellWall extension method, in here because this is currently the only static class
 	public static void RemoveWall(this MazeCellWall wall)
 	{

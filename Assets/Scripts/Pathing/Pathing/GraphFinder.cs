@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 
-public class CorridorFinder : MonoBehaviour
+public class GraphFinder : MonoBehaviour
 {
     public Maze maze;
 
@@ -14,6 +14,9 @@ public class CorridorFinder : MonoBehaviour
     List<MazeCell> ends = new List<MazeCell>();
     bool[,] visited;
     static Dictionary<int, (List<MazeCell> all, List<MazeCell> ends)> GraphAreas;
+
+    [SerializeField]
+    bool showDebugDisplay = false;
 
     private void Awake()
     {
@@ -34,7 +37,7 @@ public class CorridorFinder : MonoBehaviour
         index = 0;
 
         // PASS 1
-        Debug.Log("Pass 1:");
+        //Debug.Log("Pass 1:");
 
         while(frontier.Count > 0)
         {
@@ -55,16 +58,9 @@ public class CorridorFinder : MonoBehaviour
             index++;
         }
 
-        string partitionKeys = "Pass 1 Keys: ";
-
-        foreach (var key in GraphAreas.Keys)
-            partitionKeys += key.ToString() + ", ";
-
-        Debug.Log(partitionKeys);
-
         // PASS 2
 
-        Debug.Log($"Pass 2: {GraphAreas.Count} partitions");
+        //Debug.Log($"Pass 2: {GraphAreas.Count} partitions");
 
         List<MazeCell> cellsToTest = new List<MazeCell>();
 
@@ -112,9 +108,6 @@ public class CorridorFinder : MonoBehaviour
                     foreach(var cell in part.Value.all)
                         if(cell.connectedCells.Count >= 2)
                             visited[cell.pos.x, cell.pos.y] = false;
-
-                    //cellsToTest.Add(middleCell);
-                        
                 }
             }
             else if (count == 2)
@@ -212,73 +205,114 @@ public class CorridorFinder : MonoBehaviour
             index++;
         }
 
-        partitionKeys = "Pass 2 Keys: ";
+        //partitionKeys = "Pass 2 Keys: ";
 
-        foreach (var key in GraphAreas.Keys)
-            partitionKeys += key.ToString() + ", ";
+        //foreach (var key in GraphAreas.Keys)
+        //    partitionKeys += key.ToString() + ", ";
 
-        Debug.Log(partitionKeys);
+        //Debug.Log(partitionKeys);
 
         // PASS 3
 
-        List<(int from, int to)> mergeIndices = new List<(int from, int to)>();
+        List<int> coveredIndices = new List<int>();
+        List<int> internalCornerIndices = new List<int>();
 
-        foreach (var area in GraphAreas)
+        for(int i = 0; i < maze.size.x; i++)
         {
-            var junctionCount = GetJunctionCellCount(area.Key);
-            var connectedIndexCount = GetConnectedIndexCount(area.Key);
-
-            Debug.Log($"Index {area.Key} has {area.Value.all.Count} cells and {connectedIndexCount} connections with {area.Value.ends.Count} ends and {junctionCount} junctions");
-
-            if (junctionCount == 1 && area.Value.all.Count == 2)
+            for(int j = 0; j < maze.size.y; j++)
             {
-                bool isConnectedToSingleArea = true;
+                var cell = maze.cells[i, j];
 
-                foreach (var cell in area.Value.ends)
-                    if (cell.GraphAreaCount > 2)
-                        isConnectedToSingleArea = false;
+                if (cell.state > 1 || cell.graphAreas.Keys.Count > 1)
+                    continue;
 
-                if (isConnectedToSingleArea)
+                var index = cell.GetGraphAreaIndices()[0];
+
+                if (coveredIndices.Contains(index))
+                    continue;
+
+                var junctions = GetJunctionCells(index);
+                var junctionCount = junctions.Count;
+
+                if (junctionCount == 1 && GraphAreas[index].all.Count == 2)
                 {
-                    var connectedIndices = GetConnectedIndices(area.Key);
-                    mergeIndices.Add((area.Key, connectedIndices[0]));
+                    bool isConnectedToSingleArea = true;
+
+                    foreach (var end in GraphAreas[index].ends)
+                        if (end.GraphAreaCount > 2)
+                            isConnectedToSingleArea = false;
+
+                    var connectedIndices = GetConnectedIndices(index);
+
+                    if (isConnectedToSingleArea)
+                        MergeAreas(index, connectedIndices[0]);
+                    else
+                    {
+                        var smallestAreaIndex = junctions[0].GetSmallestAreaIndex(index);
+                        MergeAreas(index, smallestAreaIndex);
+                    }
                 }
-            }
-            else if (junctionCount == 2 && area.Value.all.Count == 3)
-            {
+                else if (junctionCount == 2 && GraphAreas[index].all.Count == 3)
+                {
+                    if (cell.IsInternalCorner() && !internalCornerIndices.Contains(index))
+                    {
+                        internalCornerIndices.Add(index);
 
-            }
-        }
+                        for(int k = 0; k < MazeDirections.diagonalVectors.Length; k++)
+                        {
+                            var newX = i + MazeDirections.diagonalVectors[k].x;
+                            var newY = j + MazeDirections.diagonalVectors[k].y;
 
-        foreach (var pair in mergeIndices)
-        {
-            Debug.Log($"Merging area {pair.from} to {pair.to}");
-            MergeAreas(pair.from, pair.to);
+                            if (newX < 0 || newY < 0 || newX >= maze.size.x || newY >= maze.size.y)
+                                continue;
+
+                            var otherCell = maze.cells[newX, newY];
+
+                            bool hasConnection = (cell.diagonalBits & 1 << k) != 0;
+
+                            if(hasConnection && otherCell.IsInternalCorner())
+                            {
+                                var otherIndex = otherCell.GetGraphAreaIndices()[0];
+                                MergeAreas(index, otherIndex);
+                                coveredIndices.Add(otherIndex);
+
+                                if (!internalCornerIndices.Contains(otherIndex))
+                                    internalCornerIndices.Add(otherIndex);
+                            }
+                        }
+
+                    }
+                }
+
+                coveredIndices.Add(index);
+            }
         }
 
         // DISPLAY
 
-        foreach (var cell in maze.cells)
+        if (showDebugDisplay)
         {
-            if (cell.state > 1)
-                continue;
+            Color junctionColor = new Color(1f, 0f, 0.1f);
 
-            if(cell.graphAreas == null || cell.graphAreas.Count == 0)
+            foreach(var area in GraphAreas)
             {
-                Debug.Log($"{cell.gameObject.name} connection graph is null or empty");
-                continue;
+                var randomColor = new Color(UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f));
+
+                foreach(var cell in area.Value.all)
+                {
+                    string indices = "";
+
+                    foreach (var key in cell.graphAreas.Keys)
+                        indices += key.ToString() + " ";
+
+                    if (!cell.IsLockedConnection || cell.graphAreas.Count == 1)
+                        cell.DisplayText(indices, randomColor);
+                    else
+                        cell.DisplayText(indices, junctionColor);
+                }
             }
-
-            string indices = "";
-
-            foreach (var key in cell.graphAreas.Keys)
-                indices += key.ToString() + " ";
-
-            if (!cell.IsLockedConnection || cell.graphAreas.Count == 1)
-                cell.DisplayText(indices);
-            else
-                cell.DisplayText(indices, Color.blue);
         }
+
     }
 
 
@@ -361,8 +395,21 @@ public class CorridorFinder : MonoBehaviour
         foreach (var key in currentCell.graphAreas.Keys)
             coveredIndices.Add(key);
 
+        var currentConnectedCount = currentCell.connectedCells.Count;
+
         foreach (var cell in currentCell.connectedCells)
+        {
+            //if(currentConnectedCount == 3 && cell.connectedCells.Count == 3)
+            //{
+            //    var bitPatternToCheck = currentCell.cardinalBits.RotatePattern(4, 2);
+
+            //    if ((bitPatternToCheck ^ cell.cardinalBits) == 0)
+            //        continue;
+            //}
+
             SearchCellForMerge(cell, coveredIndices);
+        }
+
     }
 
     void MergeAreas(int from, int to)
