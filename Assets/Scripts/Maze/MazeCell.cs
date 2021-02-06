@@ -127,7 +127,12 @@ public class MazeCell : FastPriorityQueueNode
 			graphAreas.Remove(index);
     }
 
-	public int GetSmallestAreaIndex(int indexToIgnore = -1)
+    public void RemoveJunction(int index, MazeCell cell)
+    {
+		graphAreas[index].ends.Remove(cell);
+    }
+
+    public int GetSmallestAreaIndex(int indexToIgnore = -1)
     {
 		int lowestIndex = -1;
 
@@ -182,6 +187,12 @@ public class MazeCell : FastPriorityQueueNode
 
 		return highestIndex;
 	}
+
+	public int GetRandomAreaIndex()
+    {
+		var indices = new List<int>(graphAreas.Keys);
+		return indices[UnityEngine.Random.Range(0, indices.Count)];
+    }
 
 	public List<MazeCell> GetConnections(bool includeSelf = false)
     {

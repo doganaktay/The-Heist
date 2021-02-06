@@ -40,6 +40,7 @@ public abstract class AI : Character, IBehaviorTree
 
     [HideInInspector]
     public AIManager manager;
+    PathDesigner pathDesigner => PathDesigner.Instance;
 
     public bool CanSeePlayer { get => fieldOfView.CanSeePlayer() || PlayerIsVeryClose(); }
     public bool IsAlert { get; private set; }

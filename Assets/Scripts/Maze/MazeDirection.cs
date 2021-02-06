@@ -99,6 +99,11 @@ public static class MazeDirections
 		return rotatedPattern;
     }
 
+	public static bool IsWithinRange(this Vector3 from, Vector3 to, float distance)
+    {
+		return (to - from).sqrMagnitude < distance * distance;
+    }
+
 	// MazeCellWall extension method, in here because this is currently the only static class
 	public static void RemoveWall(this MazeCellWall wall)
 	{
