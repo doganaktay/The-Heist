@@ -82,13 +82,9 @@ public class MazeCell : FastPriorityQueueNode
 	public bool HasMadeConnection(MazeCell target)
     {
 		foreach(var g in graphAreas.Values)
-        {
 			foreach (var end in g.ends)
-            {
 				if (end == target)
 					return true;
-            }
-        }
 
 		return false;
     }
@@ -115,10 +111,28 @@ public class MazeCell : FastPriorityQueueNode
 			return;
         }
 
-		graphAreas[index].all.AddRange(area);
+		var cellsToAdd = new List<MazeCell>();
+		foreach(var cell in area)
+        {
+			if (!graphAreas[index].all.Contains(cell))
+				cellsToAdd.Add(cell);
+        }
 
-		if(ends != null)
-			graphAreas[index].ends.AddRange(ends);
+        graphAreas[index].all.AddRange(cellsToAdd);
+
+
+        if (ends != null)
+        {
+			var endsToAdd = new List<MazeCell>();
+
+			foreach(var cell in ends)
+            {
+				if(!graphAreas[index].ends.Contains(cell))
+					endsToAdd.Add(cell);
+            }
+
+            graphAreas[index].ends.AddRange(endsToAdd);
+        }
     }
 
 	public void RemoveGraphArea(int index)

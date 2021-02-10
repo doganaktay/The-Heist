@@ -116,32 +116,35 @@ public class GraphFinder : MonoBehaviour
             {
                 bool isSingle = false;
                 MazeCell mainNode = null;
+                MazeCell deadEnd = null;
 
                 foreach(var end in part.Value.ends)
                 {
                     if(end.connectedCells.Count == 1)
                     {
                         isSingle = true;
+                        deadEnd = end;
                     }
                     else
                     {
                         mainNode = end;
+                        visited[end.pos.x, end.pos.y] = false;
                     }
 
-                    visited[end.pos.x, end.pos.y] = false;
                 }
 
                 if (isSingle)
                 {
                     mainNode.IsLockedConnection = true;
+
+                    // this is to clear the single cell dead end from the ends lists before the merging pass
+                    // this way, any 2-cell dead-end area is merged without keeping the dead-end
+                    part.Value.ends.Remove(deadEnd);
                 }
                 else
                     foreach (var end in part.Value.ends)
                         cellsToTest.Add(end);
             }
-
-            //Debug.Log($"Partition Index: {part.Key} with one end at ({part.Value.ends[0].pos.x},{part.Value.ends[0].pos.y})");
-            //Debug.Log($"index: {part.Key} cells: {part.Value.all.Count} ends: {part.Value.ends.Count} one end at ({part.Value.ends[0].pos.x},{part.Value.ends[0].pos.y})");
         }
 
         HashSet<int> indicesToMerge = new HashSet<int>();
@@ -264,8 +267,6 @@ public class GraphFinder : MonoBehaviour
 
                 if (junctionCount == 1 && GraphAreas[index].all.Count == 2)
                 {
-                    GraphAreas[index].ends.Clear();
-
                     var smallestAreaIndex = junctions[0].GetSmallestAreaIndex(index);
                     MergeAreas(index, smallestAreaIndex, true);
                 }
@@ -434,46 +435,31 @@ public class GraphFinder : MonoBehaviour
 
         var endsToMerge = new List<MazeCell>(GraphAreas[from].ends);
         var cellsToMerge = new List<MazeCell>(GraphAreas[from].all);
+        var junctionsToDissolve = new List<MazeCell>();
 
-        List<MazeCell> junctionsToDissolve = new List<MazeCell>();
-
-        foreach (var cell in junctionCells)
-        {
-            endsToMerge.Remove(cell);
-            cellsToMerge.Remove(cell);
-
-            if (dissolve)
+        foreach(var cell in junctionCells)
+            if (cell.graphAreas.Count <= 2)
                 junctionsToDissolve.Add(cell);
-        }
 
+        if (dissolve)
+            endsToMerge.Clear();
+        
         foreach(var cell in GraphAreas[to].all.ToList())
         {
             cell.AddToGraphArea(to, cellsToMerge, endsToMerge);
 
-            if (dissolve)
-            {
-                foreach(var junction in junctionsToDissolve)
-                {
-                    cell.RemoveJunction(to, junction);
-                }
-            }
-
-        }
-
-        GraphAreas[to].all.AddRange(cellsToMerge);
-        GraphAreas[to].ends.AddRange(endsToMerge);
-
-        if (dissolve)
-        {
             foreach (var junction in junctionsToDissolve)
-            {
-                GraphAreas[to].ends.Remove(junction);
-            }
+                cell.RemoveJunction(to, junction);
         }
+
+        AddToGraphArea(to, cellsToMerge, endsToMerge);
+
+        foreach (var junction in junctionsToDissolve)
+            GraphAreas[to].ends.Remove(junction);
 
         foreach(var cell in GraphAreas[from].all.ToList())
         {
-            if(!cell.graphAreas.ContainsKey(to))
+            if (!cell.graphAreas.ContainsKey(to))
                 cell.graphAreas.Add(to, (GraphAreas[to].all, GraphAreas[to].ends));
 
             cell.graphAreas.Remove(from);
@@ -497,10 +483,8 @@ public class GraphFinder : MonoBehaviour
 
         foreach(var endFrom in GraphAreas[from].ends)
         {
-            foreach(var endTo in GraphAreas[to].ends)
-                if(endFrom == endTo && !junctionCells.Contains(endFrom))
-                    junctionCells.Add(endFrom);
-                
+            if(GraphAreas[to].ends.Contains(endFrom) && !junctionCells.Contains(endFrom))
+                junctionCells.Add(endFrom);
         }
 
         return junctionCells;
@@ -543,6 +527,38 @@ public class GraphFinder : MonoBehaviour
         }
 
         return indices;
+    }
+
+    public void AddToGraphArea(int index, List<MazeCell> area, List<MazeCell> ends = null)
+    {
+        if (!GraphAreas.ContainsKey(index))
+        {
+            Debug.Log($"{gameObject.name} does not have a graph key for {index}");
+            return;
+        }
+
+        var cellsToAdd = new List<MazeCell>();
+        foreach (var cell in area)
+        {
+            if (!GraphAreas[index].all.Contains(cell))
+                cellsToAdd.Add(cell);
+        }
+
+        GraphAreas[index].all.AddRange(cellsToAdd);
+
+
+        if (ends != null)
+        {
+            var endsToAdd = new List<MazeCell>();
+
+            foreach (var cell in ends)
+            {
+                if (!GraphAreas[index].ends.Contains(cell))
+                    endsToAdd.Add(cell);
+            }
+
+            GraphAreas[index].ends.AddRange(endsToAdd);
+        }
     }
 
     #endregion
