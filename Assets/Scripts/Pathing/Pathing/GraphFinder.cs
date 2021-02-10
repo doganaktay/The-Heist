@@ -52,8 +52,13 @@ public class GraphFinder : MonoBehaviour
             if (currentArea.Count <= 1)
                 continue;
 
+            foreach (var end in ends)
+                end.IsGraphConnection = true;
+
             foreach (var cell in currentArea)
-                cell.SetGraphArea(index, currentArea, ends);
+            {
+                cell.SetGraphArea(index);
+            }
             
             GraphAreas.Add(index, (new List<MazeCell>(currentArea), new List<MazeCell>(ends)));
 
@@ -167,7 +172,8 @@ public class GraphFinder : MonoBehaviour
                 
                 foreach (var cell in currentArea)
                 {
-                    if (cell.graphAreas.ContainsKey(coveredIndex))
+                    //if (cell.GraphAreaIndices.Contains(coveredIndex))
+                    if (cell.GraphAreaIndices.Contains(coveredIndex))
                         i++;
                 }
 
@@ -212,14 +218,21 @@ public class GraphFinder : MonoBehaviour
                     foreach(var indexToMerge in indicesToMerge)
                     {
                         cell.RemoveGraphArea(indexToMerge);
+
+                        //if (cell.GraphAreaIndices.Contains(indexToMerge))
+                        //    cell.GraphAreaIndices.Remove(indexToMerge);
                     }
                 }
                 else
                 {
-                    cell.graphAreas.Clear();
+                    cell.GraphAreaIndices.Clear();
+
+                    //cell.GraphAreaIndices.Clear();
                 }
 
-                cell.SetGraphArea(index, currentArea, ends);
+                cell.SetGraphArea(index);
+
+                //cell.GraphAreaIndices.Add(index);
             }
 
             foreach(var indexToMerge in indicesToMerge)
@@ -254,20 +267,20 @@ public class GraphFinder : MonoBehaviour
             {
                 var cell = maze.cells[i, j];
 
-                if (cell.state > 1 || cell.graphAreas.Keys.Count > 1)
+                if (cell.state > 1 || cell.GraphAreaIndices.Count > 1)
                     continue;
 
                 var index = cell.GetGraphAreaIndices()[0];
 
                 if (coveredIndices.Contains(index))
                     continue;
-
+                 
                 var junctions = GetJunctionCells(index);
                 var junctionCount = junctions.Count;
 
                 if (junctionCount == 1 && GraphAreas[index].all.Count == 2)
                 {
-                    var smallestAreaIndex = junctions[0].GetSmallestAreaIndex(index);
+                    var smallestAreaIndex = GetSmallestAreaIndex(junctions[0], index);
                     MergeAreas(index, smallestAreaIndex, true);
                 }
                 else if (junctionCount == 2 && GraphAreas[index].all.Count == 3)
@@ -320,10 +333,10 @@ public class GraphFinder : MonoBehaviour
                 {
                     string indices = "";
 
-                    foreach (var key in cell.graphAreas.Keys)
+                    foreach (var key in cell.GraphAreaIndices)
                         indices += key.ToString() + " ";
 
-                    if (!cell.IsLockedConnection || cell.graphAreas.Count == 1)
+                    if (!cell.IsLockedConnection || cell.GraphAreaIndices.Count == 1)
                         cell.DisplayText(indices, randomColor);
                     else
                         cell.DisplayText(indices, junctionColor);
@@ -377,7 +390,7 @@ public class GraphFinder : MonoBehaviour
             {
                 foreach(var cell in currentCell.connectedCells)
                 {
-                    if ((cell.connectedCells.Count < 3 && !visited[cell.pos.x, cell.pos.y]) || (cell.connectedCells.Count >= 3 && !currentCell.HasMadeConnection(cell)))
+                    if ((cell.connectedCells.Count < 3 && !visited[cell.pos.x, cell.pos.y]) || (cell.connectedCells.Count >= 3 && !HasMadeConnection(currentCell, cell)))
                     {
                         SearchCell(cell, currentCell);
                         break;
@@ -409,7 +422,10 @@ public class GraphFinder : MonoBehaviour
         if (currentCell.IsLockedConnection && !ends.Contains(currentCell))
             ends.Add(currentCell);
 
-        foreach (var key in currentCell.graphAreas.Keys)
+        //foreach (var key in currentCell.graphAreas.Keys)
+        //    coveredIndices.Add(key);
+
+        foreach (var key in currentCell.GraphAreaIndices)
             coveredIndices.Add(key);
 
         var currentConnectedCount = currentCell.connectedCells.Count;
@@ -438,19 +454,11 @@ public class GraphFinder : MonoBehaviour
         var junctionsToDissolve = new List<MazeCell>();
 
         foreach(var cell in junctionCells)
-            if (cell.graphAreas.Count <= 2)
+            if (cell.GraphAreaIndices.Count <= 2)
                 junctionsToDissolve.Add(cell);
 
         if (dissolve)
             endsToMerge.Clear();
-        
-        foreach(var cell in GraphAreas[to].all.ToList())
-        {
-            cell.AddToGraphArea(to, cellsToMerge, endsToMerge);
-
-            foreach (var junction in junctionsToDissolve)
-                cell.RemoveJunction(to, junction);
-        }
 
         AddToGraphArea(to, cellsToMerge, endsToMerge);
 
@@ -459,13 +467,24 @@ public class GraphFinder : MonoBehaviour
 
         foreach(var cell in GraphAreas[from].all.ToList())
         {
-            if (!cell.graphAreas.ContainsKey(to))
-                cell.graphAreas.Add(to, (GraphAreas[to].all, GraphAreas[to].ends));
+            cell.GraphAreaIndices.Remove(from);
 
-            cell.graphAreas.Remove(from);
+            if(!cell.GraphAreaIndices.Contains(to))
+                cell.GraphAreaIndices.Add(to);
         }
 
         GraphAreas.Remove(from);
+    }
+
+    bool HasMadeConnection(MazeCell from, MazeCell to)
+    {
+        foreach(var key in from.GraphAreaIndices)
+        {
+            if (GraphAreas[key].ends.Contains(to))
+                return true;
+        }
+
+        return false;
     }
 
     #endregion
@@ -500,7 +519,7 @@ public class GraphFinder : MonoBehaviour
         var junctionCells = new List<MazeCell>();
 
         foreach (var end in GraphAreas[index].ends)
-            if (end.graphAreas.Count > 1)
+            if (end.GraphAreaIndices.Count > 1)
                 junctionCells.Add(end);
 
         return junctionCells;
@@ -519,7 +538,7 @@ public class GraphFinder : MonoBehaviour
         {
             //Debug.Log($"Searching {cell.gameObject.name} for indices connected except {index}");
 
-            foreach (var key in cell.graphAreas.Keys)
+            foreach (var key in cell.GraphAreaIndices)
             {
                 if (key != index && !indices.Contains(key))
                     indices.Add(key);
@@ -560,6 +579,186 @@ public class GraphFinder : MonoBehaviour
             GraphAreas[index].ends.AddRange(endsToAdd);
         }
     }
+
+    //////////////////////
+
+
+    public int GetSmallestAreaIndex(MazeCell cell, int indexToIgnore = -1)
+    {
+        int lowestIndex = -1;
+
+        // exaggerating value for min check
+        int areaCount = 1000;
+
+        foreach (var key in cell.GraphAreaIndices)
+        {
+            var part = GraphAreas[key];
+
+            if (indexToIgnore > -1 && key == indexToIgnore)
+                continue;
+
+            if (part.all.Count < areaCount)
+            {
+                areaCount = part.all.Count;
+                lowestIndex = key;
+            }
+        }
+
+        if (lowestIndex < 0)
+        {
+            Debug.Log($"Smallest area index not found for {gameObject.name}");
+            return -1;
+        }
+
+        return lowestIndex;
+    }
+
+    public int GetLargestAreaIndex(MazeCell cell, int indexToIgnore = -1)
+    {
+        int highestIndex = -1;
+
+        // exaggerating value for min check
+        int areaCount = 0;
+
+        foreach (var key in cell.GraphAreaIndices)
+        {
+            var part = GraphAreas[key];
+
+            if (indexToIgnore > -1 && key == indexToIgnore)
+                continue;
+
+            if (part.all.Count > areaCount)
+            {
+                areaCount = part.all.Count;
+                highestIndex = key;
+            }
+        }
+
+        if (highestIndex < 0)
+        {
+            Debug.Log($"Largest area index not found for {gameObject.name}");
+            return -1;
+        }
+
+        return highestIndex;
+    }
+
+    public int GetRandomAreaIndex(MazeCell cell)
+    {
+        var indices = cell.GetGraphAreaIndices();
+        return indices[UnityEngine.Random.Range(0, indices.Count)];
+    }
+
+    public List<MazeCell> GetConnections(MazeCell cell, bool includeSelf = false)
+    {
+        if (!cell.IsGraphConnection)
+            return new List<MazeCell>(GraphAreas[cell.GetGraphAreaIndices()[0]].ends);
+        else
+        {
+            var connections = new List<MazeCell>();
+
+            foreach (var key in cell.GraphAreaIndices)
+            {
+                foreach(var item in GraphAreas[key].ends)
+                {
+                    if (!includeSelf && item == cell)
+                        continue;
+
+                    connections.Add(item);
+                }
+            }
+
+            return connections;
+        }
+    }
+
+    public List<MazeCell> GetConnections(MazeCell cell, int index, bool includeSelf = false)
+    {
+        if (!cell.IsGraphConnection)
+        {
+            var existingIndex = cell.GetGraphAreaIndices()[0];
+
+            if (index != existingIndex)
+                Debug.Log($"{gameObject.name} does not belong to {index} returning only available index at {existingIndex}");
+
+            return new List<MazeCell>(GraphAreas[existingIndex].ends);
+        }
+        else
+        {
+            var connections = new List<MazeCell>();
+
+            foreach (var item in GraphAreas[index].ends)
+            {
+                if (!includeSelf && item == cell)
+                    continue;
+
+                connections.Add(item);
+            }
+
+            return connections;
+        }
+    }
+
+    public int GetOtherConnectionCount(MazeCell cell, int index) => GetOtherConnections(cell, index).Count;
+
+    public List<MazeCell> GetOtherConnections(MazeCell cell, int index)
+    {
+        if (!cell.IsGraphConnection)
+        {
+            Debug.LogError($"{gameObject.name} is not a connection point. Returning ends of area");
+
+            return new List<MazeCell>(GraphAreas[cell.GetGraphAreaIndices()[0]].ends);
+        }
+        else
+        {
+            var connections = new List<MazeCell>();
+
+            foreach (var key in cell.GraphAreaIndices)
+            {
+                if (index == key)
+                    continue;
+
+                foreach (var item in GraphAreas[key].ends)
+                {
+                    if (item == cell)
+                        continue;
+
+                    connections.Add(item);
+                }
+            }
+
+            return connections;
+        }
+    }
+
+    public int GetAreaCellCount(MazeCell cell, int index = -1) => GetAreaCells(cell, index).Count;
+
+    public List<MazeCell> GetAreaCells(MazeCell cell, int index = -1)
+    {
+        if (index == -1)
+        {
+            if (cell.IsJunction)
+            {
+                Debug.LogError($"Junction {gameObject.name} received an area cell request without an index, returning null");
+                return null;
+            }
+
+            return new List<MazeCell>(GraphAreas[cell.GetGraphAreaIndices()[0]].all);
+        }
+        else
+        {
+            if (!cell.GraphAreaIndices.Contains(index))
+            {
+                Debug.Log($"{gameObject.name} received area cell request for {index} but does not contain the key, returning null");
+                return null;
+            }
+
+            return new List<MazeCell>(GraphAreas[index].all);
+        }
+
+    }
+
+
 
     #endregion
 

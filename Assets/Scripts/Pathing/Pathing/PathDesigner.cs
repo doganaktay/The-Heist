@@ -30,12 +30,12 @@ public class PathDesigner : MonoBehaviour
 
         for (int i = 0; i < count; i++)
         {
-            bool isJunction = cell.graphAreas.Count > 1;
+            bool isJunction = cell.GraphAreaIndices.Count > 1;
             MazeCell destination;
 
             if (isJunction)
             {
-                var connections = cell.GetConnections();
+                var connections = graph.GetConnections(cell);
                 destination = connections[Random.Range(0, connections.Count)];
             }
             else

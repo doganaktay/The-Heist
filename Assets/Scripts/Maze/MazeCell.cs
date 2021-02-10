@@ -31,16 +31,16 @@ public class MazeCell : FastPriorityQueueNode
 	#region Graph
 
 	// for use in identifying corridors and islands
-	public bool IsGraphConnection { get; private set; }
+	public bool IsGraphConnection { get; set; }
 	public bool IsLockedConnection { get; set; } = false;
-	public Dictionary<int, (List<MazeCell> all, List<MazeCell> ends)> graphAreas;
-	public List<int> GetGraphAreaIndices() => new List<int>(graphAreas.Keys);
-	public int GraphAreaCount => graphAreas.Keys.Count;
 	public bool IsDeadEnd => connectedCells.Count == 1;
-	public bool IsJunction => IsGraphConnection && graphAreas.Keys.Count > 1;
 
-	public int LastIndexAddedToQueue { get; set; } = -1;
+	public List<int> GraphAreaIndices = new List<int>();
+    public List<int> GetGraphAreaIndices() => GraphAreaIndices;
+    public int GraphAreaCount => GraphAreaIndices.Count;
+    public bool IsJunction => IsGraphConnection && GraphAreaIndices.Count > 1;
 
+    public int LastIndexAddedToQueue { get; set; } = -1;
 	int unexploredDirectionCount = -1;
 	public int UnexploredDirectionCount
 	{
@@ -79,242 +79,16 @@ public class MazeCell : FastPriorityQueueNode
 
 	};
 
-	public bool HasMadeConnection(MazeCell target)
+	public void SetGraphArea(int index)
     {
-		foreach(var g in graphAreas.Values)
-			foreach (var end in g.ends)
-				if (end == target)
-					return true;
-
-		return false;
-    }
-
-	public void SetGraphArea(int index, List<MazeCell> all, List<MazeCell> ends)
-    {
-		if (graphAreas == null)
-			graphAreas = new Dictionary<int, (List<MazeCell> all, List<MazeCell> ends)>();
-
-		if (ends.Contains(this))
-			IsGraphConnection = true;
-
-		if (!graphAreas.ContainsKey(index))
-			graphAreas.Add(index, (new List<MazeCell>(all), new List<MazeCell>(ends)));
-		else
-			graphAreas[index] = (new List<MazeCell>(all), new List<MazeCell>(ends));
+		if (!GraphAreaIndices.Contains(index))
+			GraphAreaIndices.Add(index);
 	}
-
-	public void AddToGraphArea(int index, List<MazeCell> area, List<MazeCell> ends = null)
-    {
-        if (!graphAreas.ContainsKey(index))
-        {
-			Debug.Log($"{gameObject.name} does not have a graph key for {index}");
-			return;
-        }
-
-		var cellsToAdd = new List<MazeCell>();
-		foreach(var cell in area)
-        {
-			if (!graphAreas[index].all.Contains(cell))
-				cellsToAdd.Add(cell);
-        }
-
-        graphAreas[index].all.AddRange(cellsToAdd);
-
-
-        if (ends != null)
-        {
-			var endsToAdd = new List<MazeCell>();
-
-			foreach(var cell in ends)
-            {
-				if(!graphAreas[index].ends.Contains(cell))
-					endsToAdd.Add(cell);
-            }
-
-            graphAreas[index].ends.AddRange(endsToAdd);
-        }
-    }
 
 	public void RemoveGraphArea(int index)
     {
-		if (graphAreas.ContainsKey(index))
-			graphAreas.Remove(index);
-    }
-
-    public void RemoveJunction(int index, MazeCell cell)
-    {
-		graphAreas[index].ends.Remove(cell);
-    }
-
-    public int GetSmallestAreaIndex(int indexToIgnore = -1)
-    {
-		int lowestIndex = -1;
-
-		// exaggerating value for min check
-		int areaCount = 1000;
-
-		foreach(var part in graphAreas)
-        {
-			if (indexToIgnore > -1 && part.Key == indexToIgnore)
-				continue;
-
-			if(part.Value.all.Count < areaCount)
-            {
-				areaCount = part.Value.all.Count;
-				lowestIndex = part.Key;
-            }
-        }
-
-		if(lowestIndex < 0)
-        {
-			Debug.Log($"Smallest area index not found for {gameObject.name}");
-			return -1;
-        }
-
-		return lowestIndex;
-    }
-
-	public int GetLargestAreaIndex(int indexToIgnore = -1)
-	{
-		int highestIndex = -1;
-
-		// exaggerating value for min check
-		int areaCount = 0;
-
-		foreach (var part in graphAreas)
-		{
-			if (indexToIgnore > -1 && part.Key == indexToIgnore)
-				continue;
-
-			if (part.Value.all.Count > areaCount)
-			{
-				areaCount = part.Value.all.Count;
-				highestIndex = part.Key;
-			}
-		}
-
-		if (highestIndex < 0)
-		{
-			Debug.Log($"Largest area index not found for {gameObject.name}");
-			return -1;
-		}
-
-		return highestIndex;
-	}
-
-	public int GetRandomAreaIndex()
-    {
-		var indices = new List<int>(graphAreas.Keys);
-		return indices[UnityEngine.Random.Range(0, indices.Count)];
-    }
-
-	public List<MazeCell> GetConnections(bool includeSelf = false)
-    {
-		if (!IsGraphConnection)
-			return new List<MazeCell>(graphAreas[GetGraphAreaIndices()[0]].ends);
-        else
-        {
-			var connections = new List<MazeCell>();
-
-			foreach(var set in graphAreas)
-            {
-				foreach(var item in set.Value.ends)
-                {
-					if (!includeSelf && item == this)
-						continue;
-
-					connections.Add(item);
-                }
-            }
-
-			return connections;
-        }
-    }
-
-	public List<MazeCell> GetConnections(int index, bool includeSelf = false)
-    {
-		if (!IsGraphConnection)
-        {
-			var existingIndex = GetGraphAreaIndices()[0];
-
-			if (index != existingIndex)
-				Debug.Log($"{gameObject.name} does not belong to {index} returning only available index at {existingIndex}");
-
-			return new List<MazeCell>(graphAreas[existingIndex].ends);
-        }
-		else
-		{
-			var connections = new List<MazeCell>();
-
-			foreach (var item in graphAreas[index].ends)
-			{
-				if (!includeSelf && item == this)
-					continue;
-
-				connections.Add(item);
-			}
-
-			return connections;
-		}
-	}
-
-	public int GetOtherConnectionCount(int index) => GetOtherConnections(index).Count;
-
-	public List<MazeCell> GetOtherConnections(int index)
-    {
-		if (!IsGraphConnection)
-		{
-			Debug.LogError($"{gameObject.name} is not a connection point. Returning ends of area");
-
-			return new List<MazeCell>(graphAreas[GetGraphAreaIndices()[0]].ends);
-		}
-		else
-		{
-			var connections = new List<MazeCell>();
-
-			foreach (var set in graphAreas)
-			{
-				if (index == set.Key)
-					continue;
-
-				foreach (var item in set.Value.ends)
-				{
-					if (item == this)
-						continue;
-
-					connections.Add(item);
-				}
-			}
-
-			return connections;
-		}
-	}
-
-	public int GetAreaCellCount(int index = -1) => GetAreaCells(index).Count;
-
-	public List<MazeCell> GetAreaCells(int index = -1)
-    {
-		if(index == -1)
-        {
-			if (IsJunction)
-            {
-				Debug.LogError($"Junction {gameObject.name} received an area cell request without an index, returning null");
-				return null;
-            }
-
-			return new List<MazeCell>(graphAreas[GetGraphAreaIndices()[0]].all);
-        }
-        else
-        {
-			if (!graphAreas.ContainsKey(index))
-            {
-				Debug.Log($"{gameObject.name} received area cell request for {index} but does not contain the key, returning null");
-				return null;
-            }
-
-			return new List<MazeCell>(graphAreas[index].all);
-		}
-
+		if (GraphAreaIndices.Contains(index))
+			GraphAreaIndices.Remove(index);
     }
 
     #endregion
