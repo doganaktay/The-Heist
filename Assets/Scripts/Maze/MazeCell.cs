@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using System.Linq;
 
 public class MazeCell : FastPriorityQueueNode
 {
@@ -34,11 +35,15 @@ public class MazeCell : FastPriorityQueueNode
 	public bool IsGraphConnection { get; set; }
 	public bool IsLockedConnection { get; set; } = false;
 	public bool IsDeadEnd => connectedCells.Count == 1;
-
 	public List<int> GraphAreaIndices = new List<int>();
     public List<int> GetGraphAreaIndices() => GraphAreaIndices;
     public int GraphAreaCount => GraphAreaIndices.Count;
     public bool IsJunction => IsGraphConnection && GraphAreaIndices.Count > 1;
+	public int EndIndex { get; set; } = -1;
+	public int DeadConnectionCount { get; set; } = 0;
+	public bool IsUnloopable { get; set; } = false;
+
+	public SortedDictionary<int, List<MazeCell>> JunctionDistances = new SortedDictionary<int, List<MazeCell>>();
 
     public int LastIndexAddedToQueue { get; set; } = -1;
 	int unexploredDirectionCount = -1;
@@ -61,6 +66,10 @@ public class MazeCell : FastPriorityQueueNode
 		{
 			if (diagonalBits == 0)
 				continue;
+
+			// currently ignores interal corners formed by 3 connection cells
+			// needs to do an or operation besides the pattern to check
+			// for other connnections to not invalidate the corner pattern
 
 			if ((cardinalBits & CornerBitPatterns[i].cardinal) == CornerBitPatterns[i].cardinal
 				&& (diagonalBits & CornerBitPatterns[i].diagonal) == CornerBitPatterns[i].diagonal)
@@ -89,6 +98,39 @@ public class MazeCell : FastPriorityQueueNode
     {
 		if (GraphAreaIndices.Contains(index))
 			GraphAreaIndices.Remove(index);
+    }
+
+	public void SetDistanceToJunctions(List<MazeCell> ends)
+    {
+		foreach(var end in ends)
+        {
+			if (end == this)
+				continue;
+
+			// -1 because path includes asking cell
+			var distance = PathRequestManager.RequestPathImmediate(this, end).Count - 1;
+
+            if (!JunctionDistances.ContainsKey(distance))
+            {
+				JunctionDistances.Add(distance, new List<MazeCell>());
+				JunctionDistances[distance].Add(end);
+            }
+            else if (!JunctionDistances[distance].Contains(end))
+            {
+				JunctionDistances[distance].Add(end);
+            }
+		}
+    }
+
+	public bool HasGraphIndex(int index)
+    {
+		foreach(var graphIndex in GetGraphAreaIndices())
+        {
+			if (graphIndex == index)
+				return true;
+        }
+
+		return false;
     }
 
     #endregion

@@ -1742,6 +1742,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maze: {fileID: 0}
+  loopSearchLimit: 30
+  recursionLimit: 20
   showDebugDisplay: 1
 --- !u!1001 &1245003532
 PrefabInstance:

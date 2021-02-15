@@ -10,6 +10,8 @@ public class PathDesigner : MonoBehaviour
     [SerializeField]
     GraphFinder graph;
 
+    Player player = GameManager.player;
+
     private void Awake()
     {
         if(Instance == null)
@@ -21,11 +23,13 @@ public class PathDesigner : MonoBehaviour
         }
     }
 
-    public Queue<MazeCell> GetDestinationQueue(MazeCell start)
+    public Queue<MazeCell> GetDestinationQueue(MazeCell currentPos, MazeCell observationPoint = null, BehaviorType type = BehaviorType.Wander)
     {
         int count = 10;
-        var cell = start;
+        var cell = currentPos;
 
+        
+        
         var queue = new Queue<MazeCell>();
 
         for (int i = 0; i < count; i++)
@@ -49,7 +53,7 @@ public class PathDesigner : MonoBehaviour
             cell = destination;
         }
 
-        Debug.Log($"Queue request start at: {start.gameObject.name}");
+        Debug.Log($"Queue request start at: {currentPos.gameObject.name}");
 
         while (queue.Count > 0)
         {
