@@ -64,10 +64,42 @@ public class PathDesigner : MonoBehaviour
         return queue;
     }
 
+    public Queue<MazeCell> RequestPathLoop()
+    {
+        var cycles = GraphFinder.cycles;
+        var random = Random.Range(0, cycles.Count);
+        var waypoints = graph.GetLoopWaypoints(cycles[random]);
+        var queue = new Queue<MazeCell>();
+
+        for(int i = 0; i < cycles[random].Length; i++)
+        {
+            queue.Enqueue(waypoints[i]);
+        }
+
+        return queue;
+    }
+
+    public void PrintPathLoop()
+    {
+        var queue = RequestPathLoop();
+        string str = "";
+
+        while(queue.Count > 0)
+        {
+            var cell = queue.Dequeue();
+            str += cell.gameObject.name + " - ";
+        }
+
+        Debug.Log($"Loop path: {str}");
+    }
+
 
     private void OnGUI()
     {
         if (GUI.Button(new Rect(10, 190, 80, 60), "Get Queue"))
             GetDestinationQueue(GameManager.StartCell);
+
+        if (GUI.Button(new Rect(10, 310, 80, 60), "Get Queue"))
+            PrintPathLoop();
     }
 }

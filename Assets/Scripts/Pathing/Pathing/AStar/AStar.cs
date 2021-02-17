@@ -23,7 +23,7 @@ public class AStar
     public List<MazeCell> aStarPath = new List<MazeCell>();
     FastPriorityQueue<MazeCell> frontier;
 
-    public List<MazeCell> GetPath(PathLayer layer, MazeCell start, MazeCell end)
+    public List<MazeCell> GetPath(PathLayer layer, MazeCell start, MazeCell end, int forcedGraphIndex = -1)
     {
         // clearing dictionaries for re-use
         cameFrom.Clear();
@@ -48,7 +48,7 @@ public class AStar
 
             foreach(var next in current.connectedCells)
             {
-                if (next.state > 1)
+                if (next.state > 1 || (forcedGraphIndex >= 0 && !next.GetGraphAreaIndices().Contains(forcedGraphIndex)))
                     continue;
 
                 float newCost = costSoFar[current] + Heuristic(current, next) + maze.Cost(current, next);

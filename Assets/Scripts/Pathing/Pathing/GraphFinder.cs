@@ -16,7 +16,7 @@ public class GraphFinder : MonoBehaviour
     bool[,] visited;
     static Dictionary<int, (List<MazeCell> all, List<MazeCell> ends)> GraphAreas;
     static Dictionary<int, MazeCell> indexedJunctions = new Dictionary<int, MazeCell>();
-    static List<int[]> cycles = new List<int[]>();
+    public static List<int[]> cycles = new List<int[]>();
     static EdgeData[] LabelledGraphEdges;
 
     [SerializeField]
@@ -460,6 +460,8 @@ public class GraphFinder : MonoBehaviour
                 break;
             }
         }
+
+        cycles = cycles.OrderBy(x => x.Length).ToList();
 
         timer.Stop();
         UnityEngine.Debug.Log($"Graph and Loop finding took: {timer.ElapsedMilliseconds}ms");
@@ -945,6 +947,16 @@ public class GraphFinder : MonoBehaviour
 
     }
 
+    public MazeCell[] GetLoopWaypoints(int[] indices)
+    {
+        var wps = new MazeCell[indices.Length];
+
+        for (int i = 0; i < indices.Length; i++)
+            wps[i] = indexedJunctions[indices[i]];
+
+        return wps;
+    }
+
     bool IsDeadEnd(int index)
     {
         bool deadEnd = false;
@@ -980,13 +992,10 @@ public class GraphFinder : MonoBehaviour
 
     #region Loop finder
 
-    static void findNewCycles(int[] path, int recursionCount = 0, int lastGraphIndex = -1)
+    static void findNewCycles(int[] path, int recursionCount = 0, int lastGraphIndex = -1, int firstGraphIndex = -1, string str = null)
     {
         if (recursionCount >= maxRecursionDepth)
-        {
-            //UnityEngine.Debug.Log($"exceeded recursive search limit, returning");
             return;
-        }
 
         int n = path[0];
         int x;
@@ -994,6 +1003,8 @@ public class GraphFinder : MonoBehaviour
 
         //if (lastGraphIndex == -1)
         //    UnityEngine.Debug.Log($"Starting new path search from {indexedJunctions[n].gameObject.name}");
+        if (str == null)
+            str = $"New search: ";
 
         for (int i = 0; i < LabelledGraphEdges.Length; i++)
         {
@@ -1005,13 +1016,16 @@ public class GraphFinder : MonoBehaviour
 
                     int graphIndex = LabelledGraphEdges[i][2];
 
+                    if (firstGraphIndex < 0)
+                        firstGraphIndex = graphIndex;
+
                     if (graphIndex == lastGraphIndex)
                     {
                         //UnityEngine.Debug.Log($"Repeat graph index {graphIndex}, aborting search going from {indexedJunctions[n].gameObject.name} to {indexedJunctions[x].gameObject.name}");
                         continue;
                     }
                     //else
-                    //    UnityEngine.Debug.Log($"Connecting {graphIndex} to {lastGraphIndex} cells: {indexedJunctions[n].gameObject.name} to {indexedJunctions[x].gameObject.name}");
+                    //    UnityEngine.Debug.Log($"Connecting {lastGraphIndex} to {graphIndex} cells: {indexedJunctions[n].gameObject.name} to {indexedJunctions[x].gameObject.name}");
 
                     if (!IsVisited(x, path))
                     //  neighbor node not on path yet
@@ -1019,20 +1033,14 @@ public class GraphFinder : MonoBehaviour
                         sub[0] = x;
                         Array.Copy(path, 0, sub, 1, path.Length);
 
+                        str += $"({indexedJunctions[n].gameObject.name} - {graphIndex} - {indexedJunctions[x].gameObject.name}) - ";
 
-                        //var pathSoFar = "";
-                        //for (int l = sub.Length - 1; l >= 0; l--)
-                        //    pathSoFar += indexedJunctions[sub[l]].gameObject.name + "-";
-
-                        //UnityEngine.Debug.Log($"Path so far: " + pathSoFar);
-
-
-                        //  explore extended path
+                        // explore extended path
                         // increase recursion counter for capping max depth;
                         recursionCount++;
-                        findNewCycles(sub, recursionCount, graphIndex);
+                        findNewCycles(sub, recursionCount, graphIndex, firstGraphIndex, str);
                     }
-                    else if ((path.Length > 2) && (x == path[path.Length - 1]))
+                    else if ((path.Length > 2) && (x == path[path.Length - 1]) && (graphIndex != firstGraphIndex))
                     //  cycle found
                     {
                         int[] p = normalize(path);
@@ -1041,13 +1049,8 @@ public class GraphFinder : MonoBehaviour
                         {
                             cycles.Add(p);
 
-                            //var pathSoFar = "";
-                            //for (int l = p.Length - 1; l >= 0; l--)
-                            //    pathSoFar += indexedJunctions[p[l]].gameObject.name + "-";
-
-                            //UnityEngine.Debug.Log($"Added path: " + pathSoFar);
-
-                            //PrintCycle(p);
+                            UnityEngine.Debug.Log(str);
+                            PrintCycle(p);
                         }
                     }
                 }
@@ -1222,20 +1225,20 @@ public class GraphFinder : MonoBehaviour
         //    UnityEngine.Debug.Log($"{str}");
         //}
 
-        //for (int j = 0; j < LabelledGraphEdges.Length; j++)
-        //{
-        //    string str = "Edge: ";
-        //    for (int k = 0; k <= 1; k++)
-        //    {
-        //        str += LabelledGraphEdges[j][k] + " ";
-        //        str += indexedJunctions[LabelledGraphEdges[j][k]].gameObject.name + ", ";
+        for (int j = 0; j < LabelledGraphEdges.Length; j++)
+        {
+            string str = "Edge: ";
+            for (int k = 0; k <= 1; k++)
+            {
+                str += LabelledGraphEdges[j][k] + " ";
+                str += indexedJunctions[LabelledGraphEdges[j][k]].gameObject.name + ", ";
 
-        //    }
+            }
 
-        //    str += " graph index: " + LabelledGraphEdges[j][2];
+            str += " graph index: " + LabelledGraphEdges[j][2];
 
-        //    UnityEngine.Debug.Log($"{str}");
-        //}
+            UnityEngine.Debug.Log($"{str}");
+        }
 
         foreach (var cycle in cycles)
         {
@@ -1248,7 +1251,7 @@ public class GraphFinder : MonoBehaviour
         string str = "";
         string strIndices = "Cycle: ";
 
-        str += indexedJunctions[cycle[0]].gameObject.name + ", ";
+        //str += indexedJunctions[cycle[0]].gameObject.name + ", ";
 
         for (int j = cycle.Length - 1; j >= 0; j--)
         {

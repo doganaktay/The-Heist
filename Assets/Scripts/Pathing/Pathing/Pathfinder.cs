@@ -60,19 +60,29 @@ public class Pathfinder : MonoBehaviour
         SetNewPath(startPos, endPos);
     }
 
-    public List<MazeCell> GetAStarPath(PathLayer layer, MazeCell start, MazeCell end = null)
+    public List<MazeCell> GetAStarPath(PathLayer layer, MazeCell start, MazeCell end = null, int forcedGraphIndex = -1)
     {
         if(end == null)
             end = areafinder.WalkableArea[UnityEngine.Random.Range(0, areafinder.WalkableArea.Count - 1)];
 
-        return new List<MazeCell>(aStar.GetPath(layer, start, end));
+        List<MazeCell> path;
+
+        if (forcedGraphIndex == -1)
+            path = new List<MazeCell>(aStar.GetPath(layer, start, end));
+        else
+            path = new List<MazeCell>(aStar.GetPath(layer, start, end, forcedGraphIndex));
+
+        return path;
     }
 
-    public void FindPath(PathRequest request, Action<PathResult> callback)
+    public void FindPath(PathRequest request, Action<PathResult> callback, int forcedGraphIndex = -1)
     {
         List<MazeCell> newPath;
 
-        newPath = GetAStarPath(request.pathLayer, request.start, request.end);
+        if(forcedGraphIndex == -1)
+            newPath = GetAStarPath(request.pathLayer, request.start, request.end);
+        else
+            newPath = GetAStarPath(request.pathLayer, request.start, request.end, forcedGraphIndex);
 
         callback(new PathResult(newPath, request.callback));
     }
