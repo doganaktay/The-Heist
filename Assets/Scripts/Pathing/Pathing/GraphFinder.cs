@@ -16,7 +16,7 @@ public class GraphFinder : MonoBehaviour
     bool[,] visited;
     static Dictionary<int, (List<MazeCell> all, List<MazeCell> ends)> GraphAreas;
     static Dictionary<int, MazeCell> indexedJunctions = new Dictionary<int, MazeCell>();
-    public static List<int[]> cycles = new List<int[]>();
+    public static List<(int[] nodes, int[] edges)> cycles = new List<(int[] nodes, int[] edges)>();
     static EdgeData[] LabelledGraphEdges;
 
     [SerializeField]
@@ -460,8 +460,6 @@ public class GraphFinder : MonoBehaviour
                 break;
             }
         }
-
-        cycles = cycles.OrderBy(x => x.Length).ToList();
 
         timer.Stop();
         UnityEngine.Debug.Log($"Graph and Loop finding took: {timer.ElapsedMilliseconds}ms");
@@ -992,17 +990,20 @@ public class GraphFinder : MonoBehaviour
 
     #region Loop finder
 
-    static void findNewCycles(int[] path, int recursionCount = 0, int lastGraphIndex = -1, int firstGraphIndex = -1, string str = null)
+    static void findNewCycles(int[] nodes, int[] edges = null, int recursionCount = 0, int lastGraphIndex = -1, string str = null)
     {
         if (recursionCount >= maxRecursionDepth)
             return;
 
-        int n = path[0];
+        int n = nodes[0];
         int x;
-        int[] sub = new int[path.Length + 1];
+        int[] sub = new int[nodes.Length + 1];
 
-        //if (lastGraphIndex == -1)
-        //    UnityEngine.Debug.Log($"Starting new path search from {indexedJunctions[n].gameObject.name}");
+        if(edges == null)
+            edges = new int[nodes.Length];
+
+        int[] edgeSub = new int[edges.Length + 1];
+
         if (str == null)
             str = $"New search: ";
 
@@ -1016,41 +1017,62 @@ public class GraphFinder : MonoBehaviour
 
                     int graphIndex = LabelledGraphEdges[i][2];
 
-                    if (firstGraphIndex < 0)
-                        firstGraphIndex = graphIndex;
-
                     if (graphIndex == lastGraphIndex)
-                    {
-                        //UnityEngine.Debug.Log($"Repeat graph index {graphIndex}, aborting search going from {indexedJunctions[n].gameObject.name} to {indexedJunctions[x].gameObject.name}");
                         continue;
-                    }
-                    //else
-                    //    UnityEngine.Debug.Log($"Connecting {lastGraphIndex} to {graphIndex} cells: {indexedJunctions[n].gameObject.name} to {indexedJunctions[x].gameObject.name}");
-
-                    if (!IsVisited(x, path))
+                    
+                    if (!IsVisited(x, nodes))
                     //  neighbor node not on path yet
                     {
                         sub[0] = x;
-                        Array.Copy(path, 0, sub, 1, path.Length);
+                        Array.Copy(nodes, 0, sub, 1, nodes.Length);
 
                         str += $"({indexedJunctions[n].gameObject.name} - {graphIndex} - {indexedJunctions[x].gameObject.name}) - ";
+
+                        edges[0] = graphIndex;
+                        Array.Copy(edges, 0, edgeSub, 1, edges.Length);
 
                         // explore extended path
                         // increase recursion counter for capping max depth;
                         recursionCount++;
-                        findNewCycles(sub, recursionCount, graphIndex, firstGraphIndex, str);
+                        findNewCycles(sub, edgeSub, recursionCount, graphIndex, str);
                     }
-                    else if ((path.Length > 2) && (x == path[path.Length - 1]) && (graphIndex != firstGraphIndex))
+                    //else if ((nodes.Length > 2) && (x == nodes[nodes.Length - 1]) && (graphIndex != firstGraphIndex))
+                    else if ((nodes.Length > 2) && (x == nodes[nodes.Length - 1]) && (graphIndex != edges[edges.Length - 1]))
                     //  cycle found
                     {
-                        int[] p = normalize(path);
-                        int[] inv = invert(p);
+                        edges[0] = graphIndex;
+
+                        //string test = "";
+                        //for (int j = 0; j < edges.Length; j++)
+                        //    test += edges[j] + " - ";
+                        //UnityEngine.Debug.Log(test);
+
+                        //var finalEdges = new int[edges.Length + 1];
+                        //Array.Copy(edges, 0, finalEdges, 1, edges.Length);
+                        //finalEdges[0] = firstGraphIndex;
+
+                        //test = "";
+                        //for (int j = 0; j < finalEdges.Length; j++)
+                        //    test += finalEdges[j] + " - ";
+                        //UnityEngine.Debug.Log(test);
+
+                        var nodesAndEdges = normalize(nodes, edges);
+                        int[] p = nodesAndEdges.nodes;
+                        int[] e = nodesAndEdges.edges;
+
+                        var inverted = invert(p, e);
+                        int[] inv = inverted.nodes;
                         if (isNew(p) && isNew(inv))
                         {
-                            cycles.Add(p);
+                            cycles.Add((p, e));
 
-                            UnityEngine.Debug.Log(str);
-                            PrintCycle(p);
+                            //test = "";
+                            //for (int j = 0; j < e.Length; j++)
+                            //    test += e[j] + " - ";
+                            //UnityEngine.Debug.Log(test);
+
+                            //UnityEngine.Debug.Log(str);
+                            PrintCycle(p, e);
                         }
                     }
                 }
@@ -1070,45 +1092,61 @@ public class GraphFinder : MonoBehaviour
         return ret;
     }
 
-    static int[] invert(int[] path)
+    static (int[] nodes, int[] edges) invert(int[] path, int[] edges)
     {
         int[] p = new int[path.Length];
+        int[] e = new int[edges.Length];
 
         for (int i = 0; i < path.Length; i++)
             p[i] = path[path.Length - 1 - i];
 
-        return normalize(p);
+        for (int i = 0; i < edges.Length - 1; i++)
+            e[i] = edges[edges.Length - 2 - i];   
+        
+
+        return normalize(p, e);
     }
 
     //  rotate cycle path such that it begins with the smallest node
-    static int[] normalize(int[] path)
+    static (int[] nodes, int[] edges) normalize(int[] nodes, int[] edges)
     {
-        int[] p = new int[path.Length];
-        int x = smallest(path);
+        int[] p = new int[nodes.Length];
+        int x = smallest(nodes);
         int n;
 
-        Array.Copy(path, 0, p, 0, path.Length);
+        int[] e = new int[edges.Length];
+        int g;
+
+        Array.Copy(nodes, 0, p, 0, nodes.Length);
+        Array.Copy(edges, 0, e, 0, edges.Length);
 
         while (p[0] != x)
         {
             n = p[0];
             Array.Copy(p, 1, p, 0, p.Length - 1);
             p[p.Length - 1] = n;
+
+            g = e[0];
+            Array.Copy(e, 1, e, 0, e.Length - 1);
+            e[e.Length - 1] = g;
         }
 
-        return p;
+        return (p, e);
     }
 
     static bool isNew(int[] path)
     {
         bool ret = true;
 
-        foreach (int[] p in cycles)
-            if (equals(p, path))
+        foreach (var cycle in cycles)
+        {
+            if (equals(cycle.nodes, path))
             {
                 ret = false;
                 break;
             }
+
+        }
 
         return ret;
     }
@@ -1225,42 +1263,35 @@ public class GraphFinder : MonoBehaviour
         //    UnityEngine.Debug.Log($"{str}");
         //}
 
-        for (int j = 0; j < LabelledGraphEdges.Length; j++)
-        {
-            string str = "Edge: ";
-            for (int k = 0; k <= 1; k++)
-            {
-                str += LabelledGraphEdges[j][k] + " ";
-                str += indexedJunctions[LabelledGraphEdges[j][k]].gameObject.name + ", ";
+        //for (int j = 0; j < LabelledGraphEdges.Length; j++)
+        //{
+        //    string str = "Edge: ";
+        //    for (int k = 0; k <= 1; k++)
+        //    {
+        //        str += LabelledGraphEdges[j][k] + " ";
+        //        str += indexedJunctions[LabelledGraphEdges[j][k]].gameObject.name + ", ";
 
-            }
+        //    }
 
-            str += " graph index: " + LabelledGraphEdges[j][2];
+        //    str += " graph index: " + LabelledGraphEdges[j][2];
 
-            UnityEngine.Debug.Log($"{str}");
-        }
+        //    UnityEngine.Debug.Log($"{str}");
+        //}
 
         foreach (var cycle in cycles)
-        {
-            PrintCycle(cycle);
-        }
+            PrintCycle(cycle.nodes, cycle.edges);
+        
     }
 
-    static void PrintCycle(int[] cycle)
+    static void PrintCycle(int[] nodes, int[] edges)
     {
-        string str = "";
         string strIndices = "Cycle: ";
 
         //str += indexedJunctions[cycle[0]].gameObject.name + ", ";
 
-        for (int j = cycle.Length - 1; j >= 0; j--)
-        {
-            strIndices += cycle[j] + "-";
-            str += indexedJunctions[cycle[j]].gameObject.name + ", ";
-        }
-
-
-        strIndices += str;
+        for (int j = nodes.Length - 1; j >= 0; j--)
+            strIndices += indexedJunctions[nodes[j]].gameObject.name + " - " + edges[j] + " - ";
+        
 
         UnityEngine.Debug.Log($"{strIndices}");
     }

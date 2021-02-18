@@ -68,10 +68,10 @@ public class PathDesigner : MonoBehaviour
     {
         var cycles = GraphFinder.cycles;
         var random = Random.Range(0, cycles.Count);
-        var waypoints = graph.GetLoopWaypoints(cycles[random]);
+        var waypoints = graph.GetLoopWaypoints(cycles[random].nodes);
         var queue = new Queue<MazeCell>();
 
-        for(int i = 0; i < cycles[random].Length; i++)
+        for(int i = 0; i < cycles[random].nodes.Length; i++)
         {
             queue.Enqueue(waypoints[i]);
         }
