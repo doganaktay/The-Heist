@@ -1098,11 +1098,14 @@ public class GraphFinder : MonoBehaviour
         int[] e = new int[edges.Length];
 
         for (int i = 0; i < path.Length; i++)
+        {
             p[i] = path[path.Length - 1 - i];
+            e[i] = edges[edges.Length - 1 - i];
+        }
 
-        for (int i = 0; i < edges.Length - 1; i++)
-            e[i] = edges[edges.Length - 2 - i];   
-        
+        //for (int i = 0; i < edges.Length - 1; i++)
+        //    e[i] = edges[edges.Length - 2 - i];
+
 
         return normalize(p, e);
     }

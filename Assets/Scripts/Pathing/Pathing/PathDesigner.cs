@@ -64,16 +64,18 @@ public class PathDesigner : MonoBehaviour
         return queue;
     }
 
-    public Queue<MazeCell> RequestPathLoop()
+    public Queue<(MazeCell start, int index)> RequestPathLoop()
     {
         var cycles = GraphFinder.cycles;
         var random = Random.Range(0, cycles.Count);
-        var waypoints = graph.GetLoopWaypoints(cycles[random].nodes);
-        var queue = new Queue<MazeCell>();
+        var randomCycle = cycles[random];
+        var waypoints = graph.GetLoopWaypoints(randomCycle.nodes);
+        var indices = randomCycle.edges;
+        var queue = new Queue<(MazeCell start, int index)>();
 
-        for(int i = 0; i < cycles[random].nodes.Length; i++)
+        for(int i = randomCycle.nodes.Length - 1; i >= 0; i--)
         {
-            queue.Enqueue(waypoints[i]);
+            queue.Enqueue((waypoints[i], indices[i]));
         }
 
         return queue;
@@ -86,8 +88,8 @@ public class PathDesigner : MonoBehaviour
 
         while(queue.Count > 0)
         {
-            var cell = queue.Dequeue();
-            str += cell.gameObject.name + " - ";
+            var pair = queue.Dequeue();
+            str += pair.start.gameObject.name + " - " + pair.index + " - ";
         }
 
         Debug.Log($"Loop path: {str}");
@@ -99,7 +101,7 @@ public class PathDesigner : MonoBehaviour
         if (GUI.Button(new Rect(10, 190, 80, 60), "Get Queue"))
             GetDestinationQueue(GameManager.StartCell);
 
-        if (GUI.Button(new Rect(10, 310, 80, 60), "Get Queue"))
+        if (GUI.Button(new Rect(10, 310, 80, 60), "Print Loop"))
             PrintPathLoop();
     }
 }
