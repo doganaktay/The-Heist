@@ -33,11 +33,14 @@ public class PathRequestManager : MonoBehaviour
         }
     }
 
-    public static void RequestPath(PathRequest request)
+    public static void RequestPath(PathRequest request, int forcedIndex = -1)
     {
         ThreadStart threadStart = delegate
         {
-            instance.pathfinder.FindPath(request, instance.FinishedProcessingPath);
+            if(forcedIndex == -1)
+                instance.pathfinder.FindPath(request, instance.FinishedProcessingPath);
+            else
+                instance.pathfinder.FindPath(request, instance.FinishedProcessingPath, forcedIndex);
         };
         threadStart.Invoke();
     }

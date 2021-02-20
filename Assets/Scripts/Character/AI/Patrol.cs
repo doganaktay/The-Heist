@@ -19,13 +19,18 @@ public class Patrol : AI
                                         new Check(this)),
                                     new Investigate(this)
                                     )),
-                            new Selector($"{gameObject.name} Relaxed Behavior",
-                                new Wander(this)
+                            new RandomSelector($"{gameObject.name} Relaxed Behavior",
+                                new Wander(this),
+                                new Loop(this)
                                 ));
     }
 
-    protected override void HandleNotification(CellNotificationData data)
+    protected override void HandleNotification(MazeCell cell, CellNotificationData data)
     {
+        if (cell != currentCell)
+            return;
+
+
         Debug.Log($"{gameObject.name} at {currentCell.pos.x},{currentCell.pos.y} is handling notification with {data.priority} priority, {data.signalStrength} signal strength, centered at {data.signalCenter.gameObject.name}");
     }
 }

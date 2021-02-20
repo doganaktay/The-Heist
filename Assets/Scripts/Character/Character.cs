@@ -29,6 +29,16 @@ public abstract class Character : MonoBehaviour
 
     public Action PositionChange;
 
+    private void OnEnable()
+    {
+        NotificationModule.AddListener(HandleNotification);
+    }
+
+    private void OnDisable()
+    {
+        NotificationModule.RemoveListener(HandleNotification);
+    }
+
     protected virtual void Start()
     {
         posHits = new Collider2D[10];
@@ -37,7 +47,7 @@ public abstract class Character : MonoBehaviour
     protected virtual void Update()
     {
         if (isOnGrid && TrackPosition())
-            ManageCallbacks();
+            PositionChange?.Invoke();
 
         if (AimOverride)
             transform.LookAt2D(aimOverrideTarget, turnSpeed * 2f);
@@ -73,17 +83,7 @@ public abstract class Character : MonoBehaviour
         return false;
     }
 
-    void ManageCallbacks()
-    {
-        if(lastCell != null)
-            NotificationModule.RemoveListener(lastCell.pos, HandleNotification);
-        if(currentCell != null)
-            NotificationModule.AddListener(currentCell.pos, HandleNotification);
-
-        PositionChange?.Invoke();
-    }
-
-    protected abstract void HandleNotification(CellNotificationData data);
+    protected abstract void HandleNotification(MazeCell cell, CellNotificationData data);
 
     #region Movement
 
@@ -97,6 +97,11 @@ public abstract class Character : MonoBehaviour
     public void Move(PathLayer pathLayer = PathLayer.Base)
     {
         PathRequestManager.RequestPath(new PathRequest(OnPathFound, pathLayer, currentCell));
+    }
+
+    public void Move(MazeCell targetCell, int forcedIndex, PathLayer pathLayer = PathLayer.Base)
+    {
+        PathRequestManager.RequestPath(new PathRequest(OnPathFound, pathLayer, currentCell, targetCell), forcedIndex);
     }
 
     public void OnPathFound(List<MazeCell> path)

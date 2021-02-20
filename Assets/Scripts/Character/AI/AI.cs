@@ -7,6 +7,7 @@ public enum BehaviorType
 {
     Disabled = -1,
     Wander,
+    Loop,
     Investigate,
     Check,
     Alert,
@@ -49,6 +50,7 @@ public abstract class AI : Character, IBehaviorTree
     public bool HasSearchTarget { get => fieldOfView.lastKnownPlayerPos != null; }
     private (MazeCell target, bool isOld) searchTarget;
     public (MazeCell target, bool isOld) SearchTarget { get => searchTarget ; set => searchTarget = value; }
+    ChartedPath loopPath;
 
     public NodeBase BehaviorTree { get ; set; }
     Coroutine behaviourTreeRoutine;
@@ -140,6 +142,10 @@ public abstract class AI : Character, IBehaviorTree
         {
             case BehaviorType.Wander:
                 currentAction = StartCoroutine(Wander());
+                break;
+
+            case BehaviorType.Loop:
+                currentAction = StartCoroutine(LoopPath());
                 break;
 
             case BehaviorType.Check:
@@ -290,6 +296,26 @@ public abstract class AI : Character, IBehaviorTree
         IsActive = false;
     }
 
+    IEnumerator GoTo(MazeCell cell, int forcedIndex, bool shouldRun = false, bool lookAroundOnArrival = false)
+    {
+        IsActive = true;
+
+        ShouldRun = shouldRun;
+
+        Move(cell, forcedIndex);
+
+        yield return null;
+
+        while (isMoving)
+            yield return null;
+
+        if (lookAroundOnArrival)
+            yield return LookAround();
+
+        searchTarget.isOld = true;
+        IsActive = false;
+    }
+
     IEnumerator Investigate(MazeCell center)
     {
         IsActive = true;
@@ -326,6 +352,39 @@ public abstract class AI : Character, IBehaviorTree
         yield return null;
 
         IsActive = false;
+    }
+
+    IEnumerator LoopPath()
+    {
+        if (GetLoop())
+        {
+            int i;
+            var next = loopPath.GetNext();
+
+            while (!next.endOfLoop)
+            {
+                if (next.index == -1)
+                    yield return GoTo(next.cell);
+                else
+                    yield return GoTo(next.cell, next.index);
+
+                next = loopPath.GetNext();
+            }
+        }
+    }
+
+    bool GetLoop()
+    {
+        if (PathDesigner.Instance.MapHasCycles)
+        {
+            loopPath = PathDesigner.Instance.RequestPathLoop();
+
+            loopPath.DebugPath();
+
+            return true;
+        }
+        else
+            return false;
     }
 
     #endregion

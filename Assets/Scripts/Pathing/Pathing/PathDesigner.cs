@@ -64,35 +64,15 @@ public class PathDesigner : MonoBehaviour
         return queue;
     }
 
-    public Queue<(MazeCell start, int index)> RequestPathLoop()
-    {
-        var cycles = GraphFinder.cycles;
-        var random = Random.Range(0, cycles.Count);
-        var randomCycle = cycles[random];
-        var waypoints = graph.GetLoopWaypoints(randomCycle.nodes);
-        var indices = randomCycle.edges;
-        var queue = new Queue<(MazeCell start, int index)>();
-
-        for(int i = randomCycle.nodes.Length - 1; i >= 0; i--)
-        {
-            queue.Enqueue((waypoints[i], indices[i]));
-        }
-
-        return queue;
-    }
+    public ChartedPath RequestPathLoop() => graph.GetChartedPath();
+    public bool MapHasCycles => graph.HasCycles;
 
     public void PrintPathLoop()
     {
-        var queue = RequestPathLoop();
-        string str = "";
-
-        while(queue.Count > 0)
-        {
-            var pair = queue.Dequeue();
-            str += pair.start.gameObject.name + " - " + pair.index + " - ";
-        }
-
-        Debug.Log($"Loop path: {str}");
+        var pathLoop = RequestPathLoop();
+        pathLoop.DebugPath();
+        pathLoop.ReversePath();
+        pathLoop.DebugPath();
     }
 
 

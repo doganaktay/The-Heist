@@ -24,6 +24,8 @@ public class GraphFinder : MonoBehaviour
     static int maxLoopSearchDepth;
     static int maxRecursionDepth;
 
+    public bool HasCycles => cycles.Count > 0;
+
     [SerializeField]
     bool showDebugDisplay = false;
 
@@ -953,6 +955,23 @@ public class GraphFinder : MonoBehaviour
             wps[i] = indexedJunctions[indices[i]];
 
         return wps;
+    }
+
+    public ChartedPath GetChartedPath(int index = -1)
+    {
+        int indexToUse = index >= 0 ? index : UnityEngine.Random.Range(0, cycles.Count);
+
+        var cycle = cycles[indexToUse];
+        var waypoints = new MazeCell[cycle.nodes.Length];
+        var graphIndices = new int[cycle.edges.Length];
+
+        for(int i = 0; i < cycle.nodes.Length; i++)
+        {
+            waypoints[i] = indexedJunctions[cycle.nodes[cycle.nodes.Length - 1 - i]];
+            graphIndices[i] = cycle.edges[cycle.edges.Length - 1 - i];
+        }
+
+        return new ChartedPath(waypoints, graphIndices);
     }
 
     bool IsDeadEnd(int index)

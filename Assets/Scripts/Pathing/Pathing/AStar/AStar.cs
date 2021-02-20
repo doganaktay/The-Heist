@@ -100,7 +100,16 @@ public class AStar
         }
 
         if (!pathFound)
-        { Debug.Log("no available path from " + start + " to " + end); return null; }
+        {
+            string str = "";
+            str += "no available path from " + start + " to " + end;
+
+            if (forcedGraphIndex > -1)
+                str += " on " + forcedGraphIndex;
+
+            Debug.Log(str);
+            return null;
+        }
 
         aStarPath.Clear();
 
