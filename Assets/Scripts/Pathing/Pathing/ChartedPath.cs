@@ -23,17 +23,26 @@ public struct ChartedPath
     public (MazeCell cell, int index, bool endOfLoop) GetNext()
     {
         if (travelIndex == -1)
-            return (cells[++travelIndex], -1, false);
+        {
+            travelIndex++;
+            return (cells[0], -1, false);
+        }
         else if (travelIndex < cells.Length - 1)
-            return (cells[travelIndex], indices[travelIndex++], false);
+        {
+            var next = travelIndex;
+            travelIndex++;
+            return (cells[next + 1], indices[next], false);
+        }
         else
         {
             var next = travelIndex;
             travelIndex = 0;
-            return (cells[next], indices[next], true);
+            return (cells[0], indices[next], true);
         }
     }
 
+    public MazeCell GetStart() => cells[0];
+    
     public int GetIndex(MazeCell start, MazeCell end)
     {
         for(int i = 0; i < cells.Length; i++)
