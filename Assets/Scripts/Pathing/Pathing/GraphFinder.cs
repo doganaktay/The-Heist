@@ -17,7 +17,7 @@ public class GraphFinder : MonoBehaviour
     static Dictionary<int, (List<MazeCell> all, List<MazeCell> ends)> GraphAreas;
     static Dictionary<int, MazeCell> indexedJunctions = new Dictionary<int, MazeCell>();
     public static List<(int[] nodes, int[] edges)> cycles = new List<(int[] nodes, int[] edges)>();
-    static EdgeData[] LabelledGraphEdges;
+    static EdgeData[] LabelledGraphConnections;
 
     [SerializeField]
     int loopSearchLimit = 50, recursionLimit = 20;
@@ -29,6 +29,12 @@ public class GraphFinder : MonoBehaviour
     [SerializeField]
     bool showDebugDisplay = false;
 
+    // bidirectional BFS search collections
+    bool[] fromVisited;
+    bool[] toVisited;
+    (int node, int graphEdge)[] fromParent;
+    (int node, int graphEdge)[] toParent;
+
     #region Graph Search
 
     private void Awake()
@@ -36,12 +42,18 @@ public class GraphFinder : MonoBehaviour
         maxLoopSearchDepth = loopSearchLimit;
         maxRecursionDepth = recursionLimit;
 
-        GameManager.MazeGenFinished += CreateGraph;
+        GameManager.MazeGenFinished += Initialize;
     }
 
     private void OnDisable()
     {
-        GameManager.MazeGenFinished -= CreateGraph;
+        GameManager.MazeGenFinished -= Initialize;
+    }
+
+    private void Initialize()
+    {
+        CreateGraph();
+        InitializeSearchCollections();
     }
 
     public void CreateGraph()
@@ -373,7 +385,7 @@ public class GraphFinder : MonoBehaviour
 
             foreach (var end in area.Value.ends)
             {
-                if (end.IsLockedConnection && !currentEnds.Contains(end))
+                if (!currentEnds.Contains(end))
                 {
                     currentEnds.Add(end);
                     end.EndIndex = endCounter;
@@ -381,21 +393,6 @@ public class GraphFinder : MonoBehaviour
                     endCounter++;
                 }
             }
-        }
-
-        PruneTree(pruningList);
-
-        var unloopables = new List<MazeCell>();
-        foreach(var end in currentEnds)
-        {
-            if (end.IsUnloopable)
-                unloopables.Add(end);
-        }
-
-        foreach (var t in unloopables)
-        {
-            currentEnds.Remove(t);
-            //UnityEngine.Debug.Log($"Removing {t.gameObject.name} from loop junctions");
         }
 
         indexedJunctions.Clear();
@@ -407,7 +404,7 @@ public class GraphFinder : MonoBehaviour
             if (!indexedJunctions.ContainsKey(junctionIndex))
                 indexedJunctions.Add(junctionIndex, end);
 
-            var labelledConnections = GetLabelledConnections(end, false);
+            var labelledConnections = GetLabelledConnections(end, true);
 
             foreach(var connection in labelledConnections)
             {
@@ -426,28 +423,51 @@ public class GraphFinder : MonoBehaviour
             }
         }
 
-        // Construct edge graph for cycle detection
-        cycles.Clear();
+        PruneTree(pruningList);
 
         int edgeCount = 0;
-        LabelledGraphEdges = new EdgeData[labelledEdges.Count];
+        LabelledGraphConnections = new EdgeData[labelledEdges.Count];
         edgeCount = 0;
+
+        HashSet<int> prunedIndices = new HashSet<int>();
         foreach(var edge in labelledEdges)
         {
-            LabelledGraphEdges[edgeCount].from = edge.from;
-            LabelledGraphEdges[edgeCount].to = edge.to;
-            LabelledGraphEdges[edgeCount].graphIndex = edge.graphIndex;
+            LabelledGraphConnections[edgeCount].from = edge.from;
+            LabelledGraphConnections[edgeCount].to = edge.to;
+            LabelledGraphConnections[edgeCount].graphIndex = edge.graphIndex;
+
+            var from = indexedJunctions[edge.from];
+            var to = indexedJunctions[edge.to];
+
+
+            if (from.IsUnloopable || to.IsUnloopable
+                || !from.IsLockedConnection || !to.IsLockedConnection)
+                prunedIndices.Add(edgeCount);
 
             edgeCount++;
         }
 
+        var prunedEdges = new EdgeData[LabelledGraphConnections.Length - prunedIndices.Count];
+        int h = 0;
+        for(int i = 0; i < LabelledGraphConnections.Length; i++)
+        {
+            if (!prunedIndices.Contains(i))
+            {
+                prunedEdges[h] = LabelledGraphConnections[i];
+                h++;
+            }
+        }
+
+        // Construct edge graph for cycle detection
+        cycles.Clear();
+
         List<int> usedIndices = new List<int>();
 
-        for(int i = 0; i < LabelledGraphEdges.Length; i++)
+        for(int i = 0; i < prunedEdges.Length; i++)
         {
             for(int j = 0; j <= 1; j++)
             {
-                var label = LabelledGraphEdges[i][j];
+                var label = prunedEdges[i][j];
 
                 if (!indexedJunctions[label].IsJunction || usedIndices.Contains(label))
                     continue;
@@ -462,6 +482,9 @@ public class GraphFinder : MonoBehaviour
                 break;
             }
         }
+
+        LabelledGraphConnections.OrderBy(x => x.from);
+        cycles.OrderByDescending(x => x.nodes.Length);
 
         timer.Stop();
         UnityEngine.Debug.Log($"Graph and Loop finding took: {timer.ElapsedMilliseconds}ms");
@@ -653,6 +676,210 @@ public class GraphFinder : MonoBehaviour
                 CheckJunction(connection);
             }
         }
+    }
+
+    #endregion
+
+    #region Charted Path
+
+    //public ChartedPath BidirectionalSearch(MazeCell from, MazeCell to)
+    //{
+
+    //}
+
+    void InitializeSearchCollections()
+    {
+        fromVisited = new bool[indexedJunctions.Count];
+        toVisited = new bool[indexedJunctions.Count];
+        fromParent = new (int node, int edge)[indexedJunctions.Count];
+        toParent = new (int node, int edge)[indexedJunctions.Count];
+    }
+
+    void BiDirSearch(int from, int to)
+    {
+        UnityEngine.Debug.Log($"{indexedJunctions.Count}");
+
+        Array.Clear(fromVisited, 0, fromVisited.Length);
+        Array.Clear(toVisited, 0, toVisited.Length);
+        Array.Clear(fromParent, 0, fromParent.Length);
+        Array.Clear(toParent, 0, toParent.Length);
+
+        Queue<int> fromQueue = new Queue<int>();
+        Queue<int> toQueue = new Queue<int>();
+
+        int intersectNode = -1;
+
+        fromQueue.Enqueue(from);
+        fromVisited[from] = true;
+        fromParent[from] = (-1, -1);
+
+        toQueue.Enqueue(to);
+        toVisited[to] = true;
+        toParent[from] = (-1, -1);
+
+        while(fromQueue.Count > 0 && toQueue.Count > 0)
+        {
+            BFS(fromQueue, fromVisited, fromParent);
+            BFS(toQueue, toVisited, toParent);
+
+            intersectNode = IsIntersecting(fromVisited, toVisited);
+
+            if(intersectNode != -1)
+            {
+                BuildPath(fromParent, toParent, from, to, intersectNode);
+                break;
+            }
+        }
+    }
+
+    void BFS(Queue<int> queue, bool[] visited, (int, int)[] history)
+    {
+        int current = queue.Dequeue();
+
+        foreach(var connection in GetChartedConnections(current))
+        {
+            if (!visited[connection.node])
+            {
+                history[connection.node] = (current, connection.edge);
+                visited[connection.node] = true;
+                queue.Enqueue(connection.node);
+            }
+        }
+    }
+
+    int IsIntersecting(bool[] fromVisited, bool[] toVisited)
+    {
+        for(int i = 0; i < indexedJunctions.Count; i++)
+        {
+            if (fromVisited[i] && toVisited[i])
+                return i;
+        }
+
+        return -1;
+    }
+
+    ChartedPath BuildPath((int node, int graphEdge)[] fromParent, (int node, int graphEdge)[] toParent, int from, int to, int intersection)
+    {
+        var cells = new List<MazeCell>();
+        var indices = new List<int>();
+
+        int i = intersection;
+
+        cells.Add(indexedJunctions[i]);
+
+        while (i != from)
+        {
+            cells.Add(indexedJunctions[fromParent[i].node]);
+            indices.Add(fromParent[i].graphEdge);
+            i = fromParent[i].node;
+        }
+
+        cells.Reverse();
+        indices.Reverse();
+
+        i = intersection;
+
+        while (i != to)
+        {
+            cells.Add(indexedJunctions[toParent[i].node]);
+            indices.Add(toParent[i].graphEdge);
+            i = toParent[i].node;
+        }
+
+        UnityEngine.Debug.Log("Path found");
+
+        string test = "Path: ";
+
+        for(int k = 0; k < cells.Count; k++)
+        {
+            test += cells[k];
+
+            if(k < indices.Count)
+                test += " - " + indices[k] + " - ";
+        }
+
+        UnityEngine.Debug.Log(test);
+
+        return new ChartedPath(cells.ToArray(), indices.ToArray());
+    }
+
+    bool ChartPath(int fromIndex, int toIndex)
+    {
+        var searchA = new Queue<int>();
+        var searchB = new Queue<int>();
+
+        var visitedA = new HashSet<int>();
+        var visitedB = new HashSet<int>();
+
+        visitedA.Add(fromIndex);
+        visitedB.Add(toIndex);
+
+        searchA.Enqueue(fromIndex);
+        searchB.Enqueue(toIndex);
+
+        while (searchA.Count > 0 || searchB.Count > 0)
+        {
+            if (PathExists(searchA, visitedA, visitedB))
+                return true;
+
+            if (PathExists(searchB, visitedB, visitedA))
+                return true;
+        }
+
+        return false;
+    }
+
+
+
+    bool PathExists(Queue<int> queue, HashSet<int> visitedA, HashSet<int> visitedB)
+    {
+        if (queue.Count > 0)
+        {
+            int next = queue.Dequeue();
+            var connections = GetUnchartedConnections(next);
+
+            foreach (var index in connections)
+            {
+                if (visitedB.Contains(index))
+                    return true;
+                else if (visitedA.Add(index))
+                    queue.Enqueue(index);
+            }
+        }
+
+        return false;
+    }
+
+    HashSet<int> GetUnchartedConnections(int index)
+    {
+        var indices = new HashSet<int>();
+
+        for (int i = 0; i < LabelledGraphConnections.Length; i++)
+        {
+            for (int j = 0; j < 2; j++)
+            {
+                if (LabelledGraphConnections[i][j] == index)
+                    indices.Add(LabelledGraphConnections[i][(j + 1) % 2]);
+            }
+        }
+
+        return indices;
+    }
+
+    List<(int node, int edge)> GetChartedConnections(int index)
+    {
+        var connections = new List<(int node, int edge)>();
+
+        for (int i = 0; i < LabelledGraphConnections.Length; i++)
+        {
+            for (int j = 0; j < 2; j++)
+            {
+                if (LabelledGraphConnections[i][j] == index)
+                    connections.Add((LabelledGraphConnections[i][(j + 1) % 2], LabelledGraphConnections[i][2]));
+            }
+        }
+
+        return connections;
     }
 
     #endregion
@@ -947,17 +1174,7 @@ public class GraphFinder : MonoBehaviour
 
     }
 
-    public MazeCell[] GetLoopWaypoints(int[] indices)
-    {
-        var wps = new MazeCell[indices.Length];
-
-        for (int i = 0; i < indices.Length; i++)
-            wps[i] = indexedJunctions[indices[i]];
-
-        return wps;
-    }
-
-    public ChartedPath GetChartedPath(int index = -1)
+    public ChartedPath GetLoop(int index = -1)
     {
         int indexToUse = index >= 0 ? index : UnityEngine.Random.Range(0, cycles.Count);
 
@@ -1026,15 +1243,15 @@ public class GraphFinder : MonoBehaviour
         if (str == null)
             str = $"New search: ";
 
-        for (int i = 0; i < LabelledGraphEdges.Length; i++)
+        for (int i = 0; i < LabelledGraphConnections.Length; i++)
         {
             for (int y = 0; y <= 1; y++)
-                if (LabelledGraphEdges[i][y] == n)
+                if (LabelledGraphConnections[i][y] == n)
                 //  edge referes to our current node
                 {
-                    x = LabelledGraphEdges[i][(y + 1) % 2];
+                    x = LabelledGraphConnections[i][(y + 1) % 2];
 
-                    int graphIndex = LabelledGraphEdges[i][2];
+                    int graphIndex = LabelledGraphConnections[i][2];
 
                     if (graphIndex == lastGraphIndex)
                         continue;
@@ -1285,20 +1502,20 @@ public class GraphFinder : MonoBehaviour
         //    UnityEngine.Debug.Log($"{str}");
         //}
 
-        //for (int j = 0; j < LabelledGraphEdges.Length; j++)
-        //{
-        //    string str = "Edge: ";
-        //    for (int k = 0; k <= 1; k++)
-        //    {
-        //        str += LabelledGraphEdges[j][k] + " ";
-        //        str += indexedJunctions[LabelledGraphEdges[j][k]].gameObject.name + ", ";
+        for (int j = 0; j < LabelledGraphConnections.Length; j++)
+        {
+            string str = "Edge: ";
+            for (int k = 0; k <= 1; k++)
+            {
+                str += LabelledGraphConnections[j][k] + " ";
+                str += indexedJunctions[LabelledGraphConnections[j][k]].gameObject.name + ", ";
 
-        //    }
+            }
 
-        //    str += " graph index: " + LabelledGraphEdges[j][2];
+            str += " graph index: " + LabelledGraphConnections[j][2];
 
-        //    UnityEngine.Debug.Log($"{str}");
-        //}
+            UnityEngine.Debug.Log($"{str}");
+        }
 
         foreach (var cycle in cycles)
             PrintCycle(cycle.nodes, cycle.edges);
@@ -1318,9 +1535,22 @@ public class GraphFinder : MonoBehaviour
         UnityEngine.Debug.Log($"{strIndices}");
     }
 
+    string fromIndex, toIndex;
+
     private void OnGUI()
     {
-        if (GUI.Button(new Rect(10, 250, 80, 60), "Test Search"))
+        if (GUI.Button(new Rect(10, 190, 80, 60), "Test Search"))
             TestAreas();
+        fromIndex = GUI.TextField(new Rect(90, 250, 20, 60), fromIndex);
+        toIndex = GUI.TextField(new Rect(110, 250, 20, 60), toIndex);
+
+        if (GUI.Button(new Rect(10, 250, 80, 60), "Check Path"))
+        {
+            int a, b;
+            Int32.TryParse(fromIndex, out a);
+            Int32.TryParse(toIndex, out b);
+
+            BiDirSearch(a, b);
+        }
     }
 }

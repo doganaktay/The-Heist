@@ -2,20 +2,22 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public struct ChartedPath
+public class ChartedPath
 {
     public MazeCell[] cells;
     public int[] indices;
     public int travelIndex;
+    public bool isLoop;
 
     public ChartedPath(MazeCell[] cells, int[] indices)
     {
         this.cells = cells;
         this.indices = indices;
+        isLoop = cells.Length == indices.Length;
         travelIndex = -1;
 
 #if UNITY_EDITOR
-        if (cells.Length != indices.Length)
+        if (isLoop && cells.Length != indices.Length)
             Debug.LogError("Created incomplete charted path");
 #endif
     }
@@ -59,18 +61,25 @@ public struct ChartedPath
         var temp = new MazeCell[cells.Length];
         for(int i = 0; i < cells.Length; i++)
             temp[i] = cells[cells.Length - 1 - i];
-
         cells = temp;
 
         var tempInt = new int[indices.Length];
-        for (int i = 0; i < indices.Length; i++)
+        if(indices.Length == cells.Length)
         {
-            if (i < indices.Length - 1)
-                tempInt[i] = indices[indices.Length - 2 - i];
-            else
-                tempInt[i] = indices[i];
+            for (int i = 0; i < indices.Length; i++)
+            {
+                if (i < indices.Length - 1)
+                    tempInt[i] = indices[indices.Length - 2 - i];
+                else
+                    tempInt[i] = indices[i];
 
+            }
         }
+        else
+            for (int i = 0; i < indices.Length; i++)
+                tempInt[i] = indices[indices.Length - 1 - i];
+        
+
 
         indices = tempInt;
 

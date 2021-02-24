@@ -41,24 +41,24 @@ public abstract class AI : Character, IBehaviorTree
 
     [HideInInspector]
     public AIManager manager;
-    PathDesigner pathDesigner => PathDesigner.Instance;
+    PathDesigner pathDesigner = PathDesigner.Instance;
 
     public bool CanSeePlayer { get => fieldOfView.CanSeePlayer() || PlayerIsVeryClose(); }
     public bool IsAlert { get; private set; }
     public float AwarenessDistance { get => fieldOfView.viewRadius; }
-    public bool IsActive { get; private set; }
+    public bool IsActive { get; set; }
     public bool HasSearchTarget { get => fieldOfView.lastKnownPlayerPos != null; }
     private (MazeCell target, bool isOld) searchTarget;
     public (MazeCell target, bool isOld) SearchTarget { get => searchTarget ; set => searchTarget = value; }
-    ChartedPath loopPath;
+    public ChartedPath loopPath;
 
     public NodeBase BehaviorTree { get ; set; }
     Coroutine behaviourTreeRoutine;
     YieldInstruction btWaitTime = new WaitForSeconds(.1f);
-    BehaviorData lastBehaviorData;
-    BehaviorData currentBehaviorData;
 
     Coroutine currentAction;
+    public Coroutine CurrentAction => currentAction;
+    public ActionNode ActiveActionNode;
 
     #region MonoBehaviour
 
@@ -69,7 +69,7 @@ public abstract class AI : Character, IBehaviorTree
         fieldOfView = GetComponentInChildren<FieldOfView>();
         currentSpeed = Random.Range(speed.min, speed.max);
 
-        StartCoroutine(TrackAlertStatus());
+        StartCoroutine(TrackStatus());
 
         // Behavior Tree
         GenerateBehaviorTree();
@@ -79,12 +79,6 @@ public abstract class AI : Character, IBehaviorTree
     protected override void Update()
     {
         base.Update();
-
-        if (CheckForBehaviorChange() || !initialized)
-        {
-            TakeBehaviorAction();
-            initialized = true;
-        }
 
         if (CanSeePlayer)
         {
@@ -112,62 +106,13 @@ public abstract class AI : Character, IBehaviorTree
 
     IEnumerator RunBehaviorTree()
     {
+        yield return new WaitForSeconds(1f);
+
         while (enabled)
         {
             (BehaviorTree as Node).Run();
             yield return btWaitTime;
         }
-    }
-
-    bool CheckForBehaviorChange()
-    {
-        if (lastBehaviorData.type != currentBehaviorData.type || (currentBehaviorData.isRepeating && !IsActive))
-        {
-            lastBehaviorData = currentBehaviorData;
-            return true;
-        }
-        else
-            return false;
-    }
-
-    void TakeBehaviorAction()
-    {
-        if (currentAction != null)
-        {
-            StopCoroutine(currentAction);
-            IsActive = false;
-        }
-
-        switch (currentBehaviorData.type)
-        {
-            case BehaviorType.Wander:
-                currentAction = StartCoroutine(Wander());
-                break;
-
-            case BehaviorType.Loop:
-                currentAction = StartCoroutine(LoopPath());
-                break;
-
-            case BehaviorType.Check:
-                if (searchTarget.target != null)
-                    currentAction = StartCoroutine(GoTo(searchTarget.target, true));
-                break;
-
-            case BehaviorType.Investigate:
-                currentAction = StartCoroutine(Investigate(searchTarget.target));
-                break;
-
-            case BehaviorType.Chase:
-                currentAction = StartCoroutine(Chase());
-                break;
-        }
-
-        SetFOV(currentBehaviorData.fovType);        
-    }
-
-    public void SetBehaviorData(BehaviorData data)
-    {
-        currentBehaviorData = data;
     }
 
     #endregion
@@ -194,23 +139,76 @@ public abstract class AI : Character, IBehaviorTree
 
     #region AI Actions
 
-    IEnumerator Wander()
+    public void SetBehavior(IEnumerator behavior, ActionNode node)
+    {
+        Debug.Log($"Setting behavior to {node.Name}");
+
+        if (currentAction != null)
+        {
+            StopCoroutine(currentAction);
+            IsActive = false;
+        }
+
+        currentAction = StartCoroutine(behavior);
+    }
+
+    public bool IsActiveNode(ActionNode node) => node == ActiveActionNode;
+
+    public bool CanLoopMap() => PathDesigner.Instance.MapHasCycles;
+
+    public bool GetLoop()
+    {
+        if (PathDesigner.Instance.MapHasCycles)
+        {
+            loopPath = PathDesigner.Instance.RequestPathLoop();
+
+            return true;
+        }
+        else
+            return false;
+    }
+
+    public IEnumerator GoTo(MazeCell cell, bool shouldRun = false, bool lookAroundOnArrival = false)
     {
         IsActive = true;
 
-        Move();
+        ShouldRun = shouldRun;
+
+        Move(cell);
 
         yield return null;
 
         while (isMoving)
             yield return null;
 
-        yield return LookAround();
+        if (lookAroundOnArrival)
+            yield return LookAround();
 
+        searchTarget.isOld = true;
         IsActive = false;
     }
 
-    IEnumerator LookAround()
+    public IEnumerator GoTo(MazeCell cell, int forcedIndex, bool shouldRun = false, bool lookAroundOnArrival = false)
+    {
+        IsActive = true;
+
+        ShouldRun = shouldRun;
+
+        Move(cell, forcedIndex);
+
+        yield return null;
+
+        while (isMoving)
+            yield return null;
+
+        if (lookAroundOnArrival)
+            yield return LookAround();
+
+        searchTarget.isOld = true;
+        IsActive = false;
+    }
+
+    public IEnumerator LookAround()
     {
         var waitTime = Random.Range(this.waitTime.min, this.waitTime.max);
         var randomRot = Quaternion.Euler(new Vector3(0f, 0f, Random.Range(25f, 180f) * Mathf.Sign(Random.Range(-1f, 1f))));
@@ -245,156 +243,24 @@ public abstract class AI : Character, IBehaviorTree
         }
     }
 
-    Quaternion GetRandomRotation()
-    {
-
-
-        return Quaternion.Euler(0f, 0f, 0f);
-    }
-
-    IEnumerator Chase()
-    {
-        IsActive = true;
-
-        ShouldRun = true;
-        var currentTargetCell = GameManager.player.CurrentCell;
-        Move(currentTargetCell);
-
-        yield return null;
-
-        while (isMoving)
-        {
-            if (currentTargetCell != GameManager.player.CurrentCell)
-            {
-                currentTargetCell = GameManager.player.CurrentCell;
-                Move(currentTargetCell);
-            }
-
-            yield return null;
-        }
-
-        IsActive = false;
-    }
-
-    IEnumerator GoTo(MazeCell cell, bool shouldRun = false, bool lookAroundOnArrival = false)
-    {
-        IsActive = true;
-
-        ShouldRun = shouldRun;
-
-        Move(cell);
-
-        yield return null;
-
-        while (isMoving)
-            yield return null;
-
-        if (lookAroundOnArrival)
-            yield return LookAround();
-
-        searchTarget.isOld = true;
-        IsActive = false;
-    }
-
-    IEnumerator GoTo(MazeCell cell, int forcedIndex, bool shouldRun = false, bool lookAroundOnArrival = false)
-    {
-        IsActive = true;
-
-        ShouldRun = shouldRun;
-
-        Move(cell, forcedIndex);
-
-        yield return null;
-
-        while (isMoving)
-            yield return null;
-
-        if (lookAroundOnArrival)
-            yield return LookAround();
-
-        searchTarget.isOld = true;
-        IsActive = false;
-    }
-
-    IEnumerator Investigate(MazeCell center)
-    {
-        IsActive = true;
-
-        var possiblePositions = Propagation.instance.Propagate(center, 100000, 10);
-        var pathToPos = PathRequestManager.RequestPathImmediate(currentCell, searchTarget.target);
-        var pathToPlayer = PathRequestManager.RequestPathImmediate(searchTarget.target, GameManager.player.CurrentCell);
-
-        var final = new List<MazeCell>();
-
-        foreach(var pos in possiblePositions)
-        {
-            if (!pathToPos.Contains(pos) && pathToPlayer.Contains(pos))
-                final.Add(pos);
-        }
-
-        Debug.Log($"{gameObject.name} will investigate {final.Count} positions.");
-
-        while (IsAlert)
-        {
-            if (final.Count == 0)
-            {
-                Debug.Log("No position to investigate");
-                break;
-            }
-
-            var dest = final[Random.Range(0, final.Count)];
-
-            Debug.Log($"Investigating {dest.gameObject.name}");
-
-            yield return GoTo(dest, false, true);
-        }
-
-        yield return null;
-
-        IsActive = false;
-    }
-
-    IEnumerator LoopPath()
-    {
-        if (GetLoop())
-        {
-            int i;
-            var next = loopPath.GetNext();
-
-            while (!next.endOfLoop)
-            {
-                if (next.index == -1)
-                    yield return GoTo(next.cell);
-                else
-                    yield return GoTo(next.cell, next.index);
-
-                next = loopPath.GetNext();
-            }
-        }
-    }
-
-    bool GetLoop()
-    {
-        if (PathDesigner.Instance.MapHasCycles)
-        {
-            loopPath = PathDesigner.Instance.RequestPathLoop();
-
-            loopPath.DebugPath();
-
-            return true;
-        }
-        else
-            return false;
-    }
+    //Quaternion GetRandomRotation()
+    //{
+    //    return Quaternion.Euler(0f, 0f, 0f);
+    //}
 
     #endregion
 
     #region Utilities and Trackers
 
-    IEnumerator TrackAlertStatus()
+    IEnumerator TrackStatus()
     {
         while (true)
         {
+            // track player seen
+            // track player recognized
+
+            // track alert status
+
             if (CanSeePlayer)
             {
                 IsAlert = true;

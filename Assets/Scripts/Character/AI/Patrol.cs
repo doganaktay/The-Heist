@@ -8,21 +8,30 @@ public class Patrol : AI
     protected override void GenerateBehaviorTree()
     {
         BehaviorTree = new Selector($"{gameObject.name} AI Tree",
-                            new Sequence("Chase Player",
-                                new CanSeePlayer(this),
-                                new Chase(this)),
-                            new Sequence($"{gameObject.name} Alert Behavior",
-                                new IsAlert(this),
-                                new Selector("Decide Alert Behavior",
-                                    new Sequence("Check Target Cell",
-                                        new HasSearchTarget(this),
-                                        new Check(this)),
-                                    new Investigate(this)
-                                    )),
-                            new RandomSelector($"{gameObject.name} Relaxed Behavior",
-                                new Wander(this),
-                                new Loop(this)
+                                new Sequence("Chase Player",
+                                    new CanSeePlayer(this),
+                                    new Chase(this)),
+                                new RandomSelector( "Random Select",
+                                    new Wander(this),
+                                    new Loop(this)
                                 ));
+
+        //BehaviorTree = new Selector($"{gameObject.name} AI Tree",
+        //                    new Sequence("Chase Player",
+        //                        new CanSeePlayer(this),
+        //                        new Chase(this)),
+        //                    new Sequence($"{gameObject.name} Alert Behavior",
+        //                        new IsAlert(this),
+        //                        new Selector("Decide Alert Behavior",
+        //                            new Sequence("Check Target Cell",
+        //                                new HasSearchTarget(this),
+        //                                new Check(this)),
+        //                            new Investigate(this)
+        //                            )),
+        //                    new RandomSelector($"{gameObject.name} Relaxed Behavior",
+        //                        new Wander(this),
+        //                        new Loop(this)
+        //                        ));
     }
 
     protected override void HandleNotification(MazeCell cell, CellNotificationData data)

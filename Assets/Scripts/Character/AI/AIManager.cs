@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AIManager : MonoBehaviour
+public abstract class AIManager : MonoBehaviour
 {
     public AI aiPrefab;
     [SerializeField]
@@ -82,4 +82,5 @@ public class AIManager : MonoBehaviour
             CreateNewAI();
     }
 
+    protected abstract void AssignRoles();
 }

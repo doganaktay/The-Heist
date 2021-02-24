@@ -3,26 +3,43 @@ using System.Collections.Generic;
 using UnityEngine;
 using Archi.BT;
 
-public class Wander : Node
+public class Wander : ActionNode
 {
-    private AI owner;
-
     public Wander(AI owner)
     {
         this.owner = owner;
         Name = "Wander";
     }
 
-    protected override void OnReset() { }
-
-    protected override NodeStatus OnRun()
+    protected override IEnumerator Action()
     {
-        if(EvaluationCount == 0)
+        owner.ActiveActionNode = this;
+        owner.IsActive = true;
+
+        owner.ShouldRun = false;
+
+        owner.Move();
+
+        yield return null;
+
+        while (owner.IsMoving)
+            yield return null;
+
+        yield return owner.LookAround();
+
+        owner.IsActive = false;
+        owner.ActiveActionNode = null;
+    }
+
+    protected override bool ShouldAssignAction()
+    {
+        if (IsCurrentAction())
         {
-            owner.SetBehaviorData(new BehaviorData(BehaviorType.Wander, FOVType.Regular, true));
-            return NodeStatus.Running;
+
+
+            return false;
         }
 
-        return NodeStatus.Success;
+        return true;
     }
 }

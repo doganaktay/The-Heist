@@ -3,29 +3,49 @@ using System.Collections.Generic;
 using UnityEngine;
 using Archi.BT;
 
-public class Chase : Node
+public class Chase : ActionNode
 {
-    private AI owner;
-
     public Chase(AI owner)
     {
         this.owner = owner;
         Name = "Chase";
     }
 
-    protected override void OnReset() { }
-
-    protected override NodeStatus OnRun()
+    protected override IEnumerator Action()
     {
-        if (EvaluationCount == 0)
+        owner.ActiveActionNode = this;
+        owner.IsActive = true;
+
+        owner.ShouldRun = true;
+        var currentTargetCell = GameManager.player.CurrentCell;
+        owner.Move(currentTargetCell);
+
+        yield return null;
+
+        while (owner.IsMoving)
         {
-            owner.SetBehaviorData(new BehaviorData(BehaviorType.Chase, FOVType.Chase));
-            return NodeStatus.Running;
+            if (currentTargetCell != GameManager.player.CurrentCell)
+            {
+                currentTargetCell = GameManager.player.CurrentCell;
+                owner.Move(currentTargetCell);
+            }
+
+            yield return null;
         }
 
-        if (!owner.CanSeePlayer)
-            return NodeStatus.Failure;
+        owner.IsActive = false;
+        owner.ActiveActionNode = null;
+    }
 
-        return NodeStatus.Success;
+    protected override bool ShouldAssignAction()
+    {
+        if (IsCurrentAction())
+        {
+
+
+            return false;
+        }
+
+        return true;
     }
 }

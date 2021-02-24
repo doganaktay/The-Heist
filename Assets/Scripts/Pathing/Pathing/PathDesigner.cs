@@ -28,8 +28,6 @@ public class PathDesigner : MonoBehaviour
         int count = 10;
         var cell = currentPos;
 
-        
-        
         var queue = new Queue<MazeCell>();
 
         for (int i = 0; i < count; i++)
@@ -64,7 +62,7 @@ public class PathDesigner : MonoBehaviour
         return queue;
     }
 
-    public ChartedPath RequestPathLoop() => graph.GetChartedPath();
+    public ChartedPath RequestPathLoop() => graph.GetLoop();
     public bool MapHasCycles => graph.HasCycles;
 
     public void PrintPathLoop()
@@ -76,12 +74,12 @@ public class PathDesigner : MonoBehaviour
     }
 
 
-    private void OnGUI()
-    {
-        if (GUI.Button(new Rect(10, 190, 80, 60), "Get Queue"))
-            GetDestinationQueue(GameManager.StartCell);
+    //private void OnGUI()
+    //{
+    //    if (GUI.Button(new Rect(10, 190, 80, 60), "Get Queue"))
+    //        GetDestinationQueue(GameManager.StartCell);
 
-        if (GUI.Button(new Rect(10, 310, 80, 60), "Print Loop"))
-            PrintPathLoop();
-    }
+    //    if (GUI.Button(new Rect(10, 310, 80, 60), "Print Loop"))
+    //        PrintPathLoop();
+    //}
 }

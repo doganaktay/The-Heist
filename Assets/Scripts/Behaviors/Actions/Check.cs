@@ -19,7 +19,7 @@ public class Check : Node
     {
         if (EvaluationCount == 0)
         {
-            owner.SetBehaviorData(new BehaviorData(BehaviorType.Check, FOVType.Alert));
+            //owner.SetBehaviorData(new BehaviorData(BehaviorType.Check, FOVType.Alert));
             return NodeStatus.Running;
         }
 

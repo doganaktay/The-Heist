@@ -3,26 +3,49 @@ using System.Collections.Generic;
 using UnityEngine;
 using Archi.BT;
 
-public class Loop : Node
+public class Loop : ActionNode
 {
-    private AI owner;
-
     public Loop(AI owner)
     {
         this.owner = owner;
         Name = "Loop";
     }
 
-    protected override void OnReset() { }
-
-    protected override NodeStatus OnRun()
+    protected override IEnumerator Action()
     {
-        if (EvaluationCount == 0)
+        owner.ActiveActionNode = this;
+        owner.IsActive = true;
+
+        if (owner.loopPath == null)
+            owner.GetLoop();
+
+        var next = owner.loopPath.GetNext();
+
+        while (!next.endOfLoop)
         {
-            owner.SetBehaviorData(new BehaviorData(BehaviorType.Loop, FOVType.Regular, true));
-            return NodeStatus.Running;
+            if (next.index == -1)
+                yield return owner.GoTo(next.cell);
+            else
+                yield return owner.GoTo(next.cell, next.index);
+
+            next = owner.loopPath.GetNext();
         }
 
-        return NodeStatus.Success;
+        yield return owner.GoTo(next.cell, next.index);
+
+        owner.IsActive = false;
+        owner.ActiveActionNode = null;
+    }
+
+    protected override bool ShouldAssignAction()
+    {
+        if (IsCurrentAction())
+        {
+
+
+            return false;
+        }
+
+        return true;
     }
 }
