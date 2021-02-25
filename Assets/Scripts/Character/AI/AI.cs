@@ -160,12 +160,13 @@ public abstract class AI : Character, IBehaviorTree
     {
         if (PathDesigner.Instance.MapHasCycles)
         {
-            loopPath = PathDesigner.Instance.RequestPathLoop();
+            if(loopPath.cells == null)
+                loopPath = PathDesigner.Instance.RequestPathLoop();
 
             return true;
         }
-        else
-            return false;
+
+        return false;
     }
 
     public IEnumerator GoTo(MazeCell cell, bool shouldRun = false, bool lookAroundOnArrival = false)

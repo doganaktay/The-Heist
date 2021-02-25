@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ChartedPath
+public struct ChartedPath
 {
     public MazeCell[] cells;
     public int[] indices;
@@ -13,37 +13,69 @@ public class ChartedPath
     {
         this.cells = cells;
         this.indices = indices;
-        isLoop = cells.Length == indices.Length;
+        isLoop = indices.Length == cells.Length;
         travelIndex = -1;
-
-#if UNITY_EDITOR
-        if (isLoop && cells.Length != indices.Length)
-            Debug.LogError("Created incomplete charted path");
-#endif
     }
 
-    public (MazeCell cell, int index, bool endOfLoop) GetNext()
+    public (MazeCell cell, int index) GetNext(MazeCell cell, bool isEntry = false)
     {
-        if (travelIndex == -1)
+        bool found = false;
+
+        if (!isEntry)
         {
-            travelIndex++;
-            return (cells[0], -1, false);
-        }
-        else if (travelIndex < cells.Length - 1)
-        {
-            var next = travelIndex;
-            travelIndex++;
-            return (cells[next + 1], indices[next], false);
+            if (cell == cells[travelIndex + 1])
+                travelIndex++;
+
+            found = true;
         }
         else
         {
-            var next = travelIndex;
-            travelIndex = 0;
-            return (cells[0], indices[next], true);
+
+            for (int i = 0; i < cells.Length; i++)
+                if (cell == cells[i])
+                {
+                    travelIndex = i;
+                    found = true;
+                }
+
+            if (!found)
+            {
+                foreach(var index in cell.GetGraphAreaIndices())
+                {
+                    for(int i = 0; i < indices.Length; i++)
+                        if(index == indices[i])
+                        {
+                            travelIndex = i;
+                            found = true;
+                            break;
+                        }
+
+                    if (found)
+                        break;
+                }
+            }
         }
+
+        if (travelIndex == cells.Length - 1)
+        {
+            if (!isLoop)
+            {
+                travelIndex = -1;
+                return (null, -1);
+            }
+            else
+            {
+                var next = travelIndex;
+                travelIndex = -1;
+                return (cells[0], found ? indices[next] : -1);
+            }
+        }
+
+        return (cells[travelIndex + 1], travelIndex == -1 || !found ? -1 : indices[travelIndex]);
     }
 
-    public MazeCell GetStart() => cells[0];
+    public MazeCell Start => cells[0];
+    public MazeCell End => cells[cells.Length - 1];
     
     public int GetIndex(MazeCell start, MazeCell end)
     {

@@ -35,6 +35,9 @@ public class GraphFinder : MonoBehaviour
     (int node, int graphEdge)[] fromParent;
     (int node, int graphEdge)[] toParent;
 
+    ChartedPath chartedPath;
+    public ChartedPath ChartedPath => chartedPath;
+
     #region Graph Search
 
     private void Awake()
@@ -695,10 +698,8 @@ public class GraphFinder : MonoBehaviour
         toParent = new (int node, int edge)[indexedJunctions.Count];
     }
 
-    void BiDirSearch(int from, int to)
+    bool BiDirSearch(int from, int to, List<int> avoidIndices = null)
     {
-        UnityEngine.Debug.Log($"{indexedJunctions.Count}");
-
         Array.Clear(fromVisited, 0, fromVisited.Length);
         Array.Clear(toVisited, 0, toVisited.Length);
         Array.Clear(fromParent, 0, fromParent.Length);
@@ -719,25 +720,88 @@ public class GraphFinder : MonoBehaviour
 
         while(fromQueue.Count > 0 && toQueue.Count > 0)
         {
-            BFS(fromQueue, fromVisited, fromParent);
-            BFS(toQueue, toVisited, toParent);
+            if(avoidIndices == null)
+            {
+                BFS(fromQueue, fromVisited, fromParent);
+                BFS(toQueue, toVisited, toParent);
+            }
+            else
+            {
+                BFS(fromQueue, fromVisited, fromParent, avoidIndices);
+                BFS(toQueue, toVisited, toParent, avoidIndices);
+            }
 
             intersectNode = IsIntersecting(fromVisited, toVisited);
 
             if(intersectNode != -1)
             {
-                BuildPath(fromParent, toParent, from, to, intersectNode);
-                break;
+                chartedPath = BuildPath(fromParent, toParent, from, to, intersectNode);
+                return true;
             }
+            
         }
+
+        return false;
     }
 
-    void BFS(Queue<int> queue, bool[] visited, (int, int)[] history)
+    bool BiDirSearch(MazeCell fromCell, MazeCell toCell, List<int> avoidIndices = null)
+    {
+        int from = fromCell.EndIndex;
+        int to = toCell.EndIndex;
+
+        Array.Clear(fromVisited, 0, fromVisited.Length);
+        Array.Clear(toVisited, 0, toVisited.Length);
+        Array.Clear(fromParent, 0, fromParent.Length);
+        Array.Clear(toParent, 0, toParent.Length);
+
+        Queue<int> fromQueue = new Queue<int>();
+        Queue<int> toQueue = new Queue<int>();
+
+        int intersectNode = -1;
+
+        fromQueue.Enqueue(from);
+        fromVisited[from] = true;
+        fromParent[from] = (-1, -1);
+
+        toQueue.Enqueue(to);
+        toVisited[to] = true;
+        toParent[from] = (-1, -1);
+
+        while (fromQueue.Count > 0 && toQueue.Count > 0)
+        {
+            if (avoidIndices == null)
+            {
+                BFS(fromQueue, fromVisited, fromParent);
+                BFS(toQueue, toVisited, toParent);
+            }
+            else
+            {
+                BFS(fromQueue, fromVisited, fromParent, avoidIndices);
+                BFS(toQueue, toVisited, toParent, avoidIndices);
+            }
+
+            intersectNode = IsIntersecting(fromVisited, toVisited);
+
+            if (intersectNode != -1)
+            {
+                chartedPath = BuildPath(fromParent, toParent, from, to, intersectNode);
+                return true;
+            }
+
+        }
+
+        return false;
+    }
+
+    void BFS(Queue<int> queue, bool[] visited, (int, int)[] history, List<int> avoidIndices = null)
     {
         int current = queue.Dequeue();
 
         foreach(var connection in GetChartedConnections(current))
         {
+            if (avoidIndices != null && avoidIndices.Contains(connection.edge))
+                continue;
+
             if (!visited[connection.node])
             {
                 history[connection.node] = (current, connection.edge);
@@ -801,53 +865,6 @@ public class GraphFinder : MonoBehaviour
         UnityEngine.Debug.Log(test);
 
         return new ChartedPath(cells.ToArray(), indices.ToArray());
-    }
-
-    bool ChartPath(int fromIndex, int toIndex)
-    {
-        var searchA = new Queue<int>();
-        var searchB = new Queue<int>();
-
-        var visitedA = new HashSet<int>();
-        var visitedB = new HashSet<int>();
-
-        visitedA.Add(fromIndex);
-        visitedB.Add(toIndex);
-
-        searchA.Enqueue(fromIndex);
-        searchB.Enqueue(toIndex);
-
-        while (searchA.Count > 0 || searchB.Count > 0)
-        {
-            if (PathExists(searchA, visitedA, visitedB))
-                return true;
-
-            if (PathExists(searchB, visitedB, visitedA))
-                return true;
-        }
-
-        return false;
-    }
-
-
-
-    bool PathExists(Queue<int> queue, HashSet<int> visitedA, HashSet<int> visitedB)
-    {
-        if (queue.Count > 0)
-        {
-            int next = queue.Dequeue();
-            var connections = GetUnchartedConnections(next);
-
-            foreach (var index in connections)
-            {
-                if (visitedB.Contains(index))
-                    return true;
-                else if (visitedA.Add(index))
-                    queue.Enqueue(index);
-            }
-        }
-
-        return false;
     }
 
     HashSet<int> GetUnchartedConnections(int index)
@@ -1472,24 +1489,23 @@ public class GraphFinder : MonoBehaviour
         //        UnityEngine.Debug.Log($"area contains: {cell.gameObject.name}");
         //}
 
-        //for (int i = 0; i < maze.size.x; i++)
-        //{
-        //    for (int j = 0; j < maze.size.y; j++)
-        //    {
-        //        var cell = maze.cells[i, j];
+        for (int i = 0; i < maze.size.x; i++)
+        {
+            for (int j = 0; j < maze.size.y; j++)
+            {
+                var cell = maze.cells[i, j];
 
-        //        if (cell.state > 1)
-        //            continue;
+                if (cell.state > 1)
+                    continue;
 
-        //        UnityEngine.Debug.Log($"Junction Distances for {cell.gameObject.name}");
+                UnityEngine.Debug.Log($"Measured junctions for {cell.gameObject.name}");
 
-        //        foreach(var item in cell.JunctionDistances)
-        //        {
-        //            foreach(var end in item.Value)
-        //            UnityEngine.Debug.Log($"distance to {end.gameObject.name}: {item.Key}");
-        //        }
-        //    }
-        //}
+                foreach (var item in cell.MeasuredJunctions)
+                {
+                    UnityEngine.Debug.Log($"distance to {item.Key.gameObject.name}: {item.Value}");
+                }
+            }
+        }
 
         //for(int j = 0; j < GraphEdges.GetLength(0); j++)
         //{

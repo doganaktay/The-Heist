@@ -16,22 +16,20 @@ public class Loop : ActionNode
         owner.ActiveActionNode = this;
         owner.IsActive = true;
 
-        if (owner.loopPath == null)
-            owner.GetLoop();
-
-        var next = owner.loopPath.GetNext();
-
-        while (!next.endOfLoop)
+        if (owner.GetLoop())
         {
-            if (next.index == -1)
-                yield return owner.GoTo(next.cell);
-            else
-                yield return owner.GoTo(next.cell, next.index);
+            var next = owner.loopPath.GetNext(owner.CurrentCell, true);
 
-            next = owner.loopPath.GetNext();
+            while (next.cell != null)
+            {
+                if (next.index == -1)
+                    yield return owner.GoTo(next.cell);
+                else
+                    yield return owner.GoTo(next.cell, next.index);
+
+                next = owner.loopPath.GetNext(owner.CurrentCell);
+            }
         }
-
-        yield return owner.GoTo(next.cell, next.index);
 
         owner.IsActive = false;
         owner.ActiveActionNode = null;

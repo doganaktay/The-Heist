@@ -43,7 +43,7 @@ public class MazeCell : FastPriorityQueueNode
 	public int DeadConnectionCount { get; set; } = 0;
 	public bool IsUnloopable { get; set; } = false;
 
-	public SortedDictionary<int, List<MazeCell>> JunctionDistances = new SortedDictionary<int, List<MazeCell>>();
+	public List<KeyValuePair<MazeCell, int>> MeasuredJunctions = new List<KeyValuePair<MazeCell, int>>();
 
     public int LastIndexAddedToQueue { get; set; } = -1;
 	int unexploredDirectionCount = -1;
@@ -110,16 +110,10 @@ public class MazeCell : FastPriorityQueueNode
 			// -1 because path includes asking cell
 			var distance = PathRequestManager.RequestPathImmediate(this, end).Count - 1;
 
-            if (!JunctionDistances.ContainsKey(distance))
-            {
-				JunctionDistances.Add(distance, new List<MazeCell>());
-				JunctionDistances[distance].Add(end);
-            }
-            else if (!JunctionDistances[distance].Contains(end))
-            {
-				JunctionDistances[distance].Add(end);
-            }
+			MeasuredJunctions.Add(new KeyValuePair<MazeCell, int>(end, distance));
 		}
+
+		MeasuredJunctions = MeasuredJunctions.OrderBy(x => x.Value).ToList();
     }
 
 	public bool HasGraphIndex(int index)

@@ -12,7 +12,7 @@ public class Patrol : AI
                                     new CanSeePlayer(this),
                                     new Chase(this)),
                                 new RandomSelector( "Random Select",
-                                    new Wander(this),
+                                    //new Wander(this),
                                     new Loop(this)
                                 ));
 
