@@ -50,6 +50,14 @@ public class PathRequestManager : MonoBehaviour
         return instance.pathfinder.GetAStarPath(pathLayer, start, end);
     }
 
+    public static List<MazeCell> RequestPathImmediate(MazeCell start, MazeCell end, int forcedGraphIndex, PathLayer pathLayer = PathLayer.Base)
+    {
+        if (forcedGraphIndex == -1)
+            return instance.pathfinder.GetAStarPath(pathLayer, start, end);
+        else
+            return instance.pathfinder.GetAStarPath(pathLayer, start, end, forcedGraphIndex);
+    }
+
     public void FinishedProcessingPath(PathResult result)
     {
         lock (results)

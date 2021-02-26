@@ -16,6 +16,22 @@ public class Patrol : AI
                                     new Loop(this)
                                 ));
 
+        // if can see
+            // if coordinated
+                // broadcast observation point
+            // chase
+            // set point of interest
+        // if point of interest
+            // consume point to build search queue
+            // while path !empty search
+        // if isAlert
+            // investigate surroundings
+        // casual behaviors
+            // if chance and proximity
+                // socialize
+            // wander
+            // loop
+
         //BehaviorTree = new Selector($"{gameObject.name} AI Tree",
         //                    new Sequence("Chase Player",
         //                        new CanSeePlayer(this),

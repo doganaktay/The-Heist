@@ -48,6 +48,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isOnGrid: 1
+  pathDriftMultiplier: 0.05
   speed:
     min: 8
     max: 20

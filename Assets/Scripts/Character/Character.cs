@@ -13,6 +13,7 @@ public abstract class Character : MonoBehaviour
     protected Collider2D previousHit;
     [SerializeField] protected bool isOnGrid = true;
     private bool hasChanged = false;
+    [Range(0f, 1f), SerializeField]protected float pathDriftMultiplier = 0.2f;
 
     [SerializeField]
     protected MinMaxData speed;
@@ -142,9 +143,12 @@ public abstract class Character : MonoBehaviour
 #endif
 
         int i = path[0] == currentCell ? 1 : 0;
+        Vector2 drift = UnityEngine.Random.insideUnitCircle.normalized * (GameManager.CellDiagonal * pathDriftMultiplier);
         while (i < path.Count)
         {
             nextCell = path[i];
+
+            Vector3 nextPos = nextCell.transform.position + (Vector3)drift;
 
             if (!AimOverride)
             {
@@ -154,10 +158,19 @@ public abstract class Character : MonoBehaviour
                     transform.LookAt2D(nextCell.transform, turnSpeed);
             }
 
-            transform.position = Vector2.MoveTowards(transform.position, nextCell.transform.position, speed * Time.deltaTime);
+            transform.position = Vector2.MoveTowards(transform.position, nextPos, speed * Time.deltaTime);
 
-            if (transform.position == nextCell.transform.position)
+            if (transform.position == nextPos)
+            {
+                drift = UnityEngine.Random.insideUnitCircle.normalized * (GameManager.CellDiagonal * pathDriftMultiplier);
                 i++;
+            }
+
+
+            //transform.position = Vector2.MoveTowards(transform.position, nextCell.transform.position, speed * Time.deltaTime);
+
+            //if (transform.position == nextCell.transform.position)
+            //    i++;
 
 #if UNITY_EDITOR
             Debug.DrawLine(transform.position, nextCell.transform.position, Color.blue, 5f);

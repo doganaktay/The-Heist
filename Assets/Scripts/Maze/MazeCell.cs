@@ -36,16 +36,16 @@ public class MazeCell : FastPriorityQueueNode
 	public bool IsLockedConnection { get; set; } = false;
 	public bool IsDeadEnd => connectedCells.Count == 1;
 	public List<int> GraphAreaIndices = new List<int>();
-    public List<int> GetGraphAreaIndices() => GraphAreaIndices;
-    public int GraphAreaCount => GraphAreaIndices.Count;
-    public bool IsJunction => IsGraphConnection && GraphAreaIndices.Count > 1;
+	public List<int> GetGraphAreaIndices() => GraphAreaIndices;
+	public int GraphAreaCount => GraphAreaIndices.Count;
+	public bool IsJunction => IsGraphConnection && GraphAreaIndices.Count > 1;
 	public int EndIndex { get; set; } = -1;
 	public int DeadConnectionCount { get; set; } = 0;
 	public bool IsUnloopable { get; set; } = false;
 
 	public List<KeyValuePair<MazeCell, int>> MeasuredJunctions = new List<KeyValuePair<MazeCell, int>>();
 
-    public int LastIndexAddedToQueue { get; set; } = -1;
+	public int LastIndexAddedToQueue { get; set; } = -1;
 	int unexploredDirectionCount = -1;
 	public int UnexploredDirectionCount
 	{
@@ -79,7 +79,7 @@ public class MazeCell : FastPriorityQueueNode
 		return false;
 	}
 
-	static (int cardinal, int diagonal)[] CornerBitPatterns = new(int cardinal, int diagonal)[]
+	static (int cardinal, int diagonal)[] CornerBitPatterns = new (int cardinal, int diagonal)[]
 	{
 		(1 << 0 | 1 << 1, 1 << 0),
 		(1 << 1 | 1 << 2, 1 << 1),
@@ -89,10 +89,11 @@ public class MazeCell : FastPriorityQueueNode
 	};
 
 	public void SetGraphArea(int index)
-    {
-		if (!GraphAreaIndices.Contains(index))
+	{
+		if(!GraphAreaIndices.Contains(index))
 			GraphAreaIndices.Add(index);
 	}
+	
 
 	public void RemoveGraphArea(int index)
     {
@@ -115,6 +116,20 @@ public class MazeCell : FastPriorityQueueNode
 
 		MeasuredJunctions = MeasuredJunctions.OrderBy(x => x.Value).ToList();
     }
+
+	public MazeCell GetClosestJunction() => MeasuredJunctions[0].Key;
+	public MazeCell GetClosestJunction(MazeCell junctionToAvoid)
+    {
+		for(int i = 0; i < MeasuredJunctions.Count; i++)
+        {
+			if (MeasuredJunctions[i].Key != junctionToAvoid)
+				return MeasuredJunctions[i].Key;
+		}
+
+		return null;
+    }
+
+	public MazeCell GetFarthestJunction() => MeasuredJunctions[MeasuredJunctions.Count - 1].Key;
 
 	public bool HasGraphIndex(int index)
     {

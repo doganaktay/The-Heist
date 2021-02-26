@@ -14,8 +14,8 @@ public class GraphFinder : MonoBehaviour
     List<MazeCell> currentArea = new List<MazeCell>();
     List<MazeCell> ends = new List<MazeCell>();
     bool[,] visited;
-    static Dictionary<int, (List<MazeCell> all, List<MazeCell> ends)> GraphAreas;
-    static Dictionary<int, MazeCell> indexedJunctions = new Dictionary<int, MazeCell>();
+    public static Dictionary<int, (List<MazeCell> all, List<MazeCell> ends)> GraphAreas;
+    public static Dictionary<int, MazeCell> indexedJunctions = new Dictionary<int, MazeCell>();
     public static List<(int[] nodes, int[] edges)> cycles = new List<(int[] nodes, int[] edges)>();
     static EdgeData[] LabelledGraphConnections;
 
@@ -698,8 +698,11 @@ public class GraphFinder : MonoBehaviour
         toParent = new (int node, int edge)[indexedJunctions.Count];
     }
 
-    bool BiDirSearch(int from, int to, List<int> avoidIndices = null)
+    public bool BiDirSearch(int from, int to, List<int> avoidIndices = null)
     {
+        if (from == -1 || to == -1)
+            return false;
+
         Array.Clear(fromVisited, 0, fromVisited.Length);
         Array.Clear(toVisited, 0, toVisited.Length);
         Array.Clear(fromParent, 0, fromParent.Length);
@@ -744,10 +747,13 @@ public class GraphFinder : MonoBehaviour
         return false;
     }
 
-    bool BiDirSearch(MazeCell fromCell, MazeCell toCell, List<int> avoidIndices = null)
+    public bool BiDirSearch(MazeCell fromCell, MazeCell toCell, List<int> avoidIndices = null)
     {
         int from = fromCell.EndIndex;
         int to = toCell.EndIndex;
+
+        if (from == -1 || to == -1)
+            return false;
 
         Array.Clear(fromVisited, 0, fromVisited.Length);
         Array.Clear(toVisited, 0, toVisited.Length);
@@ -1237,6 +1243,59 @@ public class GraphFinder : MonoBehaviour
                     indices.Add(index);
 
         return indices;
+    }
+
+    public int GetClosestSharedIndex(MazeCell from, MazeCell to)
+    {
+        var indices = new List<int>();
+
+        foreach (var index in from.GetGraphAreaIndices())
+            foreach (var otherIndex in to.GetGraphAreaIndices())
+                if (index == otherIndex)
+                    indices.Add(index);
+
+        if (indices.Count == 0)
+            return -1;
+        else if (indices.Count == 1)
+            return indices[0];
+        else
+        {
+            int closestIndex = -1;
+            int shortestPathCount = 10000;
+
+            foreach (var index in indices)
+            {
+                var path = PathRequestManager.RequestPathImmediate(from, to, index);
+
+                if (path.Count < shortestPathCount || closestIndex == -1)
+                {
+                    closestIndex = index;
+                    shortestPathCount = path.Count;
+                }
+            }
+
+            return closestIndex;
+        }
+    }
+
+    public MazeCell GetSharedJunction(int from, int to)
+    {
+        foreach (var end in GraphAreas[from].ends)
+            foreach (var other in GraphAreas[to].ends)
+                if (end == other)
+                    return end;
+
+        return null;
+    }
+
+    public bool ShareIndex(MazeCell from, MazeCell to)
+    {
+        foreach (var index in from.GraphAreaIndices)
+            foreach (var otherIndex in to.GraphAreaIndices)
+                if (index == otherIndex)
+                    return true;
+
+        return false;
     }
 
     #endregion
