@@ -8,17 +8,24 @@ public class Patrol : AI
     protected override void GenerateBehaviorTree()
     {
         BehaviorTree = new Selector($"{gameObject.name} AI Tree",
-                                new Sequence("Chase Player",
-                                    new CanSeePlayer(this),
+                                new Sequence("Chase",
+                                    new RegisterPlayer(this),
                                     new Chase(this)),
-                                new RandomSelector( "Random Select",
+                                new Sequence("Pursuit",
+                                    new HasPursuitPath(this),
+                                    new FollowChartedPath(this, ChartedPathType.Pursuit, FOVType.Chase, true)),
+                                new Sequence("Alert",
+                                    new IsAlert(this),
+                                    new Investigate(this)),
+                                new RandomSelector("Random Select",
                                     //new Wander(this),
-                                    new Loop(this)
+                                    //new Loop(this),
+                                    new FollowChartedPath(this, ChartedPathType.Loop, FOVType.Regular)
                                 ));
 
         // if can see
             // if coordinated
-                // broadcast observation point
+                // broadcast observation point and heading
             // chase
             // set point of interest
         // if point of interest
@@ -29,8 +36,9 @@ public class Patrol : AI
         // casual behaviors
             // if chance and proximity
                 // socialize
-            // wander
-            // loop
+            // do assigned role or pick random
+                // wander
+                // loop
 
         //BehaviorTree = new Selector($"{gameObject.name} AI Tree",
         //                    new Sequence("Chase Player",
@@ -40,7 +48,7 @@ public class Patrol : AI
         //                        new IsAlert(this),
         //                        new Selector("Decide Alert Behavior",
         //                            new Sequence("Check Target Cell",
-        //                                new HasSearchTarget(this),
+        //                                new HasPursuitPath(this),
         //                                new Check(this)),
         //                            new Investigate(this)
         //                            )),

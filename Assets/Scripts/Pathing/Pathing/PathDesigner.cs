@@ -25,6 +25,56 @@ public class PathDesigner : MonoBehaviour
         }
     }
 
+    public ChartedPath GetPursuitPath(AI ai, MazeCell current, MazeCell observation)
+    {
+        var start = GetSearchStart(current, observation);
+        List<MazeCell> cells = new List<MazeCell>();
+        List<int> indices = new List<int>();
+        Queue<(MazeCell cell, int index)> cellsToExplore = new Queue<(MazeCell cell, int index)>();
+
+        int maxTravelDist = (int)(GameManager.CellCount * ai.fitness);
+
+        if (start.cell != null)
+        {
+            cellsToExplore.Enqueue((start.cell, start.index));
+            cells.Add(current);
+            indices.Add(-1);
+            //indices.Add(start.index);
+        }
+
+        while(cellsToExplore.Count != 0)
+        {
+            var next = cellsToExplore.Dequeue();
+            cells.Add(next.cell);
+
+            var candidates = graph.GetOtherConnections(next.cell, next.index);
+
+            if (candidates.Count == 1)
+            {
+                cellsToExplore.Enqueue(candidates[0]);
+                indices.Add(candidates[0].index);
+            }
+            else if (candidates.Count > 1)
+            {
+                var selected = candidates[Random.Range(0, candidates.Count - 1)];
+                cellsToExplore.Enqueue(selected);
+                indices.Add(candidates[0].index);
+            }
+        }
+
+        //string str = $"Pursuit Path: {ai.gameObject.name} asking from {current.gameObject.name}, observed at {observation.gameObject.name}: ";
+        //for(int i = 0; i < cells.Count; i++)
+        //{
+        //    str += cells[i].gameObject.name + " - ";
+
+        //    if (i < indices.Count)
+        //        str += indices[i] + " - ";
+        //}
+        //Debug.Log(str);
+
+        return new ChartedPath(cells.ToArray(), indices.ToArray());
+    }
+
     public ChartedPath ChartPath(MazeCell from, MazeCell to)
     {
         if (graph.BiDirSearch(from, to))
@@ -35,9 +85,10 @@ public class PathDesigner : MonoBehaviour
         return new ChartedPath(null, new int[1]);
     }
 
-    public (MazeCell cell, int avoidIndex) GetSearchStart(MazeCell current, MazeCell observation)
+    public (MazeCell cell, int index) GetSearchStart(MazeCell current, MazeCell observation)
     {
         var shareIndex = graph.GetClosestSharedIndex(current, observation);
+        Debug.Log($"{current.gameObject.name} - {observation.gameObject.name} Closest shared index: {shareIndex}");
 
         if(shareIndex != -1)
         {

@@ -12,6 +12,7 @@ public class GameManager : MonoBehaviour
 	[SerializeField] float cellSizeX;
 	[SerializeField] float cellSizeY;
 	public static float CellDiagonal;
+	public static int CellCount;
 
 	[Header("References")]
 	public DControl touchControl;
@@ -89,6 +90,9 @@ public class GameManager : MonoBehaviour
 			newPos.y -= (mazeInstance.cellScaleX - mazeInstance.cellScaleY) * mazeInstance.cells.GetLength(1) / 2f;
 			mazeInstance.transform.position = newPos;
         }
+
+		// set cell count static reference
+		CellCount = gridSizeX * gridSizeY;
 
         // pass references to pathfinder
         pathfinder.maze = mazeInstance;

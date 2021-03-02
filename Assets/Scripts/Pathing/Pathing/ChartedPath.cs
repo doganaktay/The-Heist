@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
 public struct ChartedPath
 {
     public MazeCell[] cells;
@@ -19,6 +20,9 @@ public struct ChartedPath
 
     public (MazeCell cell, int index) GetNext(MazeCell cell, bool isEntry = false)
     {
+        if (cells == null || indices == null)
+            return (null, -1);
+
         bool found = false;
 
         if (!isEntry)
@@ -116,6 +120,17 @@ public struct ChartedPath
         indices = tempInt;
 
         travelIndex = 0;
+    }
+
+    public void Clear()
+    {
+        Debug.Log($"Clearing charted path");
+
+        cells = null;
+        indices = null;
+        travelIndex = -1;
+
+        Debug.Log($"Charted cells are null: {cells == null}");
     }
 
 #if UNITY_EDITOR

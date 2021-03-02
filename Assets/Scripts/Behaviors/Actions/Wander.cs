@@ -16,6 +16,7 @@ public class Wander : ActionNode
         owner.ActiveActionNode = this;
         owner.IsActive = true;
 
+        owner.SetFOV(FOVType.Regular);
         owner.ShouldRun = false;
 
         owner.Move();

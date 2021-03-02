@@ -41,18 +41,22 @@ public class FieldOfView : MonoBehaviour
 	Vector3[] vertices;
 	List<int> triangles;
 
-	[Header("Detection Settings")]
-	[SerializeField] float detectionTime;
-	public float DetectionTime { get => detectionTime; }
-	float exposureTime;
-	float detectionPercent;
-	[SerializeField] bool detectionIsCumulative;
-	public bool DetectionIsCumulative { get => detectionIsCumulative; }
-	Coroutine targetDetection;
 	PerObjectMaterialProperties props;
-	bool isDetecting;
-	public bool HasAcquiredTarget { get; set; } = false;
+
+	// detection settings
+	public bool AccumulateExposure { get; set; } = false;
+	public float ContinuousExposureTime { get; private set; }
+	public float TotalExposureTime { get; private set; }
+	public float ExposureLimit { get; set; }
 	public MazeCell lastKnownPlayerPos;
+
+	public void SetColorBlendFactor(float factor) => props.SetBlendFactor(factor);
+	public MazeCell GetPlayerPos()
+    {
+		var cell = lastKnownPlayerPos;
+		lastKnownPlayerPos = null;
+		return cell;
+    }
 
 	void Start()
 	{
@@ -77,37 +81,25 @@ public class FieldOfView : MonoBehaviour
 		//	DrawFieldOfView();
 	}
 
-
-	IEnumerator FindTargetsWithDelay(float delay)
-	{
-		var cachedDelay = new WaitForSeconds(delay);
-
-		while (true)
-		{
-			yield return cachedDelay;
-			FindVisibleTargets();
-		}
-	}
-
     private void Update()
     {
-		if (CanSeePlayer() && !isDetecting)
-        {
-			targetDetection = StartCoroutine(DetectTarget());
+		if (CanSeePlayer())
+		{
+			ContinuousExposureTime += Time.deltaTime;
+			TotalExposureTime += Time.deltaTime;
+
 			lastKnownPlayerPos = GameManager.player.CurrentCell;
 		}
-		else if (!CanSeePlayer() && isDetecting)
+        else
         {
-			isDetecting = false;
+			if (ContinuousExposureTime > ExposureLimit)
+				ContinuousExposureTime = ExposureLimit;
 
-			StopCoroutine(targetDetection);
-
-			if (!detectionIsCumulative)
-            {
-				exposureTime = 0f;
-				props.SetBlendFactor(0f);
-            }
-		}
+			if (!AccumulateExposure)
+				ContinuousExposureTime = 0;
+			else if (ContinuousExposureTime > 0)
+				ContinuousExposureTime -= Time.deltaTime;
+        }
     }
 
     private void LateUpdate()
@@ -127,27 +119,16 @@ public class FieldOfView : MonoBehaviour
         }
     }
 
-	IEnumerator DetectTarget()
-    {
-		isDetecting = true;
+	IEnumerator FindTargetsWithDelay(float delay)
+	{
+		var cachedDelay = new WaitForSeconds(delay);
 
-		while (isDetecting && detectionPercent <= 1f)
-        {
-			exposureTime += Time.deltaTime;
-			detectionPercent = exposureTime / detectionTime;
-
-			if (detectionPercent > 1f)
-				detectionPercent = 1f;
-
-			props.SetBlendFactor(detectionPercent);
-
-			yield return null;
-        }
-
-		HasAcquiredTarget = true;
-
-		isDetecting = false;
-    }
+		while (true)
+		{
+			yield return cachedDelay;
+			FindVisibleTargets();
+		}
+	}
 
 	public void ClearMesh()
 	{

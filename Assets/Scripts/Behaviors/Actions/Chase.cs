@@ -16,8 +16,10 @@ public class Chase : ActionNode
         owner.ActiveActionNode = this;
         owner.IsActive = true;
 
+        owner.SetFOV(FOVType.Chase);
         owner.ShouldRun = true;
         var currentTargetCell = GameManager.player.CurrentCell;
+        owner.SetPursuit(currentTargetCell);
         owner.Move(currentTargetCell);
 
         yield return null;
@@ -28,6 +30,7 @@ public class Chase : ActionNode
             {
                 currentTargetCell = GameManager.player.CurrentCell;
                 owner.Move(currentTargetCell);
+                owner.SetPursuit(currentTargetCell);
             }
 
             yield return null;

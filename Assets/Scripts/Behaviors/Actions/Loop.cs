@@ -16,9 +16,11 @@ public class Loop : ActionNode
         owner.ActiveActionNode = this;
         owner.IsActive = true;
 
+        owner.SetFOV(FOVType.Regular);
+
         if (owner.GetLoop())
         {
-            var next = owner.loopPath.GetNext(owner.CurrentCell, true);
+            var next = owner.loop.GetNext(owner.CurrentCell, true);
 
             while (next.cell != null)
             {
@@ -27,7 +29,7 @@ public class Loop : ActionNode
                 else
                     yield return owner.GoTo(next.cell, next.index);
 
-                next = owner.loopPath.GetNext(owner.CurrentCell);
+                next = owner.loop.GetNext(owner.CurrentCell);
             }
         }
 

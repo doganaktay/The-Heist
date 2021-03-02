@@ -22,6 +22,13 @@ public enum FOVType
     Chase
 }
 
+public enum ChartedPathType
+{
+    Loop,
+    Pursuit,
+    Disturbance
+}
+
 public abstract class AI : Character, IBehaviorTree
 {
     [SerializeField]
@@ -32,44 +39,96 @@ public abstract class AI : Character, IBehaviorTree
     MinMaxData lookSpeed;
     [SerializeField]
     MinMaxData waitTime;
+    [SerializeField, Tooltip("Time (in seconds) exposure to register player")]
+    MinMaxData registerThreshold;
+    float currentRegisterThreshold;
+    float registerTimer = 0;
+    [SerializeField, Tooltip("How much time needs to pass without a sighting to lose track of player after having found him")]
+    float lostTargetThreshold = 3f;
     [SerializeField]
     float maintainAlertTime = 5f;
     [SerializeField]
     float maintainAlertTimeIncrement = 5f;
     float alertTimer = 0f;
-    bool initialized = false;
+
+    Coroutine FOVRoutine;
+    [SerializeField]
+    float FOVAdjustTime = 1f;
 
     [HideInInspector]
     public AIManager manager;
-    PathDesigner pathDesigner = PathDesigner.Instance;
+    [HideInInspector]
+    public PathDesigner pathDesigner = PathDesigner.Instance;
 
-    public bool CanSeePlayer { get => fieldOfView.CanSeePlayer() || PlayerIsVeryClose(); }
+    public bool RegisterPlayer { get; private set; }
     public bool IsAlert { get; private set; }
     public float AwarenessDistance { get => fieldOfView.viewRadius; }
     public bool IsActive { get; set; }
-    public bool HasSearchTarget { get => fieldOfView.lastKnownPlayerPos != null; }
-    private (MazeCell target, bool isOld) searchTarget;
-    public (MazeCell target, bool isOld) SearchTarget { get => searchTarget ; set => searchTarget = value; }
-    public ChartedPath loopPath;
+    public MazeCell ObservationPoint { get; set; }
+    public int SearchAvoidIndex { get; set; } = -1;
+    public bool ReadyForPursuit { get; set; } = false;
+    public void SetPursuit(MazeCell start)
+    {
+        ReadyForPursuit = true;
+        ObservationPoint = start;
+        SearchAvoidIndex = -1;
+    }
+    public void SetPursuit(MazeCell start, int avoidIndex)
+    {
+        ReadyForPursuit = true;
+        ObservationPoint = start;
+        SearchAvoidIndex = avoidIndex;
+    }
+
+    Coroutine trackStatusRoutine;
+
+    [Range(0f,1f), Tooltip("Used for coordination and biasing pursuit towards longer paths")]
+    public float fitness;
+    [Range(0f, 1f), Tooltip("Used for coordination and biasing pursuit in the correct direction")]
+    public float foresight;
+    [Tooltip("Used in constructing pursuit paths")]
+    public int memory;
+
+    // charted paths
+    [HideInInspector] public ChartedPath loop;
+    [HideInInspector] public ChartedPath pursuit;
+    [HideInInspector] public ChartedPath disturbance;
+    public ChartedPath GetPath(ChartedPathType type)
+    {
+        switch (type)
+        {
+            case ChartedPathType.Loop:
+                return loop;
+            case ChartedPathType.Pursuit:
+                return pursuit;
+            case ChartedPathType.Disturbance:
+                return disturbance;
+        }
+
+        return new ChartedPath(null, new int[1]);
+    }
 
     public NodeBase BehaviorTree { get ; set; }
     Coroutine behaviourTreeRoutine;
     YieldInstruction btWaitTime = new WaitForSeconds(.1f);
-
     Coroutine currentAction;
     public Coroutine CurrentAction => currentAction;
     public ActionNode ActiveActionNode;
 
     #region MonoBehaviour
-
+    
     protected override void Start()
     {
         base.Start();
 
         fieldOfView = GetComponentInChildren<FieldOfView>();
+        fieldOfView.AccumulateExposure = true;
+        fieldOfView.ExposureLimit = currentRegisterThreshold;
         currentSpeed = Random.Range(speed.min, speed.max);
+        currentRegisterThreshold = Random.Range(registerThreshold.min, registerThreshold.max);
 
-        StartCoroutine(TrackStatus());
+        // Track status
+        trackStatusRoutine = StartCoroutine(TrackStatus());
 
         // Behavior Tree
         GenerateBehaviorTree();
@@ -80,11 +139,10 @@ public abstract class AI : Character, IBehaviorTree
     {
         base.Update();
 
-        if (CanSeePlayer)
+        if (RegisterPlayer && (fieldOfView.CanSeePlayer() || (IsAlert && PlayerIsVeryClose())))
         {
             aimOverrideTarget = GameManager.player.transform;
             AimOverride = true;
-            searchTarget = (GameManager.player.CurrentCell, false);
         }
         else
         {
@@ -96,6 +154,9 @@ public abstract class AI : Character, IBehaviorTree
     {
         if (behaviourTreeRoutine != null)
             StopCoroutine(behaviourTreeRoutine);
+
+        if (trackStatusRoutine != null)
+            StopCoroutine(trackStatusRoutine);
     }
 
     #endregion MonoBehaviour
@@ -119,13 +180,45 @@ public abstract class AI : Character, IBehaviorTree
 
     #region Field Of View
 
-    void SetFOV(FOVType type)
+    public void SetFOV(FOVType type)
     {
-        if ((int)type < 0)
-            return;
+        float radius, angle;
 
-        fieldOfView.viewRadius = fovPresets[(int)type].radius;
-        fieldOfView.viewAngle = fovPresets[(int)type].angle;
+        if (type == FOVType.Disabled)
+        {
+            fieldOfView.enabled = false;
+            return;
+        }
+        
+        if (!fieldOfView.isActiveAndEnabled)
+            fieldOfView.enabled = true;
+
+        radius = fovPresets[(int)type].radius;
+        angle = fovPresets[(int)type].angle;
+
+        if (FOVRoutine != null)
+            StopCoroutine(FOVRoutine);
+
+        StartCoroutine(AdjustFOV(radius, angle));
+    }
+
+    IEnumerator AdjustFOV(float radius, float angle)
+    {
+        float timer = 0f;
+        float ratio = 0f;
+        float currentRadius = fieldOfView.viewRadius;
+        float currentAngle = fieldOfView.viewAngle;
+
+        while(ratio < 1f)
+        {
+            fieldOfView.viewRadius = Mathf.Lerp(currentRadius, radius, ratio);
+            fieldOfView.viewAngle = Mathf.Lerp(currentAngle, angle, ratio);
+
+            timer += Time.deltaTime;
+            ratio = timer / FOVAdjustTime;
+
+            yield return null;
+        }
     }
 
     static List<(float radius, float angle)> fovPresets = new List<(float radius, float angle)>()
@@ -160,8 +253,8 @@ public abstract class AI : Character, IBehaviorTree
     {
         if (PathDesigner.Instance.MapHasCycles)
         {
-            if(loopPath.cells == null)
-                loopPath = PathDesigner.Instance.RequestPathLoop();
+            if(loop.cells.Length == 0)
+                loop = PathDesigner.Instance.RequestPathLoop();
 
             return true;
         }
@@ -169,11 +262,9 @@ public abstract class AI : Character, IBehaviorTree
         return false;
     }
 
-    public IEnumerator GoTo(MazeCell cell, bool shouldRun = false, bool lookAroundOnArrival = false)
+    public IEnumerator GoTo(MazeCell cell, bool lookAroundOnArrival = false)
     {
-        IsActive = true;
-
-        ShouldRun = shouldRun;
+        //IsActive = true;
 
         Move(cell);
 
@@ -185,15 +276,12 @@ public abstract class AI : Character, IBehaviorTree
         if (lookAroundOnArrival)
             yield return LookAround();
 
-        searchTarget.isOld = true;
-        IsActive = false;
+        //IsActive = false;
     }
 
-    public IEnumerator GoTo(MazeCell cell, int forcedIndex, bool shouldRun = false, bool lookAroundOnArrival = false)
+    public IEnumerator GoTo(MazeCell cell, int forcedIndex, bool lookAroundOnArrival = false)
     {
-        IsActive = true;
-
-        ShouldRun = shouldRun;
+        //IsActive = true;
 
         Move(cell, forcedIndex);
 
@@ -205,8 +293,7 @@ public abstract class AI : Character, IBehaviorTree
         if (lookAroundOnArrival)
             yield return LookAround();
 
-        searchTarget.isOld = true;
-        IsActive = false;
+        //IsActive = false;
     }
 
     public IEnumerator LookAround()
@@ -255,42 +342,90 @@ public abstract class AI : Character, IBehaviorTree
 
     IEnumerator TrackStatus()
     {
+        yield return new WaitForSeconds(1f);
+
         while (true)
         {
+            if (!RegisterPlayer)
+            {
+                if(fieldOfView.ContinuousExposureTime > currentRegisterThreshold
+                   || (IsAlert && (fieldOfView.CanSeePlayer() || PlayerIsVeryClose())))
+                {
+                    IsAlert = true;
+                    alertTimer = 0f;
+                    RegisterPlayer = true;
+
+                    UnityEngine.Debug.Log($"{gameObject.name} found player. Exposure: {fieldOfView.ContinuousExposureTime}/{currentRegisterThreshold}, {fieldOfView.ContinuousExposureTime > currentRegisterThreshold}, Is alert: {IsAlert} Can see player: {fieldOfView.CanSeePlayer()} Is too close: {PlayerIsVeryClose()}");
+                }
+            }
+            else
+            {
+                if (fieldOfView.CanSeePlayer() || (IsAlert && PlayerIsVeryClose()))
+                {
+                    registerTimer = 0;
+                    alertTimer = 0f;
+                }
+                else
+                    registerTimer += Time.deltaTime;
+
+                if(registerTimer >= lostTargetThreshold)
+                {
+                    RegisterPlayer = false;
+                    registerTimer = 0;
+
+                    UnityEngine.Debug.Log($"{gameObject.name} lost player");
+                }
+            }
+
+            fieldOfView.SetColorBlendFactor(RegisterPlayer || IsAlert ? 1f : fieldOfView.ContinuousExposureTime / currentRegisterThreshold);
+
+            if (IsAlert)
+            {
+                alertTimer += Time.deltaTime;
+
+                if (alertTimer > maintainAlertTime)
+                {
+                    IsAlert = false;
+                    alertTimer = 0;
+                    maintainAlertTime += maintainAlertTimeIncrement;
+
+                    Debug.Log($"{gameObject.name} is no longer alert");
+                }
+            }
+
             // track player seen
             // track player recognized
 
             // track alert status
 
-            if (CanSeePlayer)
-            {
-                IsAlert = true;
-                alertTimer = 0f;
-            }
-            else if (IsAlert)
-            {
-                alertTimer = 0f;
+            //if (CanSeePlayer)
+            //{
+            //    IsAlert = true;
+            //    alertTimer = 0f;
+            //}
+            //else if (IsAlert)
+            //{
+            //    alertTimer = 0f;
 
-                while (alertTimer < maintainAlertTime && !CanSeePlayer)
-                {
-                    alertTimer += Time.deltaTime;
-                    yield return null;
-                }
+            //    while (alertTimer < maintainAlertTime && !CanSeePlayer)
+            //    {
+            //        alertTimer += Time.deltaTime;
+            //        yield return null;
+            //    }
 
-                if (!CanSeePlayer)
-                {
-                    IsAlert = false;
-                    maintainAlertTime += maintainAlertTimeIncrement;
-                }
-            }
+            //    if (!CanSeePlayer)
+            //    {
+            //        IsAlert = false;
+            //        maintainAlertTime += maintainAlertTimeIncrement;
+            //    }
+            //}
 
             yield return null;
         }
     }
 
     bool PlayerIsVeryClose() =>
-        IsAlert
-        && (GameManager.player.transform.position - transform.position).sqrMagnitude < GameManager.CellDiagonal * GameManager.CellDiagonal
+        (GameManager.player.transform.position - transform.position).sqrMagnitude < GameManager.CellDiagonal
         && !Physics2D.Raycast(transform.position, GameManager.player.transform.position - transform.position, GameManager.CellDiagonal, fieldOfView.obstacleMask);
     
 

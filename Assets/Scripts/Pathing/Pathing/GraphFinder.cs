@@ -1140,17 +1140,22 @@ public class GraphFinder : MonoBehaviour
 
     public int GetOtherConnectionCount(MazeCell cell, int index) => GetOtherConnections(cell, index).Count;
 
-    public List<MazeCell> GetOtherConnections(MazeCell cell, int index)
+    public List<(MazeCell cell, int index)> GetOtherConnections(MazeCell cell, int index, bool getDeadEnds = true)
     {
         if (!cell.IsGraphConnection)
         {
             UnityEngine.Debug.LogError($"{gameObject.name} is not a connection point. Returning ends of area");
 
-            return new List<MazeCell>(GraphAreas[cell.GetGraphAreaIndices()[0]].ends);
+            int selected = cell.GetGraphAreaIndices()[0];
+            var list = new List<(MazeCell cell, int index)>();
+            foreach (var end in GraphAreas[selected].ends)
+                list.Add((end, selected));
+
+            return list;
         }
         else
         {
-            var connections = new List<MazeCell>();
+            var connections = new List<(MazeCell cell, int index)>();
 
             foreach (var key in cell.GraphAreaIndices)
             {
@@ -1159,10 +1164,10 @@ public class GraphFinder : MonoBehaviour
 
                 foreach (var item in GraphAreas[key].ends)
                 {
-                    if (item == cell)
+                    if (item == cell || (!getDeadEnds && !item.IsLockedConnection))
                         continue;
 
-                    connections.Add(item);
+                    connections.Add((item, key));
                 }
             }
 

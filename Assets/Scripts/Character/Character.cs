@@ -166,12 +166,6 @@ public abstract class Character : MonoBehaviour
                 i++;
             }
 
-
-            //transform.position = Vector2.MoveTowards(transform.position, nextCell.transform.position, speed * Time.deltaTime);
-
-            //if (transform.position == nextCell.transform.position)
-            //    i++;
-
 #if UNITY_EDITOR
             Debug.DrawLine(transform.position, nextCell.transform.position, Color.blue, 5f);
 #endif
