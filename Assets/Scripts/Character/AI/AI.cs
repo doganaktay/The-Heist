@@ -80,9 +80,9 @@ public abstract class AI : Character, IBehaviorTree
 
     Coroutine trackStatusRoutine;
 
-    [Range(0f,1f), Tooltip("Used for coordination and biasing pursuit towards longer paths")]
+    [Range(0f,1f), Tooltip("Used for movement decisions")]
     public float fitness;
-    [Range(0f, 1f), Tooltip("Used for coordination and biasing pursuit in the correct direction")]
+    [Range(0f, 1f), Tooltip("Used for coordination and biasing actions to be prescient")]
     public float foresight;
     [Tooltip("Used in constructing pursuit paths")]
     public int memory;

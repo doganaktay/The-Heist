@@ -32,14 +32,16 @@ public class PathDesigner : MonoBehaviour
         List<int> indices = new List<int>();
         Queue<(MazeCell cell, int index)> cellsToExplore = new Queue<(MazeCell cell, int index)>();
 
-        int maxTravelDist = (int)(GameManager.CellCount * ai.fitness);
+        int maxTravelDist = Mathf.RoundToInt(GameManager.CellCount * ai.fitness);
+        int dist = 0;
 
         if (start.cell != null)
         {
             cellsToExplore.Enqueue((start.cell, start.index));
             cells.Add(current);
             indices.Add(-1);
-            //indices.Add(start.index);
+
+            dist += PathRequestManager.RequestPathImmediate(current, start.cell).Count - 1;
         }
 
         while(cellsToExplore.Count != 0)
@@ -51,27 +53,31 @@ public class PathDesigner : MonoBehaviour
 
             if (candidates.Count == 1)
             {
+                dist += next.cell.GetJunctionDistance(candidates[0].cell);
+                if (dist > maxTravelDist)
+                {
+                    Debug.Log($"{ai.gameObject.name} exceeded pursuit distance limit");
+                    break;
+                }
+
                 cellsToExplore.Enqueue(candidates[0]);
                 indices.Add(candidates[0].index);
             }
             else if (candidates.Count > 1)
             {
-                var random = Random.Range(0, candidates.Count - 1);
-                var selected = candidates[random];
+                var selected = candidates[Random.Range(0, candidates.Count - 1)];
+
+                dist += next.cell.GetJunctionDistance(selected.cell);
+                if (dist > maxTravelDist)
+                {
+                    Debug.Log($"{ai.gameObject.name} exceeded pursuit distance limit");
+                    break;
+                }
+
                 cellsToExplore.Enqueue(selected);
-                indices.Add(candidates[random].index);
+                indices.Add(selected.index);
             }
         }
-
-        //string str = $"Pursuit Path: {ai.gameObject.name} asking from {current.gameObject.name}, observed at {observation.gameObject.name}: ";
-        //for(int i = 0; i < cells.Count; i++)
-        //{
-        //    str += cells[i].gameObject.name + " - ";
-
-        //    if (i < indices.Count)
-        //        str += indices[i] + " - ";
-        //}
-        //Debug.Log(str);
 
         return new ChartedPath(cells.ToArray(), indices.ToArray());
     }
@@ -106,7 +112,7 @@ public class PathDesigner : MonoBehaviour
                 if (current.IsGraphConnection)
                     return (observation.GetClosestJunction(current), shareIndex);
                 else
-                    return (observation.GetClosestJunction(), shareIndex);
+                    return (observation.GetClosestJunction(current.GetClosestJunction()), shareIndex);
             }
             else
             {

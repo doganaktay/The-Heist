@@ -72,7 +72,7 @@ MonoBehaviour:
   FOVAdjustTime: 1
   manager: {fileID: 0}
   pathDesigner: {fileID: 0}
-  fitness: 0
+  fitness: 0.2
   foresight: 0
   memory: 0
   loop:

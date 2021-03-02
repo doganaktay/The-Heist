@@ -142,6 +142,17 @@ public class MazeCell : FastPriorityQueueNode
 		return false;
     }
 
+	public int GetJunctionDistance(MazeCell other)
+    {
+		for(int i = 0; i < MeasuredJunctions.Count; i++)
+        {
+			if (MeasuredJunctions[i].Key == other)
+				return MeasuredJunctions[i].Value;
+		}
+
+		return -1;
+    }
+
     #endregion
 
     public MazeCell[] exploredFrom;
