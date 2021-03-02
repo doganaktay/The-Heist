@@ -1157,19 +1157,26 @@ public class GraphFinder : MonoBehaviour
         {
             var connections = new List<(MazeCell cell, int index)>();
 
+            string test = $"Reported other connections for {cell.gameObject.name} avoiding index {index}: ";
+
             foreach (var key in cell.GraphAreaIndices)
             {
                 if (index == key)
                     continue;
+
 
                 foreach (var item in GraphAreas[key].ends)
                 {
                     if (item == cell || (!getDeadEnds && !item.IsLockedConnection))
                         continue;
 
+                    test += $"{item.gameObject.name}, {key} - ";
+
                     connections.Add((item, key));
                 }
             }
+
+            UnityEngine.Debug.Log(test);
 
             return connections;
         }

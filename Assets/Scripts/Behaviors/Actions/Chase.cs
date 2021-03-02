@@ -16,8 +16,8 @@ public class Chase : ActionNode
         owner.ActiveActionNode = this;
         owner.IsActive = true;
 
-        owner.SetFOV(FOVType.Chase);
-        owner.ShouldRun = true;
+        owner.SetBehaviorParams(BehaviorType.Chase, FOVType.Chase, true);
+
         var currentTargetCell = GameManager.player.CurrentCell;
         owner.SetPursuit(currentTargetCell);
         owner.Move(currentTargetCell);

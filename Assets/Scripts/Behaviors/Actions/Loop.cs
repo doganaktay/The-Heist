@@ -16,7 +16,7 @@ public class Loop : ActionNode
         owner.ActiveActionNode = this;
         owner.IsActive = true;
 
-        owner.SetFOV(FOVType.Regular);
+        owner.SetBehaviorParams(BehaviorType.Casual, FOVType.Regular, false);
 
         if (owner.GetLoop())
         {

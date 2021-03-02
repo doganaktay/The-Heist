@@ -13,14 +13,14 @@ public class Patrol : AI
                                     new Chase(this)),
                                 new Sequence("Pursuit",
                                     new HasPursuitPath(this),
-                                    new FollowChartedPath(this, ChartedPathType.Pursuit, FOVType.Chase, true)),
+                                    new FollowChartedPath(this, ChartedPathType.Pursuit, BehaviorType.Pursue, FOVType.Chase, true)),
                                 new Sequence("Alert",
                                     new IsAlert(this),
                                     new Investigate(this)),
                                 new RandomSelector("Random Select",
                                     //new Wander(this),
                                     //new Loop(this),
-                                    new FollowChartedPath(this, ChartedPathType.Loop, FOVType.Regular)
+                                    new FollowChartedPath(this, ChartedPathType.Loop, BehaviorType.Casual, FOVType.Regular)
                                 ));
 
         // if can see

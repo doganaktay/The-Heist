@@ -56,9 +56,10 @@ public class PathDesigner : MonoBehaviour
             }
             else if (candidates.Count > 1)
             {
-                var selected = candidates[Random.Range(0, candidates.Count - 1)];
+                var random = Random.Range(0, candidates.Count - 1);
+                var selected = candidates[random];
                 cellsToExplore.Enqueue(selected);
-                indices.Add(candidates[0].index);
+                indices.Add(candidates[random].index);
             }
         }
 
@@ -122,90 +123,11 @@ public class PathDesigner : MonoBehaviour
             for(int i = path.Count - 1; i >= 0; i--)
             {
                 if (path[i].IsGraphConnection)
-                {
-                    if (path[i] == observation)
-                        return (path[i], graph.GetClosestSharedIndex(path[i], path[i - 1]));
-                    else
-                        return (path[i], graph.GetClosestSharedIndex(path[i], path[i + 1]));
-                }
+                    return (path[i], graph.GetClosestSharedIndex(path[i], path[i - 1]));
             }
         }
 
         return (null, -1);
-
-        // MazeCell search;
-        // if current and obs share index
-            // if index.ends.count == 1 && index.ends[0] == current
-                // return null;
-            // else if index.ends.count <= 2
-                // if obs is end
-                    // return obs
-                // else
-                    // return end closest to obs
-            // else
-                // if closest end is closer to obs than dist threshold
-                    // return closest end
-                // else
-                    // return multiple possibles (eliminate current or closest to current)
-        // else
-            // if current and obs share junction
-                // if obsIndex.ends.count == 1
-                    // return junction
-                // else if obsIndex.ends.count == 2
-                    // return end that isn't shared (can be the obs itself or not)
-                // else
-                    // return multiple possibles
-            // else
-                // get A* path to obs
-                // find last end visited
-                // if last end is obs
-                    // return obs
-                // else if obsIndex.ends.count == 2
-                    // return end of obsIndex that isn't last end visited on path
-                // else
-                    // return multiple possibles (exclude last end visited on path)
-
-
-
-    }
-
-    public Queue<MazeCell> GetDestinationQueue(MazeCell currentPos, MazeCell observationPoint = null, BehaviorType type = BehaviorType.Wander)
-    {
-        int count = 10;
-        var cell = currentPos;
-
-        var queue = new Queue<MazeCell>();
-
-        for (int i = 0; i < count; i++)
-        {
-            bool isJunction = cell.GraphAreaIndices.Count > 1;
-            MazeCell destination;
-
-            if (isJunction)
-            {
-                var connections = graph.GetConnections(cell);
-                destination = connections[Random.Range(0, connections.Count)];
-            }
-            else
-            {
-                var areaExits = graph.GetJunctionCells(cell.GetGraphAreaIndices()[0]);
-                destination = areaExits[Random.Range(0, areaExits.Count)];
-            }
-
-            queue.Enqueue(destination);
-
-            cell = destination;
-        }
-
-        Debug.Log($"Queue request start at: {currentPos.gameObject.name}");
-
-        while (queue.Count > 0)
-        {
-            var next = queue.Dequeue();
-            Debug.Log($"Next in queue: {next.gameObject.name}");
-        }
-
-        return queue;
     }
 
     public ChartedPath RequestPathLoop() => graph.GetLoop();

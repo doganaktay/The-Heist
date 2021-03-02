@@ -16,6 +16,8 @@ public class Investigate : ActionNode
         owner.ActiveActionNode = this;
         owner.IsActive = true;
 
+        owner.SetBehaviorParams(BehaviorType.Investigate, FOVType.Alert, false);
+
         var possiblePositions = Propagation.instance.Propagate(owner.CurrentCell, 100000, 10);
 
         while (owner.IsAlert)

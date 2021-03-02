@@ -6,11 +6,9 @@ using Archi.BT;
 public enum BehaviorType
 {
     Disabled = -1,
-    Wander,
-    Loop,
+    Casual,
     Investigate,
-    Check,
-    Alert,
+    Pursue,
     Chase
 }
 
@@ -108,12 +106,29 @@ public abstract class AI : Character, IBehaviorTree
         return new ChartedPath(null, new int[1]);
     }
 
+    public void ClearPath(ChartedPathType type)
+    {
+        switch (type)
+        {
+            case ChartedPathType.Loop:
+                loop.Clear();
+                break;
+            case ChartedPathType.Pursuit:
+                pursuit.Clear();
+                break;
+            case ChartedPathType.Disturbance:
+                disturbance.Clear();
+                break;
+        }
+    }
+
     public NodeBase BehaviorTree { get ; set; }
     Coroutine behaviourTreeRoutine;
     YieldInstruction btWaitTime = new WaitForSeconds(.1f);
     Coroutine currentAction;
     public Coroutine CurrentAction => currentAction;
     public ActionNode ActiveActionNode;
+    public BehaviorType CurrentBehavior { get; set; }
 
     #region MonoBehaviour
     
@@ -243,6 +258,13 @@ public abstract class AI : Character, IBehaviorTree
         }
 
         currentAction = StartCoroutine(behavior);
+    }
+
+    public void SetBehaviorParams(BehaviorType behaviorType, FOVType fovType, bool shouldRun)
+    {
+        CurrentBehavior = behaviorType;
+        SetFOV(fovType);
+        ShouldRun = shouldRun;
     }
 
     public bool IsActiveNode(ActionNode node) => node == ActiveActionNode;
@@ -377,9 +399,7 @@ public abstract class AI : Character, IBehaviorTree
                 }
             }
 
-            fieldOfView.SetColorBlendFactor(RegisterPlayer || IsAlert ? 1f : fieldOfView.ContinuousExposureTime / currentRegisterThreshold);
-
-            if (IsAlert)
+            if (IsAlert && (int)CurrentBehavior < (int)BehaviorType.Pursue)
             {
                 alertTimer += Time.deltaTime;
 
@@ -393,32 +413,7 @@ public abstract class AI : Character, IBehaviorTree
                 }
             }
 
-            // track player seen
-            // track player recognized
-
-            // track alert status
-
-            //if (CanSeePlayer)
-            //{
-            //    IsAlert = true;
-            //    alertTimer = 0f;
-            //}
-            //else if (IsAlert)
-            //{
-            //    alertTimer = 0f;
-
-            //    while (alertTimer < maintainAlertTime && !CanSeePlayer)
-            //    {
-            //        alertTimer += Time.deltaTime;
-            //        yield return null;
-            //    }
-
-            //    if (!CanSeePlayer)
-            //    {
-            //        IsAlert = false;
-            //        maintainAlertTime += maintainAlertTimeIncrement;
-            //    }
-            //}
+            fieldOfView.SetColorBlendFactor(RegisterPlayer || IsAlert ? 1f : fieldOfView.ContinuousExposureTime / currentRegisterThreshold);
 
             yield return null;
         }

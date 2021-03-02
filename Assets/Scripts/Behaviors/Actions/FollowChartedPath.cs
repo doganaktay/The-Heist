@@ -7,12 +7,14 @@ public class FollowChartedPath : ActionNode
 {
     FOVType fovType;
     ChartedPathType pathType;
+    BehaviorType behaviorType;
     bool shouldRun;
 
-    public FollowChartedPath(AI owner, ChartedPathType pathType, FOVType fovType, bool shouldRun = false)
+    public FollowChartedPath(AI owner, ChartedPathType pathType, BehaviorType behaviorType, FOVType fovType, bool shouldRun = false)
     {
         this.owner = owner;
         this.pathType = pathType;
+        this.behaviorType = behaviorType;
         this.fovType = fovType;
         this.shouldRun = shouldRun;
         Name = "Follow Path";
@@ -23,11 +25,9 @@ public class FollowChartedPath : ActionNode
         owner.ActiveActionNode = this;
         owner.IsActive = true;
 
-        if (shouldRun)
-            owner.ShouldRun = true;
-        else
-            owner.ShouldRun = false;
+        owner.SetBehaviorParams(behaviorType, fovType, shouldRun);
 
+        owner.CurrentBehavior = behaviorType;
         owner.SetFOV(fovType);
 
         if((pathType == ChartedPathType.Loop && owner.GetLoop()) || pathType != ChartedPathType.Loop) { }
@@ -53,6 +53,7 @@ public class FollowChartedPath : ActionNode
             }
 
             path.Clear();
+            owner.ClearPath(pathType);
 
         }
 
