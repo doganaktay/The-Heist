@@ -4,14 +4,19 @@ using UnityEngine;
 
 public struct CellNotificationData
 {
-    public int priority;
-    public float signalStrength;
+    public CellNotificationType type;
+    public float attenuatedSignalRatio;
     public MazeCell signalCenter;
 
-    public CellNotificationData(int priority, float signalStrength, MazeCell signalCenter)
+    public CellNotificationData(CellNotificationType type, float attenuatedSignalRatio, MazeCell signalCenter)
     {
-        this.priority = priority;
-        this.signalStrength = signalStrength;
+        this.type = type;
+        this.attenuatedSignalRatio = attenuatedSignalRatio;
         this.signalCenter = signalCenter;
     }
+}
+
+public enum CellNotificationType
+{
+    Sound
 }

@@ -8,6 +8,7 @@ public enum BehaviorType
     Disabled = -1,
     Casual,
     Investigate,
+    Check,
     Pursue,
     Chase
 }
@@ -23,8 +24,7 @@ public enum FOVType
 public enum ChartedPathType
 {
     Loop,
-    Pursuit,
-    Disturbance
+    Pursuit
 }
 
 public abstract class AI : Character, IBehaviorTree
@@ -60,23 +60,26 @@ public abstract class AI : Character, IBehaviorTree
 
     public bool RegisterPlayer { get; private set; }
     public bool IsAlert { get; private set; }
-    public float AwarenessDistance { get => fieldOfView.viewRadius; }
+    public float AwarenessDistance => fieldOfView.viewRadius;
+    public LayerMask ViewMask => fieldOfView.obstacleMask;
     public bool IsActive { get; set; }
-    public MazeCell ObservationPoint { get; set; }
+    public MazeCell PlayerObservationPoint { get; set; }
+    public MazeCell PointOfInterest { get; set; }
     public int SearchAvoidIndex { get; set; } = -1;
     public bool ReadyForPursuit { get; set; } = false;
     public void SetPursuit(MazeCell start)
     {
         ReadyForPursuit = true;
-        ObservationPoint = start;
+        PlayerObservationPoint = start;
         SearchAvoidIndex = -1;
     }
     public void SetPursuit(MazeCell start, int avoidIndex)
     {
         ReadyForPursuit = true;
-        ObservationPoint = start;
+        PlayerObservationPoint = start;
         SearchAvoidIndex = avoidIndex;
     }
+    
 
     Coroutine trackStatusRoutine;
 
@@ -90,7 +93,6 @@ public abstract class AI : Character, IBehaviorTree
     // charted paths
     [HideInInspector] public ChartedPath loop;
     [HideInInspector] public ChartedPath pursuit;
-    [HideInInspector] public ChartedPath disturbance;
     public ChartedPath GetPath(ChartedPathType type)
     {
         switch (type)
@@ -99,8 +101,6 @@ public abstract class AI : Character, IBehaviorTree
                 return loop;
             case ChartedPathType.Pursuit:
                 return pursuit;
-            case ChartedPathType.Disturbance:
-                return disturbance;
         }
 
         return new ChartedPath(null, new int[1]);
@@ -115,9 +115,6 @@ public abstract class AI : Character, IBehaviorTree
                 break;
             case ChartedPathType.Pursuit:
                 pursuit.Clear();
-                break;
-            case ChartedPathType.Disturbance:
-                disturbance.Clear();
                 break;
         }
     }
@@ -326,7 +323,7 @@ public abstract class AI : Character, IBehaviorTree
         var targetRot = randomRot * currentRot;
         var lookSpeed = Random.Range(this.lookSpeed.min, this.lookSpeed.max);
         var lookCurrent = 0f;
-
+        
         Debug.Log($"{gameObject.name} starting {waitTime} second look around");
 
         while (waitTime > 0)
@@ -351,6 +348,8 @@ public abstract class AI : Character, IBehaviorTree
             waitTime -= Time.deltaTime;
             yield return null;
         }
+
+        Debug.Log($"{gameObject.name} finished look around");
     }
 
     //Quaternion GetRandomRotation()
@@ -361,6 +360,12 @@ public abstract class AI : Character, IBehaviorTree
     #endregion
 
     #region Utilities and Trackers
+
+    public void SetAlertStatus()
+    {
+        IsAlert = true;
+        alertTimer = 0f;
+    }
 
     IEnumerator TrackStatus()
     {
@@ -373,8 +378,7 @@ public abstract class AI : Character, IBehaviorTree
                 if(fieldOfView.ContinuousExposureTime > currentRegisterThreshold
                    || (IsAlert && (fieldOfView.CanSeePlayer() || PlayerIsVeryClose())))
                 {
-                    IsAlert = true;
-                    alertTimer = 0f;
+                    SetAlertStatus();
                     RegisterPlayer = true;
 
                     UnityEngine.Debug.Log($"{gameObject.name} found player. Exposure: {fieldOfView.ContinuousExposureTime}/{currentRegisterThreshold}, {fieldOfView.ContinuousExposureTime > currentRegisterThreshold}, Is alert: {IsAlert} Can see player: {fieldOfView.CanSeePlayer()} Is too close: {PlayerIsVeryClose()}");
@@ -399,7 +403,9 @@ public abstract class AI : Character, IBehaviorTree
                 }
             }
 
-            if (IsAlert && (int)CurrentBehavior < (int)BehaviorType.Pursue)
+            
+
+            if (IsAlert && (int)CurrentBehavior < (int)BehaviorType.Check)
             {
                 alertTimer += Time.deltaTime;
 

@@ -99,46 +99,11 @@ public static class MazeDirections
 		return rotatedPattern;
     }
 
-	public static bool IsWithinRange(this Vector3 from, Vector3 to, float distance)
-    {
-		return (to - from).sqrMagnitude < distance * distance;
-    }
-
-	// MazeCellWall extension method, in here because this is currently the only static class
 	public static void RemoveWall(this MazeCellWall wall)
 	{
 		wall.cellA.connectedCells.Add(wall.cellB);
 		wall.cellB.connectedCells.Add(wall.cellA);
 
 		wall.gameObject.SetActive(false);
-	}
-
-	public static bool IsConnectedTo(this MazeCell current, MazeCell next, bool isCardinal)
-	{
-		if (isCardinal)
-		{
-			if (current.connectedCells.Contains(next) || current.placedConnectedCells.Contains(next))
-				return true;
-		}
-		else
-		{
-			int connected = 0;
-
-			foreach (var cell in current.connectedCells)
-			{
-				if (cell.connectedCells.Contains(next) || cell.placedConnectedCells.Contains(next))
-					connected++;
-			}
-			foreach (var cell in current.placedConnectedCells)
-			{
-				if (cell.connectedCells.Contains(next) || cell.placedConnectedCells.Contains(next))
-					connected++;
-			}
-
-			if (connected == 2)
-				return true;
-		}
-
-		return false;
 	}
 }

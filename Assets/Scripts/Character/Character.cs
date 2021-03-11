@@ -22,7 +22,7 @@ public abstract class Character : MonoBehaviour
     protected float turnSpeed = 1f;
     public bool ShouldRun { get; set; }
     protected bool isMoving = false;
-    protected MazeCell nextCell;
+    protected MazeCell currentTargetCell, nextTargetCell;
     protected Coroutine currentMovement;
     [HideInInspector] public Transform aim; // used if Character has aim for LookAt
     [HideInInspector] public bool AimOverride { get; set; } = false;
@@ -135,27 +135,21 @@ public abstract class Character : MonoBehaviour
     {
         isMoving = true;
 
-#if UNITY_EDITOR
-        for (int j = 0; j < path.Count - 1; j++)
-        {
-            Debug.DrawLine(path[j].transform.position, path[j + 1].transform.position, Color.red, 5f);
-        }
-#endif
-
         int i = path[0] == currentCell ? 1 : 0;
         Vector2 drift = UnityEngine.Random.insideUnitCircle.normalized * (GameManager.CellDiagonal * pathDriftMultiplier);
         while (i < path.Count)
         {
-            nextCell = path[i];
+            currentTargetCell = path[i];
+            nextTargetCell = i < path.Count - 1 ? path[i + 1] : null;
 
-            Vector3 nextPos = nextCell.transform.position + (Vector3)drift;
+            Vector3 nextPos = currentTargetCell.transform.position + (Vector3)drift;
 
             if (!AimOverride)
             {
                 if(aim != null)
-                    aim.LookAt2D(nextCell.transform, turnSpeed);
+                    aim.LookAt2D(nextPos, turnSpeed);
                 else
-                    transform.LookAt2D(nextCell.transform, turnSpeed);
+                    transform.LookAt2D(nextPos, turnSpeed);
             }
 
             transform.position = Vector2.MoveTowards(transform.position, nextPos, speed * Time.deltaTime);
@@ -165,10 +159,6 @@ public abstract class Character : MonoBehaviour
                 drift = UnityEngine.Random.insideUnitCircle.normalized * (GameManager.CellDiagonal * pathDriftMultiplier);
                 i++;
             }
-
-#if UNITY_EDITOR
-            Debug.DrawLine(transform.position, nextCell.transform.position, Color.blue, 5f);
-#endif
 
             yield return null;
         }

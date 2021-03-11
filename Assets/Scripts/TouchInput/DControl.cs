@@ -231,6 +231,12 @@ namespace Archi.Touch
                 switch (TouchUI.instance.CurrentSelectedButton.ButtonType)
                 {
                     case ButtonActionType.PlaceObject:
+                        if(currentCellHit.state > 1)
+                        {
+                            Debug.Log("Can't place on occupied cell");
+                            break;
+                        }
+
                         player.PutOrRemoveItem(TouchUI.instance.CurrentSelectedButton.ItemType, currentCellHit);
                         TouchUI.instance.CurrentSelectedButton.Deselect();
                         TouchUI.instance.CurrentSelectedButton = null;
@@ -239,16 +245,13 @@ namespace Archi.Touch
                         if(!currentCellHit.HasPlacedItem())
                         {
                             Debug.Log("No placed item");
+                            break;
                         }
-                        else
+                        
+                        foreach(var item in currentCellHit.placedItems.Values)
                         {
-                            foreach(var item in currentCellHit.placedItems.Values)
-                            {
-                                if (item)
-                                {
-                                    item.UseItem();
-                                }
-                            }
+                            if (item)
+                                item.UseItem();
                         }
 
                         TouchUI.instance.CurrentSelectedButton.Deselect();

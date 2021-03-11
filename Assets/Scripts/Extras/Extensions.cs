@@ -65,12 +65,36 @@ public static class Extensions
 
     public static void LookAt2D(this Transform transform, Transform target, float turnSpeed)
     {
-        transform.up = Vector2.Lerp(transform.up, target.position - transform.position, turnSpeed * Time.deltaTime);
+        Vector3 dir = target.position - transform.position;
+        float angle = (Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg) - 90f;
+        var currentRot = transform.rotation;
+        var newRot = Quaternion.AngleAxis(angle, Vector3.forward);
+
+        transform.rotation = Quaternion.Lerp(currentRot, newRot, turnSpeed * Time.deltaTime);
     }
 
     public static void LookAt2D(this Transform transform, Transform target)
     {
-        transform.up = (Vector2)(target.position - transform.position);
+        Vector3 dir = target.position - transform.position;
+        float angle = (Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg) - 90f;
+        transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
+    }
+
+    public static void LookAt2D(this Transform transform, Vector3 target)
+    {
+        Vector3 dir = target - transform.position;
+        float angle = (Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg) - 90f;
+        transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
+    }
+
+    public static void LookAt2D(this Transform transform, Vector3 target, float turnSpeed)
+    {
+        Vector3 dir = target - transform.position;
+        float angle = (Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg) - 90f;
+        var currentRot = transform.rotation;
+        var newRot = Quaternion.AngleAxis(angle, Vector3.forward);
+
+        transform.rotation = Quaternion.Lerp(currentRot, newRot, turnSpeed * Time.deltaTime);
     }
 
     public static bool IsWalkable(this MazeCell cell)
@@ -119,4 +143,41 @@ public static class Extensions
             UnityEngine.Object.Destroy(t.gameObject);
         }
     }
+
+    public static bool IsWithinRange(this Vector3 from, Vector3 to, float distance)
+    {
+        return (to - from).sqrMagnitude < distance * distance;
+    }
+
+    public static bool IsConnectedTo(this MazeCell current, MazeCell next, bool isCardinal)
+    {
+        if (isCardinal)
+        {
+            if (current.connectedCells.Contains(next) || current.placedConnectedCells.Contains(next))
+                return true;
+        }
+        else
+        {
+            int connected = 0;
+
+            foreach (var cell in current.connectedCells)
+            {
+                if (cell.connectedCells.Contains(next) || cell.placedConnectedCells.Contains(next))
+                    connected++;
+            }
+            foreach (var cell in current.placedConnectedCells)
+            {
+                if (cell.connectedCells.Contains(next) || cell.placedConnectedCells.Contains(next))
+                    connected++;
+            }
+
+            if (connected == 2)
+                return true;
+        }
+
+        return false;
+    }
+
+    public static bool IsCloseAndInView(this Transform from, Transform to, float distance, LayerMask mask) =>
+        (to.position - from.position).sqrMagnitude < distance && !Physics2D.Raycast(from.position, to.position - from.position, distance, mask);
 }

@@ -57,8 +57,6 @@ public class FollowChartedPath : ActionNode
 
         }
 
-
-
         owner.IsActive = false;
         owner.ActiveActionNode = null;
     }

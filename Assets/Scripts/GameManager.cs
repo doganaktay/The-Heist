@@ -14,6 +14,13 @@ public class GameManager : MonoBehaviour
 	public static float CellDiagonal;
 	public static int CellCount;
 
+	[Header("Parameter scaling")]
+	[SerializeField] float parameterDeviation;
+	public static float ParameterDeviation { get; private set; }
+	[SerializeField] MinMaxData biasMultipliers;
+	public static MinMaxData BiasMultipliers { get; private set; }
+
+
 	[Header("References")]
 	public DControl touchControl;
 	public Trajectory trajectory;
@@ -90,6 +97,10 @@ public class GameManager : MonoBehaviour
 			newPos.y -= (mazeInstance.cellScaleX - mazeInstance.cellScaleY) * mazeInstance.cells.GetLength(1) / 2f;
 			mazeInstance.transform.position = newPos;
         }
+
+		// set static getters for parameter deviation and bias multipliers
+		ParameterDeviation = parameterDeviation;
+		BiasMultipliers = GameManager.BiasMultipliers;
 
 		// set cell count static reference
 		CellCount = gridSizeX * gridSizeY;

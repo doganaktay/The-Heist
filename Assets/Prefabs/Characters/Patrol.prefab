@@ -52,7 +52,7 @@ MonoBehaviour:
   speed:
     min: 8
     max: 20
-  turnSpeed: 0.6
+  turnSpeed: 5
   aim: {fileID: 0}
   aimOverrideTarget: {fileID: 0}
   fieldOfView: {fileID: 3954462537585510568}
@@ -81,11 +81,6 @@ MonoBehaviour:
     travelIndex: 0
     isLoop: 0
   pursuit:
-    cells: []
-    indices: 
-    travelIndex: 0
-    isLoop: 0
-  disturbance:
     cells: []
     indices: 
     travelIndex: 0

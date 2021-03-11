@@ -124,13 +124,9 @@ public struct ChartedPath
 
     public void Clear()
     {
-        Debug.Log($"Clearing charted path");
-
         cells = null;
         indices = null;
         travelIndex = -1;
-
-        Debug.Log($"Charted cells are null: {cells == null}");
     }
 
 #if UNITY_EDITOR

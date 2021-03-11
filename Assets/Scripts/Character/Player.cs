@@ -75,7 +75,7 @@ public class Player : Character
         if (cell != currentCell)
             return;
 
-        Debug.Log($"{gameObject.name} at {currentCell.pos.x},{currentCell.pos.y} is handling notification with {data.priority} priority, {data.signalStrength} signal strength, centered at {data.signalCenter.gameObject.name}");
+        Debug.Log($"{gameObject.name} at {currentCell.pos.x},{currentCell.pos.y} is handling notification: type {data.type}, signal ratio {data.attenuatedSignalRatio}, center {data.signalCenter.gameObject.name}");
     }
 
     #endregion MonoBehaviour

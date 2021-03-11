@@ -43,10 +43,6 @@ public class CCTV : MonoBehaviour
     [SerializeField, Range(0f, 1f)]
     float defaultRotChance = 0.1f;
     MinMaxData camRotChance;
-    [SerializeField, Range(0f,1f), Tooltip("Percent to deviate from default value on affected parameters")]
-    float paramDeviation = 0.1f;
-    [SerializeField, Tooltip("The deviation is biased in the min and max by these multipliers")]
-    MinMaxData biasMultipliers;
 
     private void OnEnable()
     {
@@ -61,14 +57,6 @@ public class CCTV : MonoBehaviour
     private void SetupCCTV()
     {
         camDisplacement = GameManager.CellDiagonal / 2f * camDisplacementPercent;
-
-        if(biasMultipliers.min  == 0 || biasMultipliers.max == 0)
-        {
-            Debug.LogError("Bias multiplier is zero. Assigning default values");
-
-            biasMultipliers.min = 1;
-            biasMultipliers.max = 1;
-        }
 
         camViewRadius = GetLimits(defaultViewRadius);
         camViewAngle = GetLimits(defaultViewAngle);
@@ -87,8 +75,8 @@ public class CCTV : MonoBehaviour
 
     private MinMaxData GetLimits(float original)
     {
-        var min = original - (original * paramDeviation * biasMultipliers.min);
-        var max = original + (original * paramDeviation * biasMultipliers.max);
+        var min = original - (original * GameManager.ParameterDeviation * GameManager.BiasMultipliers.min);
+        var max = original + (original * GameManager.ParameterDeviation * GameManager.BiasMultipliers.max);
         return new MinMaxData(min, max);
     }
 

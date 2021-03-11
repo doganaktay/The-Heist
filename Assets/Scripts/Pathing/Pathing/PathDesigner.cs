@@ -12,8 +12,6 @@ public class PathDesigner : MonoBehaviour
     [SerializeField]
     int endProximityThreshold = 3;
 
-    Player player = GameManager.player;
-
     private void Awake()
     {
         if(Instance == null)
@@ -39,7 +37,8 @@ public class PathDesigner : MonoBehaviour
         {
             cellsToExplore.Enqueue((start.cell, start.index));
             cells.Add(current);
-            indices.Add(-1);
+            //indices.Add(-1);
+            indices.Add(graph.GetClosestSharedIndex(current, start.cell));
 
             dist += PathRequestManager.RequestPathImmediate(current, start.cell).Count - 1;
         }
@@ -112,7 +111,12 @@ public class PathDesigner : MonoBehaviour
                 if (current.IsGraphConnection)
                     return (observation.GetClosestJunction(current), shareIndex);
                 else
-                    return (observation.GetClosestJunction(current.GetClosestJunction()), shareIndex);
+                {
+                    if(current.GetClosestJunction() == observation.GetClosestJunction())
+                        return (observation.GetClosestJunction(), shareIndex);
+                    else
+                        return (observation.GetClosestJunction(current.GetClosestJunction()), shareIndex);
+                }
             }
             else
             {

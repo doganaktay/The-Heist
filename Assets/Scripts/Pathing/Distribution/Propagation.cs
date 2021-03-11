@@ -53,9 +53,9 @@ public class Propagation : MonoBehaviour
         }
     }
 
-    public List<MazeCell> Propagate(MazeCell center, float initialStrength, float minViableStrength)
+    public List<(MazeCell cell, float ratio)> Propagate(MazeCell center, float initialStrength, float minViableStrength)
     {
-        List<MazeCell> requestedAreaOfEffect = new List<MazeCell>();
+        List<(MazeCell cell, float ratio)> requestedAreaOfEffect = new List<(MazeCell cell, float ratio)>();
 
         Array.Clear(isSearched, 0, isSearched.Length);
         queue.Clear();
@@ -67,7 +67,7 @@ public class Propagation : MonoBehaviour
 
         int currentRingCellCount = 1;
         int nextRingCellCount = 0;
-        int totalRingCount = 0;
+        int ringIterationCount = 0;
 
         List<MazeCell> currentRing = new List<MazeCell>();
 
@@ -95,12 +95,12 @@ public class Propagation : MonoBehaviour
                 var strengthPerCell = strength / currentRing.Count;
 
                 if (strengthPerCell < minViableStrength)
-                { break; }
+                    break;
 
                 foreach(var cell in currentRing)
                 {
                     if (cell.state < 2)
-                        requestedAreaOfEffect.Add(cell);
+                        requestedAreaOfEffect.Add((cell, strengthPerCell / initialStrength));
                 }
 
                 currentRing.Clear();
@@ -108,9 +108,9 @@ public class Propagation : MonoBehaviour
                 currentRingCellCount = nextRingCellCount;
                 nextRingCellCount = 0;
 
-                totalRingCount++;
+                ringIterationCount++;
 
-                strength = Attenuate(strength, totalRingCount, currentRingCellCount);
+                strength = Attenuate(strength, ringIterationCount, currentRingCellCount);
 
             }
         }
@@ -119,9 +119,9 @@ public class Propagation : MonoBehaviour
         return requestedAreaOfEffect;
     }
 
-    private float Attenuate(float strength, float iteration, float ringCount)
+    private float Attenuate(float strength, float iteration, float ringCellCount)
     {
-        var d = iteration * ringCount / attenuationScalar;
+        var d = iteration * ringCellCount / attenuationScalar;
 
         return strength / (1 + d * d);
     }

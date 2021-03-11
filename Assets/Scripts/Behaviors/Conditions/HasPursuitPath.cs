@@ -25,7 +25,7 @@ public class HasPursuitPath : Condition
         {
             owner.ReadyForPursuit = false;
 
-            searchStart = owner.ObservationPoint;
+            searchStart = owner.PlayerObservationPoint;
             owner.pursuit = PathDesigner.Instance.GetPursuitPath(owner, owner.CurrentCell, searchStart);
 
             test = "New Pursuit Path: ";

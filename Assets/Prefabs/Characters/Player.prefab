@@ -235,8 +235,6 @@ MonoBehaviour:
   aim: {fileID: 928625601923451}
   zOffset: 0
   canDraw: 1
-  detectionTime: 0
-  detectionIsCumulative: 0
   lastKnownPlayerPos: {fileID: 0}
 --- !u!23 &7403064084887006763
 MeshRenderer:
@@ -436,7 +434,7 @@ MonoBehaviour:
   speed:
     min: 25
     max: 50
-  turnSpeed: 0.5
+  turnSpeed: 5
   aim: {fileID: 0}
   aimOverrideTarget: {fileID: 0}
   projectilePrefab: {fileID: 372506298171578869, guid: 3f7dd9ebfb0ea4133bfb93dfe5f47185,
