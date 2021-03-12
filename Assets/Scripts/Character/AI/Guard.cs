@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using Archi.BT;
 
-public class Patrol : AI
+public class Guard : AI
 {
+    public GuardRole role;
+
     protected override void GenerateBehaviorTree()
     {
         BehaviorTree = new Selector($"{gameObject.name} AI Tree",

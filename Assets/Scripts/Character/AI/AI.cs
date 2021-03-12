@@ -118,6 +118,7 @@ public abstract class AI : Character, IBehaviorTree
                 break;
         }
     }
+    [HideInInspector] public List<int> indicesOfInterest;
 
     public NodeBase BehaviorTree { get ; set; }
     Coroutine behaviourTreeRoutine;

@@ -1291,7 +1291,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   player: {fileID: 0}
   areafinder: {fileID: 0}
-  patrolManager: {fileID: 1571564959}
+  guardManager: {fileID: 0}
   maze: {fileID: 0}
   startPos:
     x: 0
@@ -2105,7 +2105,7 @@ GameObject:
   - component: {fileID: 1571564958}
   - component: {fileID: 1571564959}
   m_Layer: 0
-  m_Name: PatrolManager
+  m_Name: GuardManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2139,10 +2139,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   aiPrefab: {fileID: -8045927754576532818, guid: aaab0ca4958f545f492213de7b26129a,
     type: 3}
-  aiTypeName: Patrol
-  aiCount: 1
+  aiTypeName: Guard
   areafinder: {fileID: 0}
   activeAIs: []
+  guardCount:
+    min: 3
+    max: 5
 --- !u!1 &1623977388
 GameObject:
   m_ObjectHideFlags: 0
@@ -3007,7 +3009,7 @@ MonoBehaviour:
   spotfinder: {fileID: 613073250}
   graphFinder: {fileID: 1206136601}
   propagationModule: {fileID: 467790617}
-  patrolManager: {fileID: 1571564959}
+  guardManager: {fileID: 1571564959}
   cctv: {fileID: 1623977390}
   textOverlay: {fileID: 595692259}
   playerPrefab: {fileID: 7925979547997160563, guid: b27354f4f377042c1953090e61a0d611,

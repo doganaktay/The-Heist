@@ -7,32 +7,17 @@ public abstract class AIManager : MonoBehaviour
     public AI aiPrefab;
     [SerializeField]
     protected string aiTypeName;
-    public int aiCount = 3;
 
     [HideInInspector]
     public AreaFinder areafinder;
+    [HideInInspector]
+    public GraphFinder graphFinder;
     [HideInInspector]
     public List<AI> activeAIs = new List<AI>();
 
     void Start()
     {
-        GameManager.MazeGenFinished += ResetAI;
-    }
-
-    public void CreateNewAI()
-    {
-        for (int i = 0; i < aiCount; i++)
-        {
-            var randomCell = areafinder.WalkableArea[Random.Range(0, areafinder.WalkableArea.Count)];
-            var ai = Instantiate(aiPrefab, new Vector3(randomCell.transform.position.x, randomCell.transform.position.y, -1f), Quaternion.identity);
-
-            ai.name = aiTypeName + " " + (activeAIs.Count + i);
-            ai.transform.parent = transform;
-
-            ai.manager = this;
-
-            activeAIs.Add(ai);
-        }
+        GameManager.MazeGenFinished += InitializeAI;
     }
 
     public void CreateNewAI(int count)
@@ -46,6 +31,29 @@ public abstract class AIManager : MonoBehaviour
             ai.transform.parent = transform;
             activeAIs.Add(ai);
         }
+    }
+
+    public void CreateNewAI(MazeCell cell, int count = 1)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            var ai = Instantiate(aiPrefab, new Vector3(cell.transform.position.x, cell.transform.position.y, -1f), Quaternion.identity);
+
+            ai.name = aiTypeName + " " + (activeAIs.Count + i);
+            ai.transform.parent = transform;
+            activeAIs.Add(ai);
+        }
+    }
+
+    public AI CreateNewAI(MazeCell cell)
+    {
+        var ai = Instantiate(aiPrefab, new Vector3(cell.transform.position.x, cell.transform.position.y, -1f), Quaternion.identity);
+
+        ai.name = aiTypeName + " " + activeAIs.Count;
+        ai.transform.parent = transform;
+        activeAIs.Add(ai);
+
+        return ai;
     }
 
     public bool ProximityCheck(AI aiToCheck)
@@ -71,16 +79,23 @@ public abstract class AIManager : MonoBehaviour
         }
     }
 
+    void InitializeAI()
+    {
+        ResetAI();
+        OnInitializeAI();
+    }
+
     void OnDestroy()
     {
-        GameManager.MazeGenFinished -= ResetAI;
+        GameManager.MazeGenFinished -= InitializeAI;
     }
 
     private void OnGUI()
     {
         if (GUI.Button(new Rect(10, 10, 80, 60), $"New {aiTypeName}"))
-            CreateNewAI();
+            CreateNewAI(1);
     }
 
     protected abstract void AssignRoles();
+    protected abstract void OnInitializeAI();
 }

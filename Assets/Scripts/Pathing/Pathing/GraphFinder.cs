@@ -5,6 +5,12 @@ using UnityEngine;
 using System.Linq;
 using System.Diagnostics;
 
+public enum IndexPriority
+{
+    High,
+    Critical
+}
+
 public class GraphFinder : MonoBehaviour
 {
     public Maze maze;
@@ -18,6 +24,7 @@ public class GraphFinder : MonoBehaviour
     public static Dictionary<int, MazeCell> indexedJunctions = new Dictionary<int, MazeCell>();
     public static List<(int[] nodes, int[] edges)> cycles = new List<(int[] nodes, int[] edges)>();
     static EdgeData[] LabelledGraphConnections;
+    List<HashSet<int>> isolatedAreas = new List<HashSet<int>>();
 
     [SerializeField]
     int loopSearchLimit = 50, recursionLimit = 20;
@@ -37,6 +44,25 @@ public class GraphFinder : MonoBehaviour
 
     ChartedPath chartedPath;
     public ChartedPath ChartedPath => chartedPath;
+
+    Dictionary<int, IndexPriority> priorityIndices = new Dictionary<int, IndexPriority>();
+    public void RegisterPriorityIndex(int index, IndexPriority priority)
+    {
+        if (!priorityIndices.ContainsKey(index))
+            priorityIndices.Add(index, priority);
+        else
+            priorityIndices[index] = priority;
+    }
+    public List<int> RequestPriorityIndices(IndexPriority priority)
+    {
+        var indices = new List<int>();
+
+        foreach (var index in priorityIndices)
+            if (index.Value == priority)
+                indices.Add(index.Key);
+
+        return indices;
+    }
 
     #region Graph Search
 
@@ -71,7 +97,6 @@ public class GraphFinder : MonoBehaviour
         index = 0;
 
         // PASS 1
-        //UnityEngine.Debug.Log("Pass 1:");
 
         while(frontier.Count > 0)
         {
@@ -98,8 +123,6 @@ public class GraphFinder : MonoBehaviour
         }
 
         // PASS 2
-
-        //UnityEngine.Debug.Log($"Pass 2: {GraphAreas.Count} partitions");
 
         List<MazeCell> cellsToTest = new List<MazeCell>();
 
@@ -203,22 +226,17 @@ public class GraphFinder : MonoBehaviour
                 int i = 0;
                 
                 foreach (var cell in currentArea)
-                {
-                    //if (cell.GraphAreaIndices.Contains(coveredIndex))
                     if (cell.GraphAreaIndices.Contains(coveredIndex))
                         i++;
-                }
 
                 if (i == 1 || (i == 2 && GraphAreas[coveredIndex].all.Count >= 3))
-                {
                     temp.Add(coveredIndex);
-                }
+                
             }
 
             foreach(var t in temp)
-            {
                 indicesToMerge.Remove(t);
-            }
+            
 
             foreach(var cell in currentArea)
             {
@@ -246,47 +264,25 @@ public class GraphFinder : MonoBehaviour
             foreach(var cell in currentArea)
             {
                 if (cell.IsLockedConnection)
-                {
                     foreach(var indexToMerge in indicesToMerge)
-                    {
                         cell.RemoveGraphArea(indexToMerge);
-
-                        //if (cell.GraphAreaIndices.Contains(indexToMerge))
-                        //    cell.GraphAreaIndices.Remove(indexToMerge);
-                    }
-                }
                 else
-                {
                     cell.GraphAreaIndices.Clear();
 
-                    //cell.GraphAreaIndices.Clear();
-                }
-
                 cell.SetGraphArea(index);
-
-                //cell.GraphAreaIndices.Add(index);
             }
 
             foreach(var indexToMerge in indicesToMerge)
-            {
                 if (GraphAreas.ContainsKey(indexToMerge))
                     GraphAreas.Remove(indexToMerge);
-            }
+            
 
             if (!GraphAreas.ContainsKey(index))
-            {
                 GraphAreas.Add(index, (new List<MazeCell>(currentArea), new List<MazeCell>(ends)));
-            }
+            
 
             index++;
         }
-
-        //partitionKeys = "Pass 2 Keys: ";
-
-        //foreach (var key in GraphAreas.Keys)
-        //    partitionKeys += key.ToString() + ", ";
-
-        //UnityEngine.Debug.Log(partitionKeys);
 
         // PASS 3
 
@@ -378,12 +374,8 @@ public class GraphFinder : MonoBehaviour
             else
             {
                 foreach (var end in area.Value.ends)
-                {
                     if (end.IsDeadEnd && !pruningList.Contains(end))
-                    {
                         pruningList.Add(end);
-                    }
-                }
             }
 
             foreach (var end in area.Value.ends)
@@ -426,7 +418,16 @@ public class GraphFinder : MonoBehaviour
             }
         }
 
+        // clear lists of isolated areas
+        isolatedAreas.Clear();
+
+        // a bit poorly structured so making note
+        // the recursive pruning of the loop tree
+        // also tracks the isolated areas and puts them in hashsets for future use
         PruneTree(pruningList);
+
+        // remove isolated areas that are subsets of others
+        TrimIsolatedAreas();
 
         int edgeCount = 0;
         LabelledGraphConnections = new EdgeData[labelledEdges.Count];
@@ -663,32 +664,60 @@ public class GraphFinder : MonoBehaviour
             CheckJunction(end);
     }
 
-    void CheckJunction(MazeCell cell)
+    void CheckJunction(MazeCell cell, HashSet<int> area = null)
     {
-        //UnityEngine.Debug.Log($"Checking from {cell.gameObject.name} for pruning");
+        if (area == null)
+        {
+            area = new HashSet<int>();
+
+            foreach (var index in cell.GetGraphAreaIndices())
+                area.Add(index);
+        }
+
+        bool found = false;
 
         foreach (var connection in GetConnections(cell))
         {
             connection.DeadConnectionCount++;
-            //UnityEngine.Debug.Log($"{connection.gameObject.name} dead connection count {connection.DeadConnectionCount}");
 
             if (!connection.IsDeadEnd && connection.DeadConnectionCount == GetConnections(connection).Count - 1)
             {
-                //UnityEngine.Debug.Log($"{connection.gameObject.name} is unloopable");
+                found = true;
+                //area.Add(GetSharedIndices(cell, connection)[0]);
+
+                foreach (var index in connection.GetGraphAreaIndices())
+                    area.Add(index);
+
                 connection.IsUnloopable = true;
-                CheckJunction(connection);
+                CheckJunction(connection, area);
             }
         }
+
+        if (!found && area.Count > 0)
+            isolatedAreas.Add(area);
+    }
+
+    void TrimIsolatedAreas()
+    {
+        var areasToRemove = new List<HashSet<int>>();
+
+        foreach(var area in isolatedAreas)
+            foreach(var other in isolatedAreas)
+            {
+                if (area == other)
+                    continue;
+
+                if (other.IsSubsetOf(area))
+                    areasToRemove.Add(other);
+            }
+
+        foreach (var area in areasToRemove)
+            isolatedAreas.Remove(area);
     }
 
     #endregion
 
     #region Charted Path
-
-    //public ChartedPath BidirectionalSearch(MazeCell from, MazeCell to)
-    //{
-
-    //}
 
     void InitializeSearchCollections()
     {
@@ -1144,8 +1173,6 @@ public class GraphFinder : MonoBehaviour
     {
         if (!cell.IsGraphConnection)
         {
-            UnityEngine.Debug.LogError($"{gameObject.name} is not a connection point. Returning ends of area");
-
             int selected = cell.GetGraphAreaIndices()[0];
             var list = new List<(MazeCell cell, int index)>();
             foreach (var end in GraphAreas[selected].ends)
@@ -1156,8 +1183,6 @@ public class GraphFinder : MonoBehaviour
         else
         {
             var connections = new List<(MazeCell cell, int index)>();
-
-            string test = $"Reported other connections for {cell.gameObject.name} avoiding index {index}: ";
 
             foreach (var key in cell.GraphAreaIndices)
             {
@@ -1170,13 +1195,9 @@ public class GraphFinder : MonoBehaviour
                     if (item == cell || (!getDeadEnds && !item.IsLockedConnection))
                         continue;
 
-                    test += $"{item.gameObject.name}, {key} - ";
-
                     connections.Add((item, key));
                 }
             }
-
-            UnityEngine.Debug.Log(test);
 
             return connections;
         }
@@ -1189,20 +1210,14 @@ public class GraphFinder : MonoBehaviour
         if (index == -1)
         {
             if (cell.IsJunction)
-            {
-                UnityEngine.Debug.LogError($"Junction {gameObject.name} received an area cell request without an index, returning null");
                 return null;
-            }
 
             return new List<MazeCell>(GraphAreas[cell.GetGraphAreaIndices()[0]].all);
         }
         else
         {
             if (!cell.GraphAreaIndices.Contains(index))
-            {
-                UnityEngine.Debug.Log($"{gameObject.name} received area cell request for {index} but does not contain the key, returning null");
                 return null;
-            }
 
             return new List<MazeCell>(GraphAreas[index].all);
         }
@@ -1308,6 +1323,12 @@ public class GraphFinder : MonoBehaviour
                     return true;
 
         return false;
+    }
+
+    public MazeCell GetRandomCellFromGraphArea(int index)
+    {
+        var cells = GraphAreas[index].all;
+        return cells[UnityEngine.Random.Range(0, cells.Count - 1)];
     }
 
     #endregion
@@ -1560,23 +1581,23 @@ public class GraphFinder : MonoBehaviour
         //        UnityEngine.Debug.Log($"area contains: {cell.gameObject.name}");
         //}
 
-        for (int i = 0; i < maze.size.x; i++)
-        {
-            for (int j = 0; j < maze.size.y; j++)
-            {
-                var cell = maze.cells[i, j];
+        //for (int i = 0; i < maze.size.x; i++)
+        //{
+        //    for (int j = 0; j < maze.size.y; j++)
+        //    {
+        //        var cell = maze.cells[i, j];
 
-                if (cell.state > 1)
-                    continue;
+        //        if (cell.state > 1)
+        //            continue;
 
-                UnityEngine.Debug.Log($"Measured junctions for {cell.gameObject.name}");
+        //        UnityEngine.Debug.Log($"Measured junctions for {cell.gameObject.name}");
 
-                foreach (var item in cell.MeasuredJunctions)
-                {
-                    UnityEngine.Debug.Log($"distance to {item.Key.gameObject.name}: {item.Value}");
-                }
-            }
-        }
+        //        foreach (var item in cell.MeasuredJunctions)
+        //        {
+        //            UnityEngine.Debug.Log($"distance to {item.Key.gameObject.name}: {item.Value}");
+        //        }
+        //    }
+        //}
 
         //for(int j = 0; j < GraphEdges.GetLength(0); j++)
         //{
@@ -1601,11 +1622,23 @@ public class GraphFinder : MonoBehaviour
 
             str += " graph index: " + LabelledGraphConnections[j][2];
 
-            UnityEngine.Debug.Log($"{str}");
+            UnityEngine.Debug.Log(str);
         }
 
         foreach (var cycle in cycles)
             PrintCycle(cycle.nodes, cycle.edges);
+
+        foreach(var area in isolatedAreas)
+        {
+            string test = "Isolated Area: ";
+
+            foreach(var index in area)
+            {
+                test += index + "-";
+            }
+
+            UnityEngine.Debug.Log(test);
+        }
         
     }
 

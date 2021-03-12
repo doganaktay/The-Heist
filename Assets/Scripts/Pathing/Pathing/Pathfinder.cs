@@ -14,7 +14,7 @@ public class Pathfinder : MonoBehaviour
 {
     public Player player;
     public AreaFinder areafinder;
-    public PatrolManager patrolManager;
+    public GuardManager guardManager;
     public Maze maze;
     public IntVector2 startPos, endPos;
 

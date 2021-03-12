@@ -31,7 +31,7 @@ public class GameManager : MonoBehaviour
 	public Spotfinder spotfinder;
 	public GraphFinder graphFinder;
 	public Propagation propagationModule;
-	public PatrolManager patrolManager;
+	public GuardManager guardManager;
 	public CCTV cctv;
 	public TextOverlay textOverlay;
 	public Player playerPrefab;
@@ -112,6 +112,7 @@ public class GameManager : MonoBehaviour
 		pathfinder.startPos = selectedStart;
 		pathfinder.endPos = selectedEnd;
 		pathfinder.aStar = new AStar(mazeInstance);
+		pathfinder.guardManager = guardManager;
 
 		// pass references to areafinder
         areafinder.maze = mazeInstance;
@@ -135,7 +136,8 @@ public class GameManager : MonoBehaviour
 		NotificationModule.Create(mazeInstance);
 
 		// pass references to patrol manager		
-		patrolManager.areafinder = areafinder;
+		guardManager.areafinder = areafinder;
+		guardManager.graphFinder = graphFinder;
 
 		// pass references to CCTV
 		cctv.maze = mazeInstance;
