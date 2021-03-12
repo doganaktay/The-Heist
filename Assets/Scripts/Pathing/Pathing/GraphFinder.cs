@@ -670,8 +670,14 @@ public class GraphFinder : MonoBehaviour
         {
             area = new HashSet<int>();
 
-            foreach (var index in cell.GetGraphAreaIndices())
-                area.Add(index);
+            var indices = cell.GetGraphAreaIndices();
+
+            if (indices.Count == 1)
+                area.Add(indices[0]);
+            else
+                foreach (var index in indices)
+                    if(GraphAreas[index].ends.Count == 1)
+                        area.Add(index);
         }
 
         bool found = false;
@@ -700,8 +706,10 @@ public class GraphFinder : MonoBehaviour
     void TrimIsolatedAreas()
     {
         var areasToRemove = new List<HashSet<int>>();
+        var areasToAdd = new List<HashSet<int>>();
 
-        foreach(var area in isolatedAreas)
+        foreach (var area in isolatedAreas)
+        {
             foreach(var other in isolatedAreas)
             {
                 if (area == other)
@@ -709,10 +717,53 @@ public class GraphFinder : MonoBehaviour
 
                 if (other.IsSubsetOf(area))
                     areasToRemove.Add(other);
+                else if (other.Overlaps(area))
+                {
+                    var combined = new HashSet<int>(other);
+                    combined.UnionWith(area);
+
+                    bool duplicate = false;
+                    bool hasSubset = false;
+                    var temp = new List<HashSet<int>>();
+                    foreach (var add in areasToAdd)
+                    {
+                        var test = new HashSet<int>(add);
+                        test.SymmetricExceptWith(combined);
+
+                        if (test.Count == 0 || add.IsSupersetOf(combined))
+                        {
+                            duplicate = true;
+                            break;
+                        }
+                        else if (add.IsSubsetOf(combined))
+                        {
+                            hasSubset = true;
+                            temp.Add(add);
+                        }
+                    }
+
+                    if (hasSubset)
+                        foreach (var t in temp)
+                            areasToAdd.Remove(t);
+
+                    if(!duplicate)
+                        areasToAdd.Add(combined);
+
+                    if(!areasToRemove.Contains(area))
+                        areasToRemove.Add(area);
+
+                    if(!areasToRemove.Contains(other))
+                        areasToRemove.Add(other);
+                }
+                
             }
+        }
 
         foreach (var area in areasToRemove)
             isolatedAreas.Remove(area);
+
+        foreach (var area in areasToAdd)
+            isolatedAreas.Add(area);
     }
 
     #endregion
@@ -1610,23 +1661,23 @@ public class GraphFinder : MonoBehaviour
         //    UnityEngine.Debug.Log($"{str}");
         //}
 
-        for (int j = 0; j < LabelledGraphConnections.Length; j++)
-        {
-            string str = "Edge: ";
-            for (int k = 0; k <= 1; k++)
-            {
-                str += LabelledGraphConnections[j][k] + " ";
-                str += indexedJunctions[LabelledGraphConnections[j][k]].gameObject.name + ", ";
+        //for (int j = 0; j < LabelledGraphConnections.Length; j++)
+        //{
+        //    string str = "Edge: ";
+        //    for (int k = 0; k <= 1; k++)
+        //    {
+        //        str += LabelledGraphConnections[j][k] + " ";
+        //        str += indexedJunctions[LabelledGraphConnections[j][k]].gameObject.name + ", ";
 
-            }
+        //    }
 
-            str += " graph index: " + LabelledGraphConnections[j][2];
+        //    str += " graph index: " + LabelledGraphConnections[j][2];
 
-            UnityEngine.Debug.Log(str);
-        }
+        //    UnityEngine.Debug.Log(str);
+        //}
 
-        foreach (var cycle in cycles)
-            PrintCycle(cycle.nodes, cycle.edges);
+        //foreach (var cycle in cycles)
+        //    PrintCycle(cycle.nodes, cycle.edges);
 
         foreach(var area in isolatedAreas)
         {

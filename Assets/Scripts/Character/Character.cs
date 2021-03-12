@@ -38,6 +38,7 @@ public abstract class Character : MonoBehaviour
     private void OnDisable()
     {
         NotificationModule.RemoveListener(HandleNotification);
+        StopAllCoroutines();
     }
 
     protected virtual void Start()
