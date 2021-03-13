@@ -427,8 +427,9 @@ public abstract class AI : Character, IBehaviorTree
     }
 
     bool PlayerIsVeryClose() =>
-        (GameManager.player.transform.position - transform.position).sqrMagnitude < GameManager.CellDiagonal
-        && !Physics2D.Raycast(transform.position, GameManager.player.transform.position - transform.position, GameManager.CellDiagonal, fieldOfView.obstacleMask);
+        (CurrentCell == GameManager.player.CurrentCell) ||
+        ((GameManager.player.transform.position - transform.position).sqrMagnitude < GameManager.CellDiagonal
+        && !Physics2D.Raycast(transform.position, GameManager.player.transform.position - transform.position, GameManager.CellDiagonal, fieldOfView.obstacleMask));
     
 
     #endregion

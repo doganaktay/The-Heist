@@ -28,7 +28,7 @@ public abstract class AIManager : MonoBehaviour
             var randomCell = areafinder.WalkableArea[Random.Range(0, areafinder.WalkableArea.Count)];
             var ai = Instantiate(aiPrefab, new Vector3(randomCell.transform.position.x, randomCell.transform.position.y, -1f), Quaternion.identity);
 
-            ai.name = aiTypeName + " " + (activeAIs.Count + i);
+            ai.name = aiTypeName + " " + activeAIs.Count;
             ai.transform.parent = transform;
             activeAIs.Add(ai);
         }
@@ -40,7 +40,7 @@ public abstract class AIManager : MonoBehaviour
         {
             var ai = Instantiate(aiPrefab, new Vector3(cell.transform.position.x, cell.transform.position.y, -1f), Quaternion.identity);
 
-            ai.name = aiTypeName + " " + (activeAIs.Count + i);
+            ai.name = aiTypeName + " " + activeAIs.Count;
             ai.transform.parent = transform;
             activeAIs.Add(ai);
         }
@@ -78,6 +78,8 @@ public abstract class AIManager : MonoBehaviour
             if (ai != null)
                 Destroy(ai.gameObject);
         }
+
+        activeAIs.Clear();
     }
 
     void InitializeAI()

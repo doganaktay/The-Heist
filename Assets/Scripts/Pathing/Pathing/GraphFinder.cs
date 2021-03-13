@@ -676,7 +676,7 @@ public class GraphFinder : MonoBehaviour
                 area.Add(indices[0]);
             else
                 foreach (var index in indices)
-                    if(GraphAreas[index].ends.Count == 1)
+                    if(GraphAreas[index].ends.Count <= 2)
                         area.Add(index);
         }
 
@@ -705,67 +705,65 @@ public class GraphFinder : MonoBehaviour
 
     void TrimIsolatedAreas()
     {
-        var areasToRemove = new List<HashSet<int>>();
-        var areasToAdd = new List<HashSet<int>>();
+        var final = new List<HashSet<int>>();
 
         foreach (var area in isolatedAreas)
         {
-            foreach(var other in isolatedAreas)
+            var setsToMerge = new List<HashSet<int>>();
+            bool isSubset = false;
+            bool hasOverlap = false;
+
+            foreach (var other in isolatedAreas)
             {
                 if (area == other)
                     continue;
 
-                if (other.IsSubsetOf(area))
-                    areasToRemove.Add(other);
-                else if (other.Overlaps(area))
+                if (area.IsSubsetOf(other))
                 {
-                    var combined = new HashSet<int>(other);
-                    combined.UnionWith(area);
-
-                    bool duplicate = false;
-                    bool hasSubset = false;
-                    var temp = new List<HashSet<int>>();
-                    foreach (var add in areasToAdd)
-                    {
-                        var test = new HashSet<int>(add);
-                        test.SymmetricExceptWith(combined);
-
-                        if (test.Count == 0 || add.IsSupersetOf(combined))
-                        {
-                            duplicate = true;
-                            break;
-                        }
-                        else if (add.IsSubsetOf(combined))
-                        {
-                            hasSubset = true;
-                            temp.Add(add);
-                        }
-                    }
-
-                    if (hasSubset)
-                        foreach (var t in temp)
-                            areasToAdd.Remove(t);
-
-                    if(!duplicate)
-                        areasToAdd.Add(combined);
-
-                    if(!areasToRemove.Contains(area))
-                        areasToRemove.Add(area);
-
-                    if(!areasToRemove.Contains(other))
-                        areasToRemove.Add(other);
+                    isSubset = true;
+                    break;
                 }
-                
+                else if (area.Overlaps(other))
+                {
+                    setsToMerge.Add(other);
+                    hasOverlap = true;
+                }
+            }
+
+            if (!isSubset && !hasOverlap)
+                final.Add(area);
+            else if (!isSubset && hasOverlap)
+            {
+                var temp = new HashSet<int>(area);
+                foreach (var set in setsToMerge)
+                    temp.UnionWith(set);
+
+                final.Add(temp);
             }
         }
 
-        foreach (var area in areasToRemove)
-            isolatedAreas.Remove(area);
+        isolatedAreas.Clear();
 
-        foreach (var area in areasToAdd)
+        foreach (var area in final)
+        {
+            if (area.Count == 0)
+                continue;
+
+            foreach(var other in final)
+            {
+                if (area == other || area.Count != other.Count)
+                    continue;
+
+                if (other.SetEquals(area))
+                    other.ExceptWith(area);
+            }
+
             isolatedAreas.Add(area);
+        }
 
-        isolatedAreas.Sort((a,b) => a.Count - b.Count);
+        //isolatedAreas = final;
+
+        isolatedAreas.Sort((a, b) => a.Count - b.Count);
     }
 
     #endregion
@@ -1737,7 +1735,22 @@ public class GraphFinder : MonoBehaviour
 
             UnityEngine.Debug.Log(test);
         }
-        
+
+        //TrimIsolatedAreas();
+
+        //UnityEngine.Debug.Log("Trimmed: ");
+
+        //foreach (var area in isolatedAreas)
+        //{
+        //    string test = "Isolated Area: ";
+
+        //    foreach (var index in area)
+        //    {
+        //        test += index + "-";
+        //    }
+
+        //    UnityEngine.Debug.Log(test);
+        //}
     }
 
     static void PrintCycle(int[] nodes, int[] edges)

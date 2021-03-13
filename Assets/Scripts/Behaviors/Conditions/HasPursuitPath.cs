@@ -17,7 +17,7 @@ public class HasPursuitPath : Condition
 
     protected override NodeStatus OnRun()
     {
-        string test = "";
+        //string test = "";
 
         if (owner.ReadyForPursuit)
         {
@@ -26,15 +26,15 @@ public class HasPursuitPath : Condition
             searchStart = owner.PlayerObservationPoint;
             owner.pursuit = PathDesigner.Instance.GetPursuitPath(owner, owner.CurrentCell, searchStart);
 
-            test = $"{owner.gameObject.name}, New Pursuit Path: ";
-            for (int i = 0; i < owner.pursuit.cells.Length; i++)
-            {
-                test += owner.pursuit.cells[i].gameObject.name + " - ";
+            //test = $"{owner.gameObject.name}, New Pursuit Path: ";
+            //for (int i = 0; i < owner.pursuit.cells.Length; i++)
+            //{
+            //    test += owner.pursuit.cells[i].gameObject.name + " - ";
 
-                if (i < owner.pursuit.indices.Length)
-                    test += owner.pursuit.indices[i] + " - ";
-            }
-            Debug.Log(test);
+            //    if (i < owner.pursuit.indices.Length)
+            //        test += owner.pursuit.indices[i] + " - ";
+            //}
+            //Debug.Log(test);
 
             return NodeStatus.Success;
         }
