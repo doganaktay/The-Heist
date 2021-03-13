@@ -14,8 +14,8 @@ public class GuardManager : AIManager
 {
     [SerializeField]
     MinMaxData guardCount;
-    [SerializeField, Header("Used to distribute areas")]
-    float coveragePerArea;
+    [SerializeField, Range(0, 1f), Header("Used to determine area coverage by taking area weights into account")]
+    float coveragePercent;
 
     protected override void OnInitializeAI()
     {

@@ -25,6 +25,8 @@ public class GraphFinder : MonoBehaviour
     public static List<(int[] nodes, int[] edges)> cycles = new List<(int[] nodes, int[] edges)>();
     static EdgeData[] LabelledGraphConnections;
     List<HashSet<int>> isolatedAreas = new List<HashSet<int>>();
+    public List<KeyValuePair<int, float>> weightedGraphAreas = new List<KeyValuePair<int, float>>();
+    public List<KeyValuePair<HashSet<int>, float>> weightedIsolatedAreas = new List<KeyValuePair<HashSet<int>, float>>();
 
     [SerializeField]
     int loopSearchLimit = 50, recursionLimit = 20;
@@ -368,7 +370,7 @@ public class GraphFinder : MonoBehaviour
                 var end = area.Value.ends[0];
                 end.DeadConnectionCount++;
 
-                if (!pruningList.Contains(end))
+                if (!pruningList.Contains(end) && end.GetGraphAreaIndices().Count <= 2)
                     pruningList.Add(end);
             }
             else
@@ -428,6 +430,9 @@ public class GraphFinder : MonoBehaviour
 
         // remove isolated areas that are subsets of others
         TrimIsolatedAreas();
+
+        // assign area weights
+        AssignAreaWeights();
 
         int edgeCount = 0;
         LabelledGraphConnections = new EdgeData[labelledEdges.Count];
@@ -686,10 +691,14 @@ public class GraphFinder : MonoBehaviour
         {
             connection.DeadConnectionCount++;
 
+            //foreach(var c in GetConnections(connection))
+            //    if (connection.connectedCells.Contains(c))
+            //        c.DeadConnectionCount++;
+            
+
             if (!connection.IsDeadEnd && connection.DeadConnectionCount == GetConnections(connection).Count - 1)
             {
                 found = true;
-                //area.Add(GetSharedIndices(cell, connection)[0]);
 
                 foreach (var index in connection.GetGraphAreaIndices())
                     area.Add(index);
@@ -751,10 +760,10 @@ public class GraphFinder : MonoBehaviour
 
             foreach(var other in final)
             {
-                if (area == other || area.Count != other.Count)
+                if (area == other)
                     continue;
 
-                if (other.SetEquals(area))
+                if (other.IsSubsetOf(area))
                     other.ExceptWith(area);
             }
 
@@ -764,6 +773,26 @@ public class GraphFinder : MonoBehaviour
         //isolatedAreas = final;
 
         isolatedAreas.Sort((a, b) => a.Count - b.Count);
+    }
+
+    void AssignAreaWeights()
+    {
+        weightedGraphAreas.Clear();
+        weightedIsolatedAreas.Clear();
+
+        foreach (var area in GraphAreas)
+        {
+            weightedGraphAreas.Add(new KeyValuePair<int, float>(area.Key, GetGraphAreaWeight(area.Key)));
+        }
+
+        weightedGraphAreas.Sort((a, b) => a.Value.CompareTo(b.Value));
+
+        foreach(var area in isolatedAreas)
+        {
+            weightedIsolatedAreas.Add(new KeyValuePair<HashSet<int>, float>(area, GetGraphAreaWeight(new List<int>(area))));
+        }
+
+        weightedIsolatedAreas.Sort((a, b) => a.Value.CompareTo(b.Value));
     }
 
     #endregion
@@ -1427,6 +1456,21 @@ public class GraphFinder : MonoBehaviour
             return new HashSet<int>(temp[UnityEngine.Random.Range(0, temp.Count)]);
     }
 
+    public float GetGraphAreaWeight(int index) => GraphAreas[index].all.Count / (float)AreaFinder.WalkableCellCount;
+    public float GetGraphAreaWeight(List<int> indices)
+    {
+        var finalCells = new List<MazeCell>();
+
+        foreach(var index in indices)
+        {
+            foreach (var cell in GraphAreas[index].all)
+                if (!finalCells.Contains(cell))
+                    finalCells.Add(cell);
+        }
+
+        return finalCells.Count / (float)AreaFinder.WalkableCellCount;
+    }
+
     #endregion
 
     #region Loop finder
@@ -1724,33 +1768,36 @@ public class GraphFinder : MonoBehaviour
         //foreach (var cycle in cycles)
         //    PrintCycle(cycle.nodes, cycle.edges);
 
-        foreach(var area in isolatedAreas)
-        {
-            string test = "Isolated Area: ";
-
-            foreach(var index in area)
-            {
-                test += index + "-";
-            }
-
-            UnityEngine.Debug.Log(test);
-        }
-
-        //TrimIsolatedAreas();
-
-        //UnityEngine.Debug.Log("Trimmed: ");
-
-        //foreach (var area in isolatedAreas)
+        //foreach(var area in isolatedAreas)
         //{
         //    string test = "Isolated Area: ";
 
-        //    foreach (var index in area)
+        //    foreach(var index in area)
         //    {
         //        test += index + "-";
         //    }
 
         //    UnityEngine.Debug.Log(test);
         //}
+
+        foreach (var area in weightedIsolatedAreas)
+        {
+            string test = "Weighted Isolated Area: ";
+
+            foreach (var index in area.Key)
+                test += index + " - ";
+
+            test += "weight: " + area.Value;
+
+            UnityEngine.Debug.Log(test);
+        }
+
+        foreach (var area in weightedGraphAreas)
+        {
+            string test = "Weighted Area: ";
+            test += area.Key + " - weight: " + area.Value;
+            UnityEngine.Debug.Log(test);
+        }
     }
 
     static void PrintCycle(int[] nodes, int[] edges)
