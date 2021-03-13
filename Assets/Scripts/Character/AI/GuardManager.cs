@@ -5,8 +5,8 @@ using UnityEngine;
 public enum GuardRole
 {
     Free,
-    Patrol,
-    VisitAreas,
+    Loop,
+    Coveraage,
     Station
 }
 
@@ -14,13 +14,12 @@ public class GuardManager : AIManager
 {
     [SerializeField]
     MinMaxData guardCount;
-    int currentGuardCount;
     [SerializeField, Header("Used to distribute areas")]
     float coveragePerArea;
 
     protected override void OnInitializeAI()
     {
-        currentGuardCount = Mathf.RoundToInt(Random.Range(guardCount.min, guardCount.max));
+        int maxCount = (int)guardCount.max;
 
         var indices = graphFinder.RequestPriorityIndices(IndexPriority.Critical);
 
@@ -32,9 +31,7 @@ public class GuardManager : AIManager
                 Guard guard = (Guard)ai;
                 guard.role = GuardRole.Station;
 
-                currentGuardCount--;
-                if (currentGuardCount <= 0)
-                    break;
+                maxCount--;
             }
         }
 
@@ -45,10 +42,17 @@ public class GuardManager : AIManager
             
         }
 
+        if (maxCount <= 0)
+            return;
 
 
-        CreateNewAI(currentGuardCount);
+
+
+
+        CreateNewAI(maxCount);
     }
+
+
 
 
     protected override void AssignRoles() { }

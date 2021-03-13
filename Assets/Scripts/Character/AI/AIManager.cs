@@ -14,6 +14,7 @@ public abstract class AIManager : MonoBehaviour
     public GraphFinder graphFinder;
     [HideInInspector]
     public List<AI> activeAIs = new List<AI>();
+    public int ActiveAICount => activeAIs.Count;
 
     void Start()
     {

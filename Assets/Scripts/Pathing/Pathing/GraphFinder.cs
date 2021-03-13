@@ -764,6 +764,8 @@ public class GraphFinder : MonoBehaviour
 
         foreach (var area in areasToAdd)
             isolatedAreas.Add(area);
+
+        isolatedAreas.Sort((a,b) => a.Count - b.Count);
     }
 
     #endregion
@@ -1380,6 +1382,51 @@ public class GraphFinder : MonoBehaviour
     {
         var cells = GraphAreas[index].all;
         return cells[UnityEngine.Random.Range(0, cells.Count - 1)];
+    }
+
+    public HashSet<int> GetIsolatedArea() => new HashSet<int>(isolatedAreas[UnityEngine.Random.Range(0, isolatedAreas.Count)]);
+
+    public HashSet<int> GetIsolatedArea(HashSet<int> exclude)
+    {
+        var temp = new List<HashSet<int>>(isolatedAreas);
+        var mark = new HashSet<int>();
+
+        foreach(var t in temp)
+            if (t.Overlaps(exclude))
+            {
+                mark = t;
+                break;
+            }
+
+        temp.Remove(mark);
+
+        return new HashSet<int>(temp[UnityEngine.Random.Range(0, temp.Count)]);
+    }
+
+    public HashSet<int> GetIsolatedArea(List<HashSet<int>> excludes)
+    {
+        var temp = new List<HashSet<int>>(isolatedAreas);
+        var marks = new List<HashSet<int>>();
+
+        foreach (var t in temp)
+        {
+            foreach(var e in excludes)
+            {
+                if (t.Overlaps(e))
+                {
+                    marks.Add(t);
+                    break;
+                }
+            }
+        }
+
+        foreach(var mark in marks)
+            temp.Remove(mark);
+
+        if (temp.Count == 0)
+            return null;
+        else
+            return new HashSet<int>(temp[UnityEngine.Random.Range(0, temp.Count)]);
     }
 
     #endregion
