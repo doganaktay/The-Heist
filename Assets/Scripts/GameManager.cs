@@ -32,6 +32,7 @@ public class GameManager : MonoBehaviour
 	public GraphFinder graphFinder;
 	public Propagation propagationModule;
 	public GuardManager guardManager;
+	public Curator curator;
 	public CCTV cctv;
 	public TextOverlay textOverlay;
 	public Player playerPrefab;
@@ -129,6 +130,12 @@ public class GameManager : MonoBehaviour
 		// pass references to corridor finder
 		graphFinder.maze = mazeInstance;
 
+		// pass references to curator
+		curator.maze = mazeInstance;
+		curator.pathfinder = pathfinder;
+		curator.areafinder = areafinder;
+		curator.graphfinder = graphFinder;
+
 		// pass references to propagation calculator
 		Propagation.maze = mazeInstance;
 
@@ -198,6 +205,10 @@ public class GameManager : MonoBehaviour
 		areafinder.FindAreas();
 		propagationModule.BuildConnectivityGrid();
 		areafinder.SetPassableWalls();
+		graphFinder.Initialize();
+
+		// for testing
+		curator.AssignRandomPriorities();
     }
 
 	public void RestartGame()

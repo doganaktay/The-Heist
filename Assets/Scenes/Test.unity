@@ -515,6 +515,7 @@ Transform:
   - {fileID: 619406033}
   - {fileID: 1152418503}
   - {fileID: 467790618}
+  - {fileID: 1949753983}
   m_Father: {fileID: 0}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -2141,10 +2142,14 @@ MonoBehaviour:
     type: 3}
   aiTypeName: Guard
   areafinder: {fileID: 0}
+  graphFinder: {fileID: 0}
   activeAIs: []
   guardCount:
     min: 3
     max: 5
+  coveragePercent:
+    min: 0.3
+    max: 0.5
 --- !u!1 &1623977388
 GameObject:
   m_ObjectHideFlags: 0
@@ -2558,6 +2563,49 @@ CanvasGroup:
   m_Interactable: 0
   m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0
+--- !u!1 &1949753982
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1949753983}
+  - component: {fileID: 1949753984}
+  m_Layer: 0
+  m_Name: Curator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1949753983
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1949753982}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 499716771}
+  m_RootOrder: 4
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1949753984
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1949753982}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d831a5748447948ecada1f2487363ea9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1958125023
 GameObject:
   m_ObjectHideFlags: 0
@@ -3010,6 +3058,7 @@ MonoBehaviour:
   graphFinder: {fileID: 1206136601}
   propagationModule: {fileID: 467790617}
   guardManager: {fileID: 1571564959}
+  curator: {fileID: 1949753984}
   cctv: {fileID: 1623977390}
   textOverlay: {fileID: 595692259}
   playerPrefab: {fileID: 7925979547997160563, guid: b27354f4f377042c1953090e61a0d611,

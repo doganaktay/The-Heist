@@ -6,16 +6,21 @@ public enum GuardRole
 {
     Free,
     Loop,
-    Coveraage,
+    Cover,
     Station
 }
 
 public class GuardManager : AIManager
 {
+    [Header("Settings")]
     [SerializeField]
     MinMaxData guardCount;
-    [SerializeField, Range(0, 1f), Header("Used to determine area coverage by taking area weights into account")]
-    float coveragePercent;
+    [SerializeField, Tooltip("Used to determine area coverage by taking area weights into account")]
+    MinMaxData coveragePercent;
+    float currentCoverage;
+
+    Dictionary<AI, HashSet<int>> assignedAreas = new Dictionary<AI, HashSet<int>>();
+    Dictionary<AI, ChartedPath> assignedLoops = new Dictionary<AI, ChartedPath>();
 
     protected override void OnInitializeAI()
     {
@@ -31,16 +36,41 @@ public class GuardManager : AIManager
                 Guard guard = (Guard)ai;
                 guard.role = GuardRole.Station;
 
+                ai.assignedIndices.Add(index);
+
+                assignedAreas.Add(ai, new HashSet<int> {index});
+
+                currentCoverage += graphFinder.weightedGraphAreas[index].Value;
+
                 maxCount--;
             }
         }
 
         indices = graphFinder.RequestPriorityIndices(IndexPriority.High);
 
-        if(indices.Count > 0)
+        var areas = graphFinder.GetMatchingIsolatedAreas(indices);
+        var loops = graphFinder.GetMatchingLoops(indices);
+
+        string test = "High priority isolated: ";
+        Debug.Log(test);
+
+        foreach (var area in areas)
         {
-            
+            test = "area: ";
+            foreach (var index in indices)
+                test += index + "- ";
+
+            Debug.Log(test);
         }
+
+        test = "High priority loop: ";
+        Debug.Log(test);
+
+        foreach(var loop in loops)
+        {
+            loop.DebugPath();
+        }
+
 
         if (maxCount <= 0)
             return;

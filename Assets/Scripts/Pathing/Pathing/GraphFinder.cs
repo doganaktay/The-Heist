@@ -21,6 +21,7 @@ public class GraphFinder : MonoBehaviour
     List<MazeCell> ends = new List<MazeCell>();
     bool[,] visited;
     public static Dictionary<int, (List<MazeCell> all, List<MazeCell> ends)> GraphAreas;
+    public static List<int> FinalGraphIndices = new List<int>();
     public static Dictionary<int, MazeCell> indexedJunctions = new Dictionary<int, MazeCell>();
     public static List<(int[] nodes, int[] edges)> cycles = new List<(int[] nodes, int[] edges)>();
     static EdgeData[] LabelledGraphConnections;
@@ -73,15 +74,15 @@ public class GraphFinder : MonoBehaviour
         maxLoopSearchDepth = loopSearchLimit;
         maxRecursionDepth = recursionLimit;
 
-        GameManager.MazeGenFinished += Initialize;
+        //GameManager.MazeGenFinished += Initialize;
     }
 
     private void OnDisable()
     {
-        GameManager.MazeGenFinished -= Initialize;
+        //GameManager.MazeGenFinished -= Initialize;
     }
 
-    private void Initialize()
+    public void Initialize()
     {
         CreateGraph();
         InitializeSearchCollections();
@@ -360,6 +361,10 @@ public class GraphFinder : MonoBehaviour
 
         foreach(var area in GraphAreas)
         {
+            // keeping track of the final graph indices used on map
+            // for easy access. these are the keys to GraphAreas
+            FinalGraphIndices.Add(area.Key);
+
             foreach(var cell in area.Value.all)
             {
                 cell.SetDistanceToJunctions(area.Value.ends);
@@ -493,7 +498,7 @@ public class GraphFinder : MonoBehaviour
         }
 
         LabelledGraphConnections.OrderBy(x => x.from);
-        cycles.OrderByDescending(x => x.nodes.Length);
+        cycles.OrderBy(x => x.nodes.Length);
 
         timer.Stop();
         UnityEngine.Debug.Log($"Graph and Loop finding took: {timer.ElapsedMilliseconds}ms");
@@ -1321,6 +1326,20 @@ public class GraphFinder : MonoBehaviour
         return new ChartedPath(waypoints, graphIndices);
     }
 
+    public ChartedPath GetLoop((int[] nodes, int[] edges) cycle)
+    {
+        var waypoints = new MazeCell[cycle.nodes.Length];
+        var graphIndices = new int[cycle.edges.Length];
+
+        for (int i = 0; i < cycle.nodes.Length; i++)
+        {
+            waypoints[i] = indexedJunctions[cycle.nodes[cycle.nodes.Length - 1 - i]];
+            graphIndices[i] = cycle.edges[cycle.edges.Length - 1 - i];
+        }
+
+        return new ChartedPath(waypoints, graphIndices);
+    }
+
     bool IsDeadEnd(int index)
     {
         bool deadEnd = false;
@@ -1469,6 +1488,33 @@ public class GraphFinder : MonoBehaviour
         }
 
         return finalCells.Count / (float)AreaFinder.WalkableCellCount;
+    }
+
+    public List<HashSet<int>> GetMatchingIsolatedAreas(List<int> indicesToMatch)
+    {
+        var areas = new List<HashSet<int>>();
+
+        foreach(var area in isolatedAreas)
+            foreach(var index in indicesToMatch)
+                if (area.Contains(index))
+                {
+                    areas.Add(area);
+                    break;
+                }
+
+        return areas;
+    }
+
+    public List<ChartedPath> GetMatchingLoops(List<int> indicesToMatch)
+    {
+        var loops = new List<ChartedPath>();
+
+        foreach (var cycle in cycles)
+            foreach (var index in indicesToMatch)
+                if (cycle.edges.Contains(index))
+                    loops.Add(GetLoop(cycle));
+
+        return loops;
     }
 
     #endregion
@@ -1800,7 +1846,7 @@ public class GraphFinder : MonoBehaviour
         }
     }
 
-    static void PrintCycle(int[] nodes, int[] edges)
+    public static void PrintCycle(int[] nodes, int[] edges)
     {
         string strIndices = "Cycle: ";
 
