@@ -209,6 +209,8 @@ public class GameManager : MonoBehaviour
 
 		// for testing
 		curator.AssignRandomPriorities();
+
+		//guardManager.InitializeAI();
     }
 
 	public void RestartGame()

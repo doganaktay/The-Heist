@@ -21,13 +21,13 @@ public class GraphFinder : MonoBehaviour
     List<MazeCell> ends = new List<MazeCell>();
     bool[,] visited;
     public static Dictionary<int, (List<MazeCell> all, List<MazeCell> ends)> GraphAreas;
-    public static List<int> FinalGraphIndices = new List<int>();
+    public static List<int> FinalGraphIndices;
     public static Dictionary<int, MazeCell> indexedJunctions = new Dictionary<int, MazeCell>();
     public static List<(int[] nodes, int[] edges)> cycles = new List<(int[] nodes, int[] edges)>();
     static EdgeData[] LabelledGraphConnections;
     List<HashSet<int>> isolatedAreas = new List<HashSet<int>>();
-    public List<KeyValuePair<int, float>> weightedGraphAreas = new List<KeyValuePair<int, float>>();
-    public List<KeyValuePair<HashSet<int>, float>> weightedIsolatedAreas = new List<KeyValuePair<HashSet<int>, float>>();
+    public List<KeyValuePair<int, float>> weightedGraphAreas;
+    public List<KeyValuePair<HashSet<int>, float>> weightedIsolatedAreas;
 
     [SerializeField]
     int loopSearchLimit = 50, recursionLimit = 20;
@@ -361,10 +361,6 @@ public class GraphFinder : MonoBehaviour
 
         foreach(var area in GraphAreas)
         {
-            // keeping track of the final graph indices used on map
-            // for easy access. these are the keys to GraphAreas
-            FinalGraphIndices.Add(area.Key);
-
             foreach(var cell in area.Value.all)
             {
                 cell.SetDistanceToJunctions(area.Value.ends);
@@ -502,6 +498,14 @@ public class GraphFinder : MonoBehaviour
 
         timer.Stop();
         UnityEngine.Debug.Log($"Graph and Loop finding took: {timer.ElapsedMilliseconds}ms");
+
+        // keeping track of the final graph indices used on map
+        // for easy access. these are the keys to GraphAreas
+        FinalGraphIndices = new List<int>();
+        foreach (var area in GraphAreas)
+            FinalGraphIndices.Add(area.Key);
+
+        priorityIndices.Clear();
 
         // DISPLAY
 
@@ -782,8 +786,8 @@ public class GraphFinder : MonoBehaviour
 
     void AssignAreaWeights()
     {
-        weightedGraphAreas.Clear();
-        weightedIsolatedAreas.Clear();
+        weightedGraphAreas = new List<KeyValuePair<int, float>>();
+        weightedIsolatedAreas = new List<KeyValuePair<HashSet<int>, float>>();
 
         foreach (var area in GraphAreas)
         {
@@ -792,7 +796,7 @@ public class GraphFinder : MonoBehaviour
 
         weightedGraphAreas.Sort((a, b) => a.Value.CompareTo(b.Value));
 
-        foreach(var area in isolatedAreas)
+        foreach (var area in isolatedAreas)
         {
             weightedIsolatedAreas.Add(new KeyValuePair<HashSet<int>, float>(area, GetGraphAreaWeight(new List<int>(area))));
         }
@@ -1426,6 +1430,7 @@ public class GraphFinder : MonoBehaviour
 
     public MazeCell GetRandomCellFromGraphArea(int index)
     {
+        UnityEngine.Debug.Log($"Getting random cell from index {index}");
         var cells = GraphAreas[index].all;
         return cells[UnityEngine.Random.Range(0, cells.Count - 1)];
     }
@@ -1826,9 +1831,14 @@ public class GraphFinder : MonoBehaviour
         //    UnityEngine.Debug.Log(test);
         //}
 
+        string test = "Final Graph Indices: ";
+        foreach (var index in FinalGraphIndices)
+            test += index + "-";
+        UnityEngine.Debug.Log(test);
+
         foreach (var area in weightedIsolatedAreas)
         {
-            string test = "Weighted Isolated Area: ";
+            test = "Weighted Isolated Area: ";
 
             foreach (var index in area.Key)
                 test += index + " - ";
@@ -1840,7 +1850,7 @@ public class GraphFinder : MonoBehaviour
 
         foreach (var area in weightedGraphAreas)
         {
-            string test = "Weighted Area: ";
+            test = "Weighted Area: ";
             test += area.Key + " - weight: " + area.Value;
             UnityEngine.Debug.Log(test);
         }

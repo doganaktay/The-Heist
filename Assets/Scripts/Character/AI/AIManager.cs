@@ -82,7 +82,7 @@ public abstract class AIManager : MonoBehaviour
         activeAIs.Clear();
     }
 
-    void InitializeAI()
+    public void InitializeAI()
     {
         ResetAI();
         OnInitializeAI();

@@ -40,7 +40,14 @@ public class GuardManager : AIManager
 
                 assignedAreas.Add(ai, new HashSet<int> {index});
 
-                currentCoverage += graphFinder.weightedGraphAreas[index].Value;
+                Debug.Log($"critical index: {index}");
+
+                foreach(var area in graphFinder.weightedGraphAreas)
+                    if(area.Key == index)
+                    {
+                        currentCoverage += area.Value;
+                        break;
+                    }
 
                 maxCount--;
             }
