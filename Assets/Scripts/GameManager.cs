@@ -135,6 +135,7 @@ public class GameManager : MonoBehaviour
 		curator.pathfinder = pathfinder;
 		curator.areafinder = areafinder;
 		curator.graphfinder = graphFinder;
+		curator.spotfinder = spotfinder;
 
 		// pass references to propagation calculator
 		Propagation.maze = mazeInstance;

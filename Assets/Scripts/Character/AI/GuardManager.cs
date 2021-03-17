@@ -24,7 +24,7 @@ public class GuardManager : AIManager
 
     protected override void OnInitializeAI()
     {
-        int maxCount = (int)guardCount.max;
+        int guardCounter = 0;
 
         var indices = graphFinder.RequestPriorityIndices(IndexPriority.Critical);
 
@@ -47,7 +47,7 @@ public class GuardManager : AIManager
                         break;
                     }
 
-                maxCount--;
+                guardCounter++;
             }
         }
 
@@ -55,6 +55,8 @@ public class GuardManager : AIManager
 
         var areas = graphFinder.GetMatchingIsolatedAreas(indices);
         var loops = graphFinder.GetMatchingLoops(indices);
+
+        var coveredIndices = new List<int>();
 
         string test = "High priority isolated: ";
         Debug.Log(test);
@@ -98,14 +100,14 @@ public class GuardManager : AIManager
         }
 
 
-        if (maxCount <= 0)
+        if (guardCounter <= 0)
             return;
 
 
 
 
 
-        CreateNewAI(maxCount);
+        CreateNewAI(guardCounter);
     }
 
 

@@ -269,11 +269,9 @@ public class Spotfinder : MonoBehaviour
                     var neighbour = maze.cells[xpos, ypos];
 
                     if (cell.connectedCells.Contains(neighbour) || cell.placedConnectedCells.Contains(neighbour))
-                    //if (cell.connectedCells.Contains(neighbour))
                     {
                         if (cell.connectedCells.Contains(neighbour))
                             cell.cardinalBits |= 1 << k;
-                        //Debug.Log($"{cell.gameObject.name} has {1 << k} added to cardinal bits for neighbour at ({xpos},{ypos})");
 
                         var xdiagonal = cell.pos.x + MazeDirections.diagonalVectors[k].x;
                         var ydiagonal = cell.pos.y + MazeDirections.diagonalVectors[k].y;
@@ -294,8 +292,8 @@ public class Spotfinder : MonoBehaviour
                             && (cell.connectedCells.Contains(next) || cell.placedConnectedCells.Contains(next)))
                         {
                             cell.diagonalBits |= 1 << k;
-                            //Debug.Log($"{cell.gameObject.name} has {1 << k} added to diagonal bits for neighbour at ({xdiagonal},{ydiagonal})");
                         }
+                        
                     }
                 }
             }

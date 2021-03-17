@@ -8,6 +8,7 @@ public class Curator : MonoBehaviour
     public Pathfinder pathfinder;
     public AreaFinder areafinder;
     public GraphFinder graphfinder;
+    public Spotfinder spotfinder;
 
     //private void OnEnable()
     //{

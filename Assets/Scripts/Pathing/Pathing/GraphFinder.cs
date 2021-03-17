@@ -29,8 +29,8 @@ public class GraphFinder : MonoBehaviour
     [SerializeField, Tooltip("Min max percent thresholds for isolated areas")]
     MinMaxData areaSizeThreshold;
     List<HashSet<int>> isolatedAreas = new List<HashSet<int>>();
-    public List<KeyValuePair<int, float>> weightedGraphAreas;
     public List<KeyValuePair<HashSet<int>, float>> weightedIsolatedAreas;
+    public List<KeyValuePair<int, float>> weightedGraphAreas;
     public List<KeyValuePair<int, float>> weightedDeadEnds;
 
     [SerializeField]
@@ -934,16 +934,38 @@ public class GraphFinder : MonoBehaviour
             if (area.Count == 0)
                 continue;
 
-            foreach(var other in final)
+            bool isMerged = false;
+            var merged = new HashSet<int>();
+
+            foreach (var other in final)
             {
                 if (area == other)
                     continue;
 
+                // merge dead ends with a single shared junction
+                if (area.Count == 1 && other.Count == 1)
+                {
+                    foreach (var index in area)
+                        foreach (var otherIndex in other)
+                            if (GetSharedJunction(index, otherIndex) != null
+                                && GetGraphAreaWeight(index) + GetGraphAreaWeight(otherIndex) < areaSizeThreshold.max)
+                            {
+                                merged = new HashSet<int>(area);
+                                merged.UnionWith(other);
+                                isolatedAreas.Add(merged);
+                                isMerged = true;
+                            }
+                }
+
                 if (other.IsSubsetOf(area))
                     other.ExceptWith(area);
+
+                if (isMerged)
+                    other.ExceptWith(merged);
             }
 
-            isolatedAreas.Add(area);
+            if(!isMerged)
+                isolatedAreas.Add(area);
         }
 
         //isolatedAreas = final;
@@ -1737,6 +1759,52 @@ public class GraphFinder : MonoBehaviour
         }
 
         return edgeIndex;
+    }
+
+    public HashSet<int> GetFloodCoverage(int startIndex, float coverageLimit)
+    {
+        var final = new HashSet<int> { startIndex };
+
+        Queue<int> candidates = new Queue<int>();
+        var visited = new List<int>();
+
+        var neighbors = GetConnectedIndices(startIndex);
+        neighbors.Shuffle();
+
+        float currentCoverage = GetGraphAreaWeight(startIndex);
+
+        UnityEngine.Debug.Log($"start coverage {currentCoverage}");
+
+        foreach (var neighbor in neighbors)   
+            candidates.Enqueue(neighbor);
+        
+
+        while(currentCoverage < coverageLimit)
+        {
+            var next = candidates.Dequeue();
+            var nextWeight = GetGraphAreaWeight(next);
+
+            visited.Add(next);
+
+            if (currentCoverage + nextWeight < coverageLimit)
+            {
+                final.Add(next);
+                currentCoverage += nextWeight;
+
+                UnityEngine.Debug.Log($"new coverage {currentCoverage}");
+
+                var others = GetConnectedIndices(next);
+
+
+                foreach (var other in others)
+                    if (!visited.Contains(other))
+                        candidates.Enqueue(other);
+            }
+            else
+                break;
+        }
+
+        return final;
     }
 
     #endregion
