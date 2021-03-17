@@ -129,6 +129,11 @@ public struct ChartedPath
         travelIndex = -1;
     }
 
+    public float GetWeight()
+    {
+        return GraphFinder.GetGraphAreaWeight(new List<int>(indices));
+    }
+
 #if UNITY_EDITOR
 
     public void DebugPath()

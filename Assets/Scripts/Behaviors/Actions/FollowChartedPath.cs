@@ -27,9 +27,6 @@ public class FollowChartedPath : ActionNode
 
         owner.SetBehaviorParams(behaviorType, fovType, shouldRun);
 
-        owner.CurrentBehavior = behaviorType;
-        owner.SetFOV(fovType);
-
         if((pathType == ChartedPathType.Loop && owner.GetLoop()) || pathType != ChartedPathType.Loop) { }
         {
 

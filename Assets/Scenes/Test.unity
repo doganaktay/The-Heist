@@ -1744,6 +1744,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maze: {fileID: 0}
+  areaSizeThreshold:
+    min: 0.05
+    max: 0.25
   loopSearchLimit: 30
   recursionLimit: 20
   showDebugDisplay: 1
@@ -2606,6 +2609,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d831a5748447948ecada1f2487363ea9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  maze: {fileID: 0}
+  pathfinder: {fileID: 0}
+  areafinder: {fileID: 0}
+  graphfinder: {fileID: 0}
 --- !u!1 &1958125023
 GameObject:
   m_ObjectHideFlags: 0

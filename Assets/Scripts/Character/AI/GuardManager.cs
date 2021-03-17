@@ -32,15 +32,13 @@ public class GuardManager : AIManager
         {
             foreach(var index in indices)
             {
-                var ai = CreateNewAI(graphFinder.GetRandomCellFromGraphArea(index));
+                var ai = CreateNewAI(GraphFinder.GetRandomCellFromGraphArea(index));
                 Guard guard = (Guard)ai;
                 guard.role = GuardRole.Station;
 
                 ai.assignedIndices.Add(index);
 
                 assignedAreas.Add(ai, new HashSet<int> {index});
-
-                Debug.Log($"critical index: {index}");
 
                 foreach(var area in graphFinder.weightedGraphAreas)
                     if(area.Key == index)
@@ -63,9 +61,28 @@ public class GuardManager : AIManager
 
         foreach (var area in areas)
         {
+            //var ai = CreateNewAI(GraphFinder.GetRandomCellFromGraphArea(index));
+            //Guard guard = (Guard)ai;
+            //guard.role = GuardRole.Cover;
+
+            //ai.assignedIndices.AddRange(area.area);
+
+            //assignedAreas.Add(ai, new HashSet<int> { index });
+
+            //foreach (var area in graphFinder.weightedGraphAreas)
+            //    if (area.Key == index)
+            //    {
+            //        currentCoverage += area.Value;
+            //        break;
+            //    }
+
+            //maxCount--;
+
             test = "area: ";
-            foreach (var index in indices)
+            foreach (var index in area.area)
                 test += index + "- ";
+
+            test += "match count: " + area.count;
 
             Debug.Log(test);
         }
@@ -75,7 +92,9 @@ public class GuardManager : AIManager
 
         foreach(var loop in loops)
         {
-            loop.DebugPath();
+            loop.loop.DebugPath();
+
+            Debug.Log("match count: " + loop.count);
         }
 
 

@@ -5,7 +5,7 @@ using Archi.BT;
 
 public class Guard : AI
 {
-    public GuardRole role;
+    public GuardRole role = GuardRole.Free;
 
     protected override void GenerateBehaviorTree()
     {
@@ -22,10 +22,10 @@ public class Guard : AI
                                 new Sequence("Alert",
                                     new IsAlert(this),
                                     new Investigate(this)),
-                                new RandomSelector("Random Select",
+                                new Selector("Select Casual",
                                     //new Wander(this),
                                     //new Loop(this),
-                                    new FollowChartedPath(this, ChartedPathType.Loop, BehaviorType.Casual, FOVType.Regular)
+                                    new PerformGuardRole(this)
                                 ));
     }
 

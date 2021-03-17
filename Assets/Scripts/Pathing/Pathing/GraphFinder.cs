@@ -25,9 +25,13 @@ public class GraphFinder : MonoBehaviour
     public static Dictionary<int, MazeCell> indexedJunctions = new Dictionary<int, MazeCell>();
     public static List<(int[] nodes, int[] edges)> cycles = new List<(int[] nodes, int[] edges)>();
     static EdgeData[] LabelledGraphConnections;
+
+    [SerializeField, Tooltip("Min max percent thresholds for isolated areas")]
+    MinMaxData areaSizeThreshold;
     List<HashSet<int>> isolatedAreas = new List<HashSet<int>>();
     public List<KeyValuePair<int, float>> weightedGraphAreas;
     public List<KeyValuePair<HashSet<int>, float>> weightedIsolatedAreas;
+    public List<KeyValuePair<int, float>> weightedDeadEnds;
 
     [SerializeField]
     int loopSearchLimit = 50, recursionLimit = 20;
@@ -678,86 +682,249 @@ public class GraphFinder : MonoBehaviour
             CheckJunction(end);
     }
 
-    void CheckJunction(MazeCell cell, HashSet<int> area = null)
+    //void CheckJunction(MazeCell cell, HashSet<int> area = null)
+    //{
+    //    if (area == null)
+    //    {
+    //        area = new HashSet<int>();
+
+    //        var indices = cell.GetGraphAreaIndices();
+
+    //        if (indices.Count == 1)
+    //            area.Add(indices[0]);
+    //        else
+    //            foreach (var index in indices)
+    //                if(GraphAreas[index].ends.Count <= 2)
+    //                    area.Add(index);
+    //    }
+
+    //    bool found = false;
+
+    //    foreach (var connection in GetConnections(cell))
+    //    {
+    //        connection.DeadConnectionCount++;
+
+    //        if (!connection.IsDeadEnd && connection.DeadConnectionCount == GetConnections(connection).Count - 1)
+    //        {
+    //            found = true;
+
+    //            foreach (var index in connection.GetGraphAreaIndices())
+    //                area.Add(index);
+
+    //            connection.IsUnloopable = true;
+    //            CheckJunction(connection, area);
+    //        }
+    //    }
+
+    //    if (!found && area.Count > 0)
+    //        isolatedAreas.Add(area);
+    //}
+
+    void CheckJunction(MazeCell cell, List<HashSet<int>> areas = null)
     {
-        if (area == null)
+        HashSet<int> area;
+
+        bool found = false;
+
+        if (areas == null)
         {
+            areas = new List<HashSet<int>>();
             area = new HashSet<int>();
+            areas.Add(area);
 
             var indices = cell.GetGraphAreaIndices();
 
-            if (indices.Count == 1)
-                area.Add(indices[0]);
-            else
-                foreach (var index in indices)
-                    if(GraphAreas[index].ends.Count <= 2)
-                        area.Add(index);
+            foreach (var index in indices)
+                if (GraphAreas[index].ends.Count <= 2)
+                    area.Add(index);
+
+            if (GetGraphAreaWeight(new List<int>(area)) >= areaSizeThreshold.max)
+            {
+                areas.Add(new HashSet<int>());
+                UnityEngine.Debug.Log("Area size threshold exceeded, starting new hashset");
+            }
         }
 
-        bool found = false;
+        area = areas[areas.Count - 1];
 
         foreach (var connection in GetConnections(cell))
         {
             connection.DeadConnectionCount++;
 
-            //foreach(var c in GetConnections(connection))
-            //    if (connection.connectedCells.Contains(c))
-            //        c.DeadConnectionCount++;
-            
-
             if (!connection.IsDeadEnd && connection.DeadConnectionCount == GetConnections(connection).Count - 1)
             {
                 found = true;
 
+                // looping through dead ends first
+                // in order to prevent isolated areas that skip a dead end
+                // and include a corridor
                 foreach (var index in connection.GetGraphAreaIndices())
-                    area.Add(index);
+                {
+                    if (!IsDeadEnd(index))
+                        continue;
+
+                    if (GetGraphAreaWeight(new List<int>(area)) + GetGraphAreaWeight(index) >= areaSizeThreshold.max)
+                    {
+                        areas.Add(new HashSet<int>());
+                        area = areas[areas.Count - 1];
+
+                        //UnityEngine.Debug.Log("Area size threshold exceeded, starting new hashset");
+                    }
+
+                    bool duplicate = false;
+
+                    for(int i = 0; i < areas.Count - 1; i++)
+                    {
+                        if(areas[i].Contains(index))
+                        {
+                            duplicate = true;
+                            break;
+                        }
+                    }
+
+                    if(!duplicate)
+                        area.Add(index);
+
+                }
+
+                foreach (var index in connection.GetGraphAreaIndices())
+                {
+                    if (IsDeadEnd(index))
+                        continue;
+
+                    if (GetGraphAreaWeight(new List<int>(area)) + GetGraphAreaWeight(index) >= areaSizeThreshold.max)
+                    {
+                        areas.Add(new HashSet<int>());
+                        area = areas[areas.Count - 1];
+
+                        //UnityEngine.Debug.Log("Area size threshold exceeded, starting new hashset");
+                    }
+
+                    bool duplicate = false;
+
+                    for (int i = 0; i < areas.Count - 1; i++)
+                    {
+                        if (areas[i].Contains(index))
+                        {
+                            duplicate = true;
+                            break;
+                        }
+                    }
+
+                    if (!duplicate)
+                        area.Add(index);
+
+                }
 
                 connection.IsUnloopable = true;
-                CheckJunction(connection, area);
+                CheckJunction(connection, areas);
             }
         }
 
-        if (!found && area.Count > 0)
-            isolatedAreas.Add(area);
+        if (!found)
+        {
+            foreach(var final in areas)
+            {
+                //UnityEngine.Debug.Log($"Adding {areas.Count} new areas");
+
+                if(final.Count > 0)
+                    isolatedAreas.Add(final);
+            }
+        }
     }
 
     void TrimIsolatedAreas()
     {
         var final = new List<HashSet<int>>();
+        var trimPairs = new List<(HashSet<int> area, HashSet<int> other)>();
 
         foreach (var area in isolatedAreas)
         {
             var setsToMerge = new List<HashSet<int>>();
             bool isSubset = false;
             bool hasOverlap = false;
+            bool trim = false;
 
             foreach (var other in isolatedAreas)
             {
                 if (area == other)
                     continue;
 
-                if (area.IsSubsetOf(other))
+                if (area.IsProperSubsetOf(other))
                 {
                     isSubset = true;
                     break;
                 }
-                else if (area.Overlaps(other))
+                else if (area.Overlaps(other) && !other.IsSubsetOf(area))
                 {
-                    setsToMerge.Add(other);
-                    hasOverlap = true;
+                    var areaWeight = GetGraphAreaWeight(new List<int>(area));
+                    var otherWeight = GetGraphAreaWeight(new List<int>(other));
+
+                    if(areaWeight + otherWeight < areaSizeThreshold.max)
+                    {
+                        setsToMerge.Add(other);
+                        hasOverlap = true;
+                    }
+                    else
+                    {
+                        if(areaWeight < areaSizeThreshold.max || otherWeight < areaSizeThreshold.max)
+                        {
+                            if (areaWeight <= otherWeight)
+                                other.ExceptWith(area);
+                            else
+                                area.ExceptWith(other);
+                        }
+                        else if (!trimPairs.Contains((area, other)) && !trimPairs.Contains((other, area)))
+                        {
+                            trimPairs.Add((area, other));
+                            trim = true;
+                        }
+                    }
                 }
             }
 
-            if (!isSubset && !hasOverlap)
-                final.Add(area);
-            else if (!isSubset && hasOverlap)
+            if (!trim)
             {
-                var temp = new HashSet<int>(area);
-                foreach (var set in setsToMerge)
-                    temp.UnionWith(set);
+                if (!isSubset && !hasOverlap)
+                    final.Add(area);
+                else if (!isSubset && hasOverlap)
+                {
+                    var temp = new HashSet<int>(area);
+                    foreach (var set in setsToMerge)
+                        temp.UnionWith(set);
 
-                final.Add(temp);
+                    final.Add(temp);
+                }
             }
+            else
+            {
+                final.Add(area);
+            }
+        }
+
+        foreach(var pair in trimPairs)
+        {
+            var intersect = new HashSet<int>(pair.area);
+            intersect.IntersectWith(pair.other);
+
+            string test = "Trim: ";
+            test += "First: ";
+            foreach (var index in pair.area)
+                test += index + ",";
+            test += " Second: ";
+            foreach (var index in pair.other)
+                test += index + ",";
+            test += " Intersect: ";
+            foreach (var index in intersect)
+                test += index + ",";
+
+            UnityEngine.Debug.Log(test);
+
+            pair.area.ExceptWith(intersect);
+            pair.other.ExceptWith(intersect);
+
+            if (GetGraphAreaWeight(new List<int>(intersect)) > areaSizeThreshold.min)
+                final.Add(intersect);
         }
 
         isolatedAreas.Clear();
@@ -788,6 +955,7 @@ public class GraphFinder : MonoBehaviour
     {
         weightedGraphAreas = new List<KeyValuePair<int, float>>();
         weightedIsolatedAreas = new List<KeyValuePair<HashSet<int>, float>>();
+        weightedDeadEnds = new List<KeyValuePair<int, float>>();
 
         foreach (var area in GraphAreas)
         {
@@ -802,6 +970,20 @@ public class GraphFinder : MonoBehaviour
         }
 
         weightedIsolatedAreas.Sort((a, b) => a.Value.CompareTo(b.Value));
+
+        foreach (var area in GraphAreas)
+        {
+            if(area.Value.ends.Count == 2)
+            {
+                foreach(var end in area.Value.ends)
+                    if (end.IsDeadEnd)
+                    {
+                        weightedDeadEnds.Add(new KeyValuePair<int, float>(area.Key, GetGraphAreaWeight(area.Key)));
+                    }
+            }
+        }
+
+        weightedDeadEnds.Sort((a, b) => a.Value.CompareTo(b.Value));
     }
 
     #endregion
@@ -1355,9 +1537,6 @@ public class GraphFinder : MonoBehaviour
                 break;
             }
 
-        if (deadEnd)
-            UnityEngine.Debug.Log($"{index} is dead end");
-
         return deadEnd;
     }
 
@@ -1428,9 +1607,8 @@ public class GraphFinder : MonoBehaviour
         return false;
     }
 
-    public MazeCell GetRandomCellFromGraphArea(int index)
+    public static MazeCell GetRandomCellFromGraphArea(int index)
     {
-        UnityEngine.Debug.Log($"Getting random cell from index {index}");
         var cells = GraphAreas[index].all;
         return cells[UnityEngine.Random.Range(0, cells.Count - 1)];
     }
@@ -1480,8 +1658,8 @@ public class GraphFinder : MonoBehaviour
             return new HashSet<int>(temp[UnityEngine.Random.Range(0, temp.Count)]);
     }
 
-    public float GetGraphAreaWeight(int index) => GraphAreas[index].all.Count / (float)AreaFinder.WalkableCellCount;
-    public float GetGraphAreaWeight(List<int> indices)
+    public static float GetGraphAreaWeight(int index) => GraphAreas[index].all.Count / (float)AreaFinder.WalkableCellCount;
+    public static float GetGraphAreaWeight(List<int> indices)
     {
         var finalCells = new List<MazeCell>();
 
@@ -1495,31 +1673,70 @@ public class GraphFinder : MonoBehaviour
         return finalCells.Count / (float)AreaFinder.WalkableCellCount;
     }
 
-    public List<HashSet<int>> GetMatchingIsolatedAreas(List<int> indicesToMatch)
+    public List<(HashSet<int> area, int count)> GetMatchingIsolatedAreas(List<int> indicesToMatch)
     {
-        var areas = new List<HashSet<int>>();
+        var areas = new List<(HashSet<int> area, int count)>();
 
         foreach(var area in isolatedAreas)
+        {
+            int count = 0;
+            bool includes = false;
+
             foreach(var index in indicesToMatch)
+            {
                 if (area.Contains(index))
                 {
-                    areas.Add(area);
-                    break;
+                    includes = true;
+                    count++;
                 }
+            }
+
+            if (includes)
+                areas.Add((area, count));
+        }
+
+        areas.OrderBy(x => x.count);
 
         return areas;
     }
 
-    public List<ChartedPath> GetMatchingLoops(List<int> indicesToMatch)
+    public List<(ChartedPath loop, int count)> GetMatchingLoops(List<int> indicesToMatch)
     {
-        var loops = new List<ChartedPath>();
+        var loops = new List<(ChartedPath loop, int count)>();
 
         foreach (var cycle in cycles)
+        {
+            int count = 0;
+            bool includes = false;
+
             foreach (var index in indicesToMatch)
+            {
                 if (cycle.edges.Contains(index))
-                    loops.Add(GetLoop(cycle));
+                {
+                    includes = true;
+                    count++;
+                }
+            }
+
+            if(includes)
+                loops.Add((GetLoop(cycle), count));
+        }
+
+        loops.OrderBy(x => x.count);
 
         return loops;
+    }
+
+    public int GetIsolatedEdgeIndex(HashSet<int> area)
+    {
+        int edgeIndex = -1;
+
+        foreach(var index in area)
+        {
+
+        }
+
+        return edgeIndex;
     }
 
     #endregion
@@ -1608,7 +1825,7 @@ public class GraphFinder : MonoBehaviour
                             //UnityEngine.Debug.Log(test);
 
                             //UnityEngine.Debug.Log(str);
-                            PrintCycle(p, e);
+                            //PrintCycle(p, e);
                         }
                     }
                 }
@@ -1819,11 +2036,13 @@ public class GraphFinder : MonoBehaviour
         //foreach (var cycle in cycles)
         //    PrintCycle(cycle.nodes, cycle.edges);
 
-        //foreach(var area in isolatedAreas)
-        //{
-        //    string test = "Isolated Area: ";
+        string test = "";
 
-        //    foreach(var index in area)
+        //foreach (var area in isolatedAreas)
+        //{
+        //    test = "Pre-trim Isolated Area: ";
+
+        //    foreach (var index in area)
         //    {
         //        test += index + "-";
         //    }
@@ -1831,10 +2050,24 @@ public class GraphFinder : MonoBehaviour
         //    UnityEngine.Debug.Log(test);
         //}
 
-        string test = "Final Graph Indices: ";
-        foreach (var index in FinalGraphIndices)
-            test += index + "-";
-        UnityEngine.Debug.Log(test);
+        //TrimIsolatedAreas();
+
+        //foreach (var area in isolatedAreas)
+        //{
+        //    test = "Post-trim Isolated Area: ";
+
+        //    foreach (var index in area)
+        //    {
+        //        test += index + "-";
+        //    }
+
+        //    UnityEngine.Debug.Log(test);
+        //}
+
+        //test = "Final Graph Indices: ";
+        //foreach (var index in FinalGraphIndices)
+        //    test += index + "-";
+        //UnityEngine.Debug.Log(test);
 
         foreach (var area in weightedIsolatedAreas)
         {
@@ -1848,12 +2081,19 @@ public class GraphFinder : MonoBehaviour
             UnityEngine.Debug.Log(test);
         }
 
-        foreach (var area in weightedGraphAreas)
-        {
-            test = "Weighted Area: ";
-            test += area.Key + " - weight: " + area.Value;
-            UnityEngine.Debug.Log(test);
-        }
+        //foreach (var area in weightedDeadEnds)
+        //{
+        //    test = "Weighted Dead End: ";
+        //    test += area.Key + " - weight: " + area.Value;
+        //    UnityEngine.Debug.Log(test);
+        //}
+
+        //foreach (var area in weightedGraphAreas)
+        //{
+        //    test = "Weighted Area: ";
+        //    test += area.Key + " - weight: " + area.Value;
+        //    UnityEngine.Debug.Log(test);
+        //}
     }
 
     public static void PrintCycle(int[] nodes, int[] edges)
