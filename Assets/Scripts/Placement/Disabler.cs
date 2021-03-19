@@ -19,7 +19,7 @@ public class Disabler : PlaceableItem
     {
         if((1<<collision.gameObject.layer & affectedLayers) != 0)
         {
-            Debug.Log("Disabler hit AI");
+            Debug.Log($"Disabler hit {collision.gameObject.name}");
 
             var guard = collision.gameObject.GetComponent<Guard>();
 

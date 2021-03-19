@@ -268,6 +268,7 @@ public abstract class AI : Character, IBehaviorTree
     {
         behaviourTreeRoutine = StartCoroutine(RunBehaviorTree());
         SetBehaviorParams(BehaviorType.Investigate, FOVType.Alert, false);
+        SetAlertStatus();
     }
 
     public void SetBehavior(IEnumerator behavior, ActionNode node)

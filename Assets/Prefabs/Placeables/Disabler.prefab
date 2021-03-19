@@ -133,7 +133,7 @@ MonoBehaviour:
   affectedLayers:
     serializedVersion: 2
     m_Bits: 2048
-  disableTime: -1
+  disableTime: 5
 --- !u!50 &4866447767879934501
 Rigidbody2D:
   serializedVersion: 4
