@@ -15,7 +15,7 @@ public enum BehaviorType
 
 public enum FOVType
 {
-    Disabled = -1,
+    Disabled,
     Regular,
     Alert,
     Chase
@@ -236,6 +236,7 @@ public abstract class AI : Character, IBehaviorTree
 
     static List<(float radius, float angle)> fovPresets = new List<(float radius, float angle)>()
     {
+        (1f, 1f),
         (60f, 60f),
         (70, 80f),
         (80f, 100f)
@@ -250,18 +251,29 @@ public abstract class AI : Character, IBehaviorTree
         SetBehaviorParams(BehaviorType.Disabled, FOVType.Disabled, false);
         StopCoroutine(behaviourTreeRoutine);
 
-        if(currentAction != null)
+        if (currentAction != null)
         {
             StopCoroutine(currentAction);
             IsActive = false;
         }
 
-        if(time > -1)
+        ClearBehaviorTreeData();
+
+        if (time > -1)
         {
             yield return new WaitForSeconds(time);
 
             Enable();
         }
+    }
+
+    private void ClearBehaviorTreeData()
+    {
+        ClearPath(ChartedPathType.Pursuit);
+        PointOfInterest = null;
+        PlayerObservationPoint = null;
+        ReadyForPursuit = false;
+        RegisterPlayer = false;
     }
 
     public void Enable()
@@ -386,15 +398,6 @@ public abstract class AI : Character, IBehaviorTree
         Debug.Log($"{gameObject.name} finished look around");
     }
 
-    public IEnumerable Disabled(float time = -1)
-    {
-        if (time > -1)
-        {
-            yield return new WaitForSeconds(time);
-            Enable();
-        }
-    }
-
     #endregion
 
     #region Utilities and Trackers
@@ -411,53 +414,56 @@ public abstract class AI : Character, IBehaviorTree
 
         while (true)
         {
-            if (!RegisterPlayer)
+            if(CurrentBehavior != BehaviorType.Disabled)
             {
-                if(fieldOfView.ContinuousExposureTime > currentRegisterThreshold
-                   || (IsAlert && (fieldOfView.CanSeePlayer() || PlayerIsVeryClose())))
+                if (!RegisterPlayer)
                 {
-                    SetAlertStatus();
-                    RegisterPlayer = true;
+                    if(fieldOfView.ContinuousExposureTime > currentRegisterThreshold
+                       || (IsAlert && (fieldOfView.CanSeePlayer() || PlayerIsVeryClose())))
+                    {
+                        SetAlertStatus();
+                        RegisterPlayer = true;
 
-                    UnityEngine.Debug.Log($"{gameObject.name} found player. Exposure: {fieldOfView.ContinuousExposureTime}/{currentRegisterThreshold}, {fieldOfView.ContinuousExposureTime > currentRegisterThreshold}, Is alert: {IsAlert} Can see player: {fieldOfView.CanSeePlayer()} Is too close: {PlayerIsVeryClose()}");
-                }
-            }
-            else
-            {
-                if (fieldOfView.CanSeePlayer() || (IsAlert && PlayerIsVeryClose()))
-                {
-                    registerTimer = 0;
-                    alertTimer = 0f;
+                        UnityEngine.Debug.Log($"{gameObject.name} found player. Exposure: {fieldOfView.ContinuousExposureTime}/{currentRegisterThreshold}, {fieldOfView.ContinuousExposureTime > currentRegisterThreshold}, Is alert: {IsAlert} Can see player: {fieldOfView.CanSeePlayer()} Is too close: {PlayerIsVeryClose()}");
+                    }
                 }
                 else
-                    registerTimer += Time.deltaTime;
-
-                if(registerTimer >= lostTargetThreshold)
                 {
-                    RegisterPlayer = false;
-                    registerTimer = 0;
+                    if (fieldOfView.CanSeePlayer() || (IsAlert && PlayerIsVeryClose()))
+                    {
+                        registerTimer = 0;
+                        alertTimer = 0f;
+                    }
+                    else
+                        registerTimer += Time.deltaTime;
 
-                    UnityEngine.Debug.Log($"{gameObject.name} lost player");
+                    if(registerTimer >= lostTargetThreshold)
+                    {
+                        RegisterPlayer = false;
+                        registerTimer = 0;
+
+                        UnityEngine.Debug.Log($"{gameObject.name} lost player");
+                    }
                 }
-            }
 
             
 
-            if (IsAlert && (int)CurrentBehavior < (int)BehaviorType.Check)
-            {
-                alertTimer += Time.deltaTime;
-
-                if (alertTimer > maintainAlertTime)
+                if (IsAlert && (int)CurrentBehavior < (int)BehaviorType.Check)
                 {
-                    IsAlert = false;
-                    alertTimer = 0;
-                    maintainAlertTime += maintainAlertTimeIncrement;
+                    alertTimer += Time.deltaTime;
 
-                    Debug.Log($"{gameObject.name} is no longer alert");
+                    if (alertTimer > maintainAlertTime)
+                    {
+                        IsAlert = false;
+                        alertTimer = 0;
+                        maintainAlertTime += maintainAlertTimeIncrement;
+
+                        Debug.Log($"{gameObject.name} is no longer alert");
+                    }
                 }
-            }
 
-            fieldOfView.SetColorBlendFactor(RegisterPlayer || IsAlert ? 1f : fieldOfView.ContinuousExposureTime / currentRegisterThreshold);
+                fieldOfView.SetColorBlendFactor(RegisterPlayer || IsAlert ? 1f : fieldOfView.ContinuousExposureTime / currentRegisterThreshold);
+            }
 
             yield return null;
         }

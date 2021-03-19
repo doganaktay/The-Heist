@@ -1545,6 +1545,7 @@ GameObject:
   - component: {fileID: 909260618}
   - component: {fileID: 909260617}
   - component: {fileID: 909260620}
+  - component: {fileID: 909260621}
   m_Layer: 5
   m_Name: TopMenu
   m_TagString: Untagged
@@ -1626,6 +1627,20 @@ MonoBehaviour:
   baseColor: {r: 1, g: 1, b: 1, a: 1}
   selectColor: {r: 0.8509804, g: 0.19607843, b: 0.1882353, a: 1}
   fadeTime: 2
+--- !u!114 &909260621
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 909260616}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_HorizontalFit: 0
+  m_VerticalFit: 0
 --- !u!1 &1048864350
 GameObject:
   m_ObjectHideFlags: 0
