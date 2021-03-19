@@ -23,9 +23,17 @@ public class UIMenu : MonoBehaviour
 
         for(int i = 0; i < transform.childCount; i++)
         {
-            menuItems.Add(transform.GetChild(i).GetComponent<UIMenuItem>());
+            var items = transform.GetChild(i).GetComponentsInChildren<UIMenuItem>();
+
+            foreach(var item in items)
+            {
+                if (!menuItems.Contains(item))
+                    menuItems.Add(item);
+            }
         }
     }
+
+
 
     public void SelectMenuItem(UIMenuItem selection)
     {

@@ -119,7 +119,13 @@ public class FieldOfView : MonoBehaviour
         }
     }
 
-	IEnumerator FindTargetsWithDelay(float delay)
+    public void Disable()
+    {
+		ClearMesh();
+		enabled = false;
+    }
+
+    IEnumerator FindTargetsWithDelay(float delay)
 	{
 		var cachedDelay = new WaitForSeconds(delay);
 

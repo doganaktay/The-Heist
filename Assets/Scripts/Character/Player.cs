@@ -12,6 +12,7 @@ public class Player : Character
     public Projectile projectilePrefab;
     ProjectileSelector projectileSelector; // selects current projectile from an array of SOs
     public SoundBomb soundBombPrefab;
+    public Disabler disablerPrefab;
     [HideInInspector] public Pathfinder pathfinder;
     [HideInInspector] public PhysicsSim simulation;
     [HideInInspector] public Trajectory trajectory;
@@ -148,6 +149,11 @@ public class Player : Character
             case PlaceableItemType.SoundBomb:
                 {
                     currentTask = StartCoroutine(ItemTask(PlaceableItemType.SoundBomb, soundBombPrefab, cell));
+                }
+                break;
+            case PlaceableItemType.Disabler:
+                {
+                    currentTask = StartCoroutine(ItemTask(PlaceableItemType.Disabler, disablerPrefab, cell));
                 }
                 break;
         }

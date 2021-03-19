@@ -441,6 +441,8 @@ MonoBehaviour:
     type: 3}
   soundBombPrefab: {fileID: -8828769137660388836, guid: a36dba4683cd143d7a515737ecccc028,
     type: 3}
+  disablerPrefab: {fileID: 8526714143579153358, guid: dbef4d3efa4ea47a9b9328b8df89fb9f,
+    type: 3}
   pathfinder: {fileID: 0}
   simulation: {fileID: 0}
   trajectory: {fileID: 0}

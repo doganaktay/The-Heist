@@ -250,7 +250,7 @@ namespace Archi.Touch
                         
                         foreach(var item in currentCellHit.placedItems.Values)
                         {
-                            if (item)
+                            if (item && item.isUsable)
                                 item.UseItem();
                         }
 

@@ -87,6 +87,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 20d9269b87ffc49aab193576d325c033, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  buttonType: 0
+  itemType: 1
+  isCombinationButton: 1
 --- !u!1 &6391307926873877896
 GameObject:
   m_ObjectHideFlags: 0
@@ -150,11 +153,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: BUTTON
+  m_text: SB
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: d453e6e9c12ab416aa21111fd681de18, type: 2}
-  m_sharedMaterial: {fileID: -8350782748536719683, guid: d453e6e9c12ab416aa21111fd681de18,
-    type: 2}
+  m_sharedMaterial: {fileID: 2100000, guid: ebdc797618d8848b8a00f77917b9a451, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

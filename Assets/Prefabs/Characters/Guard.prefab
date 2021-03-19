@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 4575945924325056854}
   - component: {fileID: 6135599268688126621}
   m_Layer: 11
-  m_Name: Patrol
+  m_Name: Guard
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -85,6 +85,8 @@ MonoBehaviour:
     indices: 
     travelIndex: 0
     isLoop: 0
+  assignedIndices: 
+  role: 0
 --- !u!212 &4575945924325056854
 SpriteRenderer:
   m_ObjectHideFlags: 0

@@ -67,8 +67,9 @@ public class PhysicsSim : MonoBehaviour
 
         playerCopy = Instantiate(playerPrefab);
 
-        // disable scripts
+        // remove scripts
         Destroy(playerCopy.GetComponent<Player>());
+        Destroy(playerCopy.GetComponent<Rigidbody2D>());
 
         // add player to simulation
         SceneManager.MoveGameObjectToScene(playerCopy.gameObject, simulation);

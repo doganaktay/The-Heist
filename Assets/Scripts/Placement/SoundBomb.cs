@@ -7,7 +7,6 @@ public class SoundBomb : PlaceableItem, IPropagatable
     private List<(MazeCell cell, float ratio)> affectedCells = new List<(MazeCell cell, float ratio)>();
     [SerializeField] private float strength;
     [SerializeField] private float minThreshold;
-    [SerializeField] Color notificationColor;
 
     public List<(MazeCell cell, float ratio)> AffectedCells { get => affectedCells; set => affectedCells = value; }
     public float PropagationStrength { get => strength; set => strength = value; }

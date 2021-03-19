@@ -199,7 +199,7 @@ public abstract class AI : Character, IBehaviorTree
 
         if (type == FOVType.Disabled)
         {
-            fieldOfView.enabled = false;
+            fieldOfView.Disable();
             return;
         }
         
@@ -245,14 +245,46 @@ public abstract class AI : Character, IBehaviorTree
 
     #region AI Actions
 
+    public IEnumerator Disable(float time = -1)
+    {
+        SetBehaviorParams(BehaviorType.Disabled, FOVType.Disabled, false);
+        StopCoroutine(behaviourTreeRoutine);
+
+        if(currentAction != null)
+        {
+            StopCoroutine(currentAction);
+            IsActive = false;
+        }
+
+        if(time > -1)
+        {
+            yield return new WaitForSeconds(time);
+
+            Enable();
+        }
+    }
+
+    public void Enable()
+    {
+        behaviourTreeRoutine = StartCoroutine(RunBehaviorTree());
+        SetBehaviorParams(BehaviorType.Investigate, FOVType.Alert, false);
+    }
+
     public void SetBehavior(IEnumerator behavior, ActionNode node)
     {
-        Debug.Log($"Setting behavior to {node.Name}");
+        if(node != null)
+            Debug.Log($"Setting behavior to {node.Name}");
 
         if (currentAction != null)
         {
             StopCoroutine(currentAction);
             IsActive = false;
+        }
+
+        if (currentMovement != null)
+        {
+            StopCoroutine(currentMovement);
+            isMoving = false;
         }
 
         currentAction = StartCoroutine(behavior);
@@ -353,10 +385,14 @@ public abstract class AI : Character, IBehaviorTree
         Debug.Log($"{gameObject.name} finished look around");
     }
 
-    //Quaternion GetRandomRotation()
-    //{
-    //    return Quaternion.Euler(0f, 0f, 0f);
-    //}
+    public IEnumerable Disabled(float time = -1)
+    {
+        if (time > -1)
+        {
+            yield return new WaitForSeconds(time);
+            Enable();
+        }
+    }
 
     #endregion
 
