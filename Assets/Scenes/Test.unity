@@ -1744,6 +1744,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maze: {fileID: 0}
+  spotfinder: {fileID: 0}
   areaSizeThreshold:
     min: 0.05
     max: 0.25
@@ -2613,6 +2614,7 @@ MonoBehaviour:
   pathfinder: {fileID: 0}
   areafinder: {fileID: 0}
   graphfinder: {fileID: 0}
+  spotfinder: {fileID: 0}
 --- !u!1 &1958125023
 GameObject:
   m_ObjectHideFlags: 0

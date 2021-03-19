@@ -14,6 +14,7 @@ public enum IndexPriority
 public class GraphFinder : MonoBehaviour
 {
     public Maze maze;
+    public Spotfinder spotfinder;
 
     int index;
     Queue<MazeCell> frontier = new Queue<MazeCell>();
@@ -25,6 +26,8 @@ public class GraphFinder : MonoBehaviour
     public static Dictionary<int, MazeCell> indexedJunctions = new Dictionary<int, MazeCell>();
     public static List<(int[] nodes, int[] edges)> cycles = new List<(int[] nodes, int[] edges)>();
     static EdgeData[] LabelledGraphConnections;
+
+    public static Dictionary<int, (List<MazeCell> placement, float score)> indexedPlacement;
 
     [SerializeField, Tooltip("Min max percent thresholds for isolated areas")]
     MinMaxData areaSizeThreshold;
@@ -510,6 +513,9 @@ public class GraphFinder : MonoBehaviour
             FinalGraphIndices.Add(area.Key);
 
         priorityIndices.Clear();
+
+        // assign indexed placement
+        AssignIndexedPlacement();
 
         // DISPLAY
 
@@ -1006,6 +1012,44 @@ public class GraphFinder : MonoBehaviour
         }
 
         weightedDeadEnds.Sort((a, b) => a.Value.CompareTo(b.Value));
+    }
+
+    void AssignIndexedPlacement()
+    {
+        indexedPlacement = new Dictionary<int, (List<MazeCell> placement, float score)>();
+        var temp = new Dictionary<int, List<MazeCell>>();
+
+        foreach (var placed in spotfinder.PlacedSpots)
+        {
+            foreach(var connected in placed.connectedCells)
+            {
+                foreach(var index in connected.GetGraphAreaIndices())
+                {
+                    if (!temp.ContainsKey(index))
+                    {
+                        temp.Add(index, new List<MazeCell> { placed });
+                    }
+                    else
+                    {
+                        temp[index].Add(placed);
+                    }
+                }
+            }
+        }
+
+        foreach(var t in temp)
+        {
+            indexedPlacement.Add(t.Key, (t.Value, CalculateIndexScore(t.Key, t.Value.Count)));
+        }
+    }
+
+    float CalculateIndexScore(int index, int placedCount)
+    {
+        float placed = (float)placedCount / spotfinder.PlacedSpots.Count;
+        float walkable = GetWeightedArea(index).Value;
+        float endCount = GraphAreas[index].ends.Count;
+
+        return (placed * walkable) / endCount * 1000f;
     }
 
     #endregion
@@ -1773,8 +1817,6 @@ public class GraphFinder : MonoBehaviour
 
         float currentCoverage = GetGraphAreaWeight(startIndex);
 
-        UnityEngine.Debug.Log($"start coverage {currentCoverage}");
-
         foreach (var neighbor in neighbors)   
             candidates.Enqueue(neighbor);
         
@@ -1791,10 +1833,7 @@ public class GraphFinder : MonoBehaviour
                 final.Add(next);
                 currentCoverage += nextWeight;
 
-                UnityEngine.Debug.Log($"new coverage {currentCoverage}");
-
                 var others = GetConnectedIndices(next);
-
 
                 foreach (var other in others)
                     if (!visited.Contains(other))
@@ -1805,6 +1844,15 @@ public class GraphFinder : MonoBehaviour
         }
 
         return final;
+    }
+
+    KeyValuePair<int, float> GetWeightedArea(int index)
+    {
+        foreach (var pair in weightedGraphAreas)
+            if (pair.Key == index)
+                return pair;
+
+        return new KeyValuePair<int, float>(-1, 0);
     }
 
     #endregion
@@ -2145,6 +2193,18 @@ public class GraphFinder : MonoBehaviour
                 test += index + " - ";
 
             test += "weight: " + area.Value;
+
+            UnityEngine.Debug.Log(test);
+        }
+
+        foreach (var placement in indexedPlacement)
+        {
+            test = $"Placement area {placement.Key}: ";
+
+            //foreach (var cell in placement.Value.placement)
+            //    test += cell.gameObject.name + " - ";
+
+            test += placement.Value.score;
 
             UnityEngine.Debug.Log(test);
         }

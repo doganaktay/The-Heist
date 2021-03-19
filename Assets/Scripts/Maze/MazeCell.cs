@@ -43,7 +43,7 @@ public class MazeCell : FastPriorityQueueNode
 	public int DeadConnectionCount { get; set; } = 0;
 	public bool IsUnloopable { get; set; } = false;
 
-	public List<KeyValuePair<MazeCell, int>> MeasuredJunctions = new List<KeyValuePair<MazeCell, int>>();
+	public List<KeyValuePair<MazeCell, int>> MeasuredEnds = new List<KeyValuePair<MazeCell, int>>();
 
 	public int LastIndexAddedToQueue { get; set; } = -1;
 	int unexploredDirectionCount = -1;
@@ -111,25 +111,34 @@ public class MazeCell : FastPriorityQueueNode
 			// -1 because path includes asking cell
 			var distance = PathRequestManager.RequestPathImmediate(this, end).Count - 1;
 
-			MeasuredJunctions.Add(new KeyValuePair<MazeCell, int>(end, distance));
+			MeasuredEnds.Add(new KeyValuePair<MazeCell, int>(end, distance));
 		}
 
-		MeasuredJunctions = MeasuredJunctions.OrderBy(x => x.Value).ToList();
+		MeasuredEnds = MeasuredEnds.OrderBy(x => x.Value).ToList();
     }
 
-	public MazeCell GetClosestJunction() => MeasuredJunctions[0].Key;
+	public MazeCell GetClosestJunction() => MeasuredEnds[0].Key;
 	public MazeCell GetClosestJunction(MazeCell junctionToAvoid)
     {
-		for(int i = 0; i < MeasuredJunctions.Count; i++)
+		for(int i = 0; i < MeasuredEnds.Count; i++)
         {
-			if (MeasuredJunctions[i].Key != junctionToAvoid)
-				return MeasuredJunctions[i].Key;
+			if (MeasuredEnds[i].Key != junctionToAvoid)
+				return MeasuredEnds[i].Key;
 		}
 
 		return null;
     }
+	public MazeCell GetFarthestJunction() => MeasuredEnds[MeasuredEnds.Count - 1].Key;
+	public MazeCell GetFarthestJunction(MazeCell junctionToAvoid)
+	{
+		for (int i = MeasuredEnds.Count - 1; i >= 0; i--)
+		{
+			if (MeasuredEnds[i].Key != junctionToAvoid)
+				return MeasuredEnds[i].Key;
+		}
 
-	public MazeCell GetFarthestJunction() => MeasuredJunctions[MeasuredJunctions.Count - 1].Key;
+		return null;
+	}
 
 	public bool HasGraphIndex(int index)
     {
@@ -144,10 +153,10 @@ public class MazeCell : FastPriorityQueueNode
 
 	public int GetJunctionDistance(MazeCell other)
     {
-		for(int i = 0; i < MeasuredJunctions.Count; i++)
+		for(int i = 0; i < MeasuredEnds.Count; i++)
         {
-			if (MeasuredJunctions[i].Key == other)
-				return MeasuredJunctions[i].Value;
+			if (MeasuredEnds[i].Key == other)
+				return MeasuredEnds[i].Value;
 		}
 
 		return -1;

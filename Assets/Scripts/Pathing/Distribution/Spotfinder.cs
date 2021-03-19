@@ -14,6 +14,7 @@ public class Spotfinder : MonoBehaviour
     [SerializeField] int placeCount = 1;
     List<MazeCell> availableSpots = new List<MazeCell>();
     List<MazeCell> placedSpots = new List<MazeCell>();
+    public List<MazeCell> PlacedSpots => placedSpots;
 
     public List<Tile> activeTileSet = new List<Tile>();
 

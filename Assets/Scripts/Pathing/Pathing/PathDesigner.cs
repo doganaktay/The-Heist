@@ -112,16 +112,24 @@ public class PathDesigner : MonoBehaviour
                     return (observation.GetClosestJunction(current), shareIndex);
                 else
                 {
-                    if(current.GetClosestJunction() == observation.GetClosestJunction())
-                        return (observation.GetClosestJunction(), shareIndex);
+                    var currentClosest = current.GetClosestJunction();
+                    var observationClosest = observation.GetClosestJunction();
+
+                    if(currentClosest == observationClosest)
+                    {
+                        if (current.GetJunctionDistance(currentClosest) < observation.GetJunctionDistance(observationClosest))
+                            return (observation.GetFarthestJunction(), shareIndex);
+                        else
+                            return (observation.GetClosestJunction(), shareIndex);
+                    }
                     else
                         return (observation.GetClosestJunction(current.GetClosestJunction()), shareIndex);
                 }
             }
             else
             {
-                if (observation.MeasuredJunctions[0].Value <= endProximityThreshold)
-                    return (observation.MeasuredJunctions[0].Key, shareIndex);
+                if (observation.MeasuredEnds[0].Value <= endProximityThreshold)
+                    return (observation.MeasuredEnds[0].Key, shareIndex);
                 else
                     return (null, shareIndex);
             }

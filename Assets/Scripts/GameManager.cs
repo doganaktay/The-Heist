@@ -129,6 +129,7 @@ public class GameManager : MonoBehaviour
 
 		// pass references to corridor finder
 		graphFinder.maze = mazeInstance;
+		graphFinder.spotfinder = spotfinder;
 
 		// pass references to curator
 		curator.maze = mazeInstance;
