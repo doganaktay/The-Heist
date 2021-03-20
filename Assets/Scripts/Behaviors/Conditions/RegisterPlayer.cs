@@ -14,6 +14,9 @@ public class RegisterPlayer : Condition
 
     protected override void OnReset() { }
 
-    protected override NodeStatus OnRun() => owner.RegisterPlayer? NodeStatus.Success : NodeStatus.Failure;
+    protected override NodeStatus OnRun()
+    {
+        return owner.RegisterPlayer ? NodeStatus.Success : NodeStatus.Failure;
+    }
 
 }

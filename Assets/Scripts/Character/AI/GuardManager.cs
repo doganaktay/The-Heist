@@ -28,28 +28,28 @@ public class GuardManager : AIManager
 
         var indices = graphFinder.RequestPriorityIndices(IndexPriority.Critical);
 
-        if(indices.Count > 0)
-        {
-            foreach(var index in indices)
-            {
-                var ai = CreateNewAI(GraphFinder.GetRandomCellFromGraphArea(index));
-                Guard guard = (Guard)ai;
-                guard.role = GuardRole.Station;
+        //if(indices.Count > 0)
+        //{
+        //    foreach(var index in indices)
+        //    {
+        //        var ai = CreateNewAI(GraphFinder.GetRandomCellFromGraphArea(index));
+        //        Guard guard = (Guard)ai;
+        //        guard.role = GuardRole.Station;
 
-                ai.assignedIndices.Add(index);
+        //        ai.assignedIndices.Add(index);
 
-                assignedAreas.Add(ai, new HashSet<int> {index});
+        //        assignedAreas.Add(ai, new HashSet<int> {index});
 
-                foreach(var area in graphFinder.weightedGraphAreas)
-                    if(area.Key == index)
-                    {
-                        currentCoverage += area.Value;
-                        break;
-                    }
+        //        foreach(var area in graphFinder.weightedGraphAreas)
+        //            if(area.Key == index)
+        //            {
+        //                currentCoverage += area.Value;
+        //                break;
+        //            }
 
-                guardCounter++;
-            }
-        }
+        //        guardCounter++;
+        //    }
+        //}
 
         indices = graphFinder.RequestPriorityIndices(IndexPriority.High);
 
@@ -100,14 +100,7 @@ public class GuardManager : AIManager
         }
 
 
-        if (guardCounter <= 0)
-            return;
-
-
-
-
-
-        CreateNewAI(guardCounter);
+        CreateNewAI((int)guardCount.max);
     }
 
 

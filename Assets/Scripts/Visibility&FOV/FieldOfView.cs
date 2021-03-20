@@ -122,7 +122,9 @@ public class FieldOfView : MonoBehaviour
     public void Disable()
     {
 		ClearMesh();
-		enabled = false;
+        enabled = false;
+        ContinuousExposureTime = 0f;
+		visibleTargets.Clear();
     }
 
     IEnumerator FindTargetsWithDelay(float delay)

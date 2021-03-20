@@ -165,11 +165,7 @@ public abstract class AI : Character, IBehaviorTree
 
     void OnDestroy()
     {
-        if (behaviourTreeRoutine != null)
-            StopCoroutine(behaviourTreeRoutine);
-
-        if (trackStatusRoutine != null)
-            StopCoroutine(trackStatusRoutine);
+        StopAllCoroutines();
     }
 
     #endregion MonoBehaviour
@@ -248,7 +244,6 @@ public abstract class AI : Character, IBehaviorTree
 
     public IEnumerator Disable(float time = -1)
     {
-        SetBehaviorParams(BehaviorType.Disabled, FOVType.Disabled, false);
         StopCoroutine(behaviourTreeRoutine);
 
         if (currentAction != null)
@@ -256,6 +251,14 @@ public abstract class AI : Character, IBehaviorTree
             StopCoroutine(currentAction);
             IsActive = false;
         }
+
+        if (currentMovement != null)
+        {
+            StopCoroutine(currentMovement);
+            isMoving = false;
+        }
+
+        SetBehaviorParams(BehaviorType.Disabled, FOVType.Disabled, false);
 
         ClearBehaviorTreeData();
 
@@ -274,20 +277,19 @@ public abstract class AI : Character, IBehaviorTree
         PlayerObservationPoint = null;
         ReadyForPursuit = false;
         RegisterPlayer = false;
+        ActiveActionNode = null;
     }
 
     public void Enable()
     {
-        behaviourTreeRoutine = StartCoroutine(RunBehaviorTree());
         SetBehaviorParams(BehaviorType.Investigate, FOVType.Alert, false);
         SetAlertStatus();
+
+        behaviourTreeRoutine = StartCoroutine(RunBehaviorTree());
     }
 
     public void SetBehavior(IEnumerator behavior, ActionNode node)
     {
-        if(node != null)
-            Debug.Log($"Setting behavior to {node.Name}");
-
         if (currentAction != null)
         {
             StopCoroutine(currentAction);
@@ -423,7 +425,7 @@ public abstract class AI : Character, IBehaviorTree
                     {
                         SetAlertStatus();
                         RegisterPlayer = true;
-
+                        SetPursuit(GameManager.player.CurrentCell);
                         UnityEngine.Debug.Log($"{gameObject.name} found player. Exposure: {fieldOfView.ContinuousExposureTime}/{currentRegisterThreshold}, {fieldOfView.ContinuousExposureTime > currentRegisterThreshold}, Is alert: {IsAlert} Can see player: {fieldOfView.CanSeePlayer()} Is too close: {PlayerIsVeryClose()}");
                     }
                 }
