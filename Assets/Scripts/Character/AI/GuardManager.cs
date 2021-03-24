@@ -56,49 +56,6 @@ public class GuardManager : AIManager
         var areas = graphFinder.GetMatchingIsolatedAreas(indices);
         var loops = graphFinder.GetMatchingLoops(indices);
 
-        var coveredIndices = new List<int>();
-
-        string test = "High priority isolated: ";
-        Debug.Log(test);
-
-        foreach (var area in areas)
-        {
-            //var ai = CreateNewAI(GraphFinder.GetRandomCellFromGraphArea(index));
-            //Guard guard = (Guard)ai;
-            //guard.role = GuardRole.Cover;
-
-            //ai.assignedIndices.AddRange(area.area);
-
-            //assignedAreas.Add(ai, new HashSet<int> { index });
-
-            //foreach (var area in graphFinder.weightedGraphAreas)
-            //    if (area.Key == index)
-            //    {
-            //        currentCoverage += area.Value;
-            //        break;
-            //    }
-
-            //maxCount--;
-
-            test = "area: ";
-            foreach (var index in area.area)
-                test += index + "- ";
-
-            test += "match count: " + area.count;
-
-            Debug.Log(test);
-        }
-
-        test = "High priority loop: ";
-        Debug.Log(test);
-
-        foreach(var loop in loops)
-        {
-            loop.loop.DebugPath();
-
-            Debug.Log("match count: " + loop.count);
-        }
-
 
         CreateNewAI((int)guardCount.max);
     }

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 public enum MazeDirection
 {
@@ -48,6 +49,14 @@ public static class MazeDirections
 		new IntVector2(-1,0),
 		new IntVector2(-1,1)
     };
+
+	public static Dictionary<IntVector2, int> directionBitmasks = new Dictionary<IntVector2, int>
+    {
+		{ new IntVector2(0, 1), 1 << 0 },
+		{ new IntVector2(1, 0), 1 << 1 },
+		{ new IntVector2(0, -1), 1 << 2 },
+		{ new IntVector2(-1, 0), 1 << 3 }
+	};
 
 	public static IntVector2 ToIntVector2(this MazeDirection direction)
 	{
@@ -106,4 +115,31 @@ public static class MazeDirections
 
 		wall.gameObject.SetActive(false);
 	}
+
+	public static IntVector2 GetDirection(MazeCell from, MazeCell to) => new IntVector2(to.pos.x - from.pos.x, to.pos.y - from.pos.y);
+
+	public static bool CheckWallAhead(MazeCell current, MazeCell next)
+    {
+		var dir = GetDirection(current, next);
+		return (next.cardinalBits & directionBitmasks[dir]) != 0;
+    }
+
+	public static Vector2 GetDirectionBiasVector(MazeCell currentPos, MazeCell currentTarget, MazeCell nextTarget)
+    {
+		IntVector2 first = new IntVector2(0, 0);
+		IntVector2 second = new IntVector2(0, 0);
+
+		if (currentPos != currentTarget && currentTarget != nextTarget)
+        {
+			first = GetDirection(currentPos, currentTarget);
+			second = GetDirection(currentTarget, nextTarget);
+        }
+
+		var vector = new Vector2(-first.x, -first.y) + new Vector2(second.x, second.y);
+		var result = first.x == second.x ? new Vector2(0, 0) : vector;
+
+		Debug.Log($"Bias vector ({vector.x},{vector.y}) result({result.x},{result.y}) for cells: {currentPos.gameObject.name}, {currentTarget.gameObject.name}, {nextTarget.gameObject.name}");
+
+		return result;
+    }
 }

@@ -13,7 +13,10 @@ public abstract class Character : MonoBehaviour
     protected Collider2D previousHit;
     [SerializeField] protected bool isOnGrid = true;
     private bool hasChanged = false;
-    [Range(0f, 1f), SerializeField]protected float pathDriftMultiplier = 0.2f;
+    [Range(0f, 1f), SerializeField] protected float pathDriftMultiplier = 0.2f;
+    [SerializeField] protected MinMaxData lagPercent;
+    [SerializeField] protected float cutCornerPercent = 0.15f;
+
 
     [SerializeField]
     protected MinMaxData speed;
@@ -137,28 +140,76 @@ public abstract class Character : MonoBehaviour
         isMoving = true;
 
         int i = path[0] == currentCell ? 1 : 0;
+        MazeCell lastCell = currentCell;
         Vector2 drift = UnityEngine.Random.insideUnitCircle.normalized * (GameManager.CellDiagonal * pathDriftMultiplier);
+        Vector3 fromPos = transform.position;
+        currentTargetCell = path[i];
+        nextTargetCell = i < path.Count - 1 ? path[i + 1] : null;
+        Vector3 target = currentTargetCell.transform.position + (Vector3)drift;
+        Vector3 lookPos;
+
+        Vector2 bias = Vector2.zero;
+        if (nextTargetCell != null)
+            bias = MazeDirections.GetDirectionBiasVector(lastCell, currentTargetCell, nextTargetCell) * (GameManager.CellDiagonal * 0.2f);
+        target += (Vector3)bias;
+
         while (i < path.Count)
         {
-            currentTargetCell = path[i];
-            nextTargetCell = i < path.Count - 1 ? path[i + 1] : null;
-
-            Vector3 nextPos = currentTargetCell.transform.position + (Vector3)drift;
-
             if (!AimOverride)
             {
-                if(aim != null)
-                    aim.LookAt2D(nextPos, turnSpeed);
+
+                if (nextTargetCell != null)
+                {
+                    bool wallCheck = currentCell == currentTargetCell ?
+                                     MazeDirections.CheckWallAhead(currentTargetCell, nextTargetCell)
+                                   : MazeDirections.CheckWallAhead(currentCell, currentTargetCell);
+
+                    if (wallCheck)
+                    {
+                        var total = (target - fromPos).sqrMagnitude;
+                        var current = (transform.position - fromPos).sqrMagnitude;
+                        var t = (current / total) - UnityEngine.Random.Range(lagPercent.min, lagPercent.max);
+
+                        lookPos = t < 0 ? (Vector2)target : Vector2.Lerp(target, nextTargetCell.transform.position, t);
+                    }
+                    else
+                        lookPos = target;
+
+                }
                 else
-                    transform.LookAt2D(nextPos, turnSpeed);
+                    lookPos = target;
+
+                if (aim != null)
+                    aim.LookAt2D(lookPos, turnSpeed);
+                else
+                    transform.LookAt2D(lookPos, turnSpeed);
             }
 
-            transform.position = Vector2.MoveTowards(transform.position, nextPos, speed * Time.deltaTime);
+            transform.position = Vector2.MoveTowards(transform.position, target, speed * Time.deltaTime);
 
-            if (transform.position == nextPos)
+            if (transform.position == target)
             {
-                drift = UnityEngine.Random.insideUnitCircle.normalized * (GameManager.CellDiagonal * pathDriftMultiplier);
                 i++;
+                drift = UnityEngine.Random.insideUnitCircle.normalized * (GameManager.CellDiagonal * pathDriftMultiplier);
+
+                fromPos = transform.position;
+
+                if(i < path.Count)
+                {
+                    lastCell = currentTargetCell;
+                    currentTargetCell = path[i];
+                    target = currentTargetCell.transform.position + (Vector3)drift;
+                }
+
+                nextTargetCell = i < path.Count - 1 ? path[i + 1] : null;
+
+                if (nextTargetCell != null && UnityEngine.Random.value > 0.5f)
+                    bias = MazeDirections.GetDirectionBiasVector(lastCell, currentTargetCell, nextTargetCell)
+                        * (GameManager.CellDiagonal * UnityEngine.Random.Range(0, cutCornerPercent));
+                else
+                    bias = Vector2.zero;
+
+                target += (Vector3)bias;
             }
 
             yield return null;

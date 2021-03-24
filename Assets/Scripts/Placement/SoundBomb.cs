@@ -46,7 +46,8 @@ public class SoundBomb : PlaceableItem, IPropagatable
         // clearing notification color from cells when item is removed instead of used
         foreach (var pair in affectedCells)
         {
-            pair.cell.ClearAOE(notificationColor);
+            if(pair.cell)
+                pair.cell.ClearAOE(notificationColor);
         }
     }
 }

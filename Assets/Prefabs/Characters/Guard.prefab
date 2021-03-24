@@ -49,6 +49,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isOnGrid: 1
   pathDriftMultiplier: 0.05
+  lagPercent:
+    min: 0.4
+    max: 0.8
+  cutCornerPercent: 0.1
   speed:
     min: 8
     max: 20
@@ -203,7 +207,7 @@ MonoBehaviour:
   viewAngle: 60
   targetMask:
     serializedVersion: 2
-    m_Bits: 256
+    m_Bits: 2304
   obstacleMask:
     serializedVersion: 2
     m_Bits: 8704

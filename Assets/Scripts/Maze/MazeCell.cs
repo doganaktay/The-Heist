@@ -162,6 +162,16 @@ public class MazeCell : FastPriorityQueueNode
 		return -1;
     }
 
+	public float GetJunctionDistanceAverage()
+    {
+		int total = 0;
+
+		for (int i = 0; i < MeasuredEnds.Count; i++)
+			total += MeasuredEnds[i].Value;
+
+		return (float)total / MeasuredEnds.Count;
+    }
+
     #endregion
 
     public MazeCell[] exploredFrom;
@@ -233,10 +243,7 @@ public class MazeCell : FastPriorityQueueNode
 		}
 	}
 
-	public HashSet<MazeCell> GetNeighbours()
-    {
-		return connectedCells;
-    }
+	public HashSet<MazeCell> GetNeighbours() => connectedCells;
 
 	public void PlaceItem(PlaceableItemType type, PlaceableItem item)
     {

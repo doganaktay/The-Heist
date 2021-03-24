@@ -144,6 +144,8 @@ public class FieldOfView : MonoBehaviour
 		meshCleared = true;
 	}
 
+	public void SetMaxExposureTime() => ContinuousExposureTime = ExposureLimit;
+
 	private void FindVisibleTargets()
 	{
 		visibleTargets.Clear();
@@ -170,6 +172,28 @@ public class FieldOfView : MonoBehaviour
 			return true;
 
 		return false;
+    }
+
+	public bool CanSeeAlertPatrol()
+    {
+		foreach(var target in visibleTargets)
+        {
+			if (target.TryGetComponent(out AI ai) && ai.IsAlert)
+				return true;
+        }
+
+		return false;
+    }
+
+	public AI GetAlertPatrol()
+    {
+		foreach(var target in visibleTargets)
+        {
+			if (target.TryGetComponent(out AI ai) && ai.IsAlert)
+				return ai;
+		}
+
+		return null;
     }
 
 	public void DrawFieldOfView()

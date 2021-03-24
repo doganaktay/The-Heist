@@ -21,7 +21,7 @@ public class Disabler : PlaceableItem
         {
             var guard = collision.gameObject.GetComponent<Guard>();
 
-            guard.SetBehavior(guard.Disable(disableTime), null);
+            guard.SetBehavior(guard.Disable(disableTime));
 
             Destroy(gameObject);
         }
@@ -29,6 +29,7 @@ public class Disabler : PlaceableItem
 
     private void OnDestroy()
     {
-        position.ClearAOE(notificationColor);
+        if(position)
+            position.ClearAOE(notificationColor);
     }
 }

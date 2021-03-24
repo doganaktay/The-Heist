@@ -1045,11 +1045,19 @@ public class GraphFinder : MonoBehaviour
 
     float CalculateIndexScore(int index, int placedCount)
     {
-        float placed = (float)placedCount / spotfinder.PlacedSpots.Count;
-        float walkable = GetWeightedArea(index).Value;
-        float endCount = GraphAreas[index].ends.Count;
+        //float placed = (float)placedCount / spotfinder.PlacedSpots.Count;
+        //float walkable = GetWeightedArea(index).Value;
+        //float endCount = GraphAreas[index].ends.Count;
 
-        return (placed * walkable) / endCount * 1000f;
+        float total = 0f;
+
+        foreach (var cell in GraphAreas[index].all)
+            if(cell.placedConnectedCells.Count > 0)
+                total += cell.GetJunctionDistanceAverage();
+
+        return total / GraphAreas[index].all.Count;
+
+        //return (placed * walkable) / endCount * 1000f;
     }
 
     #endregion
@@ -1592,7 +1600,7 @@ public class GraphFinder : MonoBehaviour
         return new ChartedPath(waypoints, graphIndices);
     }
 
-    bool IsDeadEnd(int index)
+    public static bool IsDeadEnd(int index)
     {
         bool deadEnd = false;
 

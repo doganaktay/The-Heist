@@ -180,4 +180,6 @@ public static class Extensions
 
     public static bool IsCloseAndInView(this Transform from, Transform to, float distance, LayerMask mask) =>
         (to.position - from.position).sqrMagnitude < distance && !Physics2D.Raycast(from.position, to.position - from.position, distance, mask);
+
+
 }

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Archi.BT;
@@ -8,6 +9,7 @@ public enum BehaviorType
     Disabled = -1,
     Casual,
     Investigate,
+    Follow,
     Check,
     Pursue,
     Chase
@@ -60,6 +62,9 @@ public abstract class AI : Character, IBehaviorTree
 
     public bool RegisterPlayer { get; private set; }
     public bool IsAlert { get; private set; }
+    public bool CanSeeAlertPatrol => fieldOfView.CanSeeAlertPatrol();
+    public AI GetAlertPatrol() => fieldOfView.GetAlertPatrol();
+    public void SetMaxExposureTime() => fieldOfView.SetMaxExposureTime();
     public float AwarenessDistance => fieldOfView.viewRadius;
     public LayerMask ViewMask => fieldOfView.obstacleMask;
     public bool IsActive { get; set; }
@@ -137,13 +142,15 @@ public abstract class AI : Character, IBehaviorTree
         fieldOfView = GetComponentInChildren<FieldOfView>();
         fieldOfView.AccumulateExposure = true;
         fieldOfView.ExposureLimit = currentRegisterThreshold;
-        currentSpeed = Random.Range(speed.min, speed.max);
-        currentRegisterThreshold = Random.Range(registerThreshold.min, registerThreshold.max);
+        currentSpeed = UnityEngine.Random.Range(speed.min, speed.max);
+        currentRegisterThreshold = UnityEngine.Random.Range(registerThreshold.min, registerThreshold.max);
 
-        // Track status
         trackStatusRoutine = StartCoroutine(TrackStatus());
 
-        // Behavior Tree
+        SetRandomTimeBuffer();
+        SetTrigExponents();
+        Debug.Log($"{gameObject.name} randomTimeBuffer: {randomTimeBuffer}");
+
         GenerateBehaviorTree();
         behaviourTreeRoutine = StartCoroutine(RunBehaviorTree());
     }
@@ -160,12 +167,8 @@ public abstract class AI : Character, IBehaviorTree
         else
         {
             AimOverride = false;
+            AddHeadMovement();
         }
-    }
-
-    void OnDestroy()
-    {
-        StopAllCoroutines();
     }
 
     #endregion MonoBehaviour
@@ -230,6 +233,56 @@ public abstract class AI : Character, IBehaviorTree
         }
     }
 
+    #endregion
+
+    #region Head Movement
+
+    float randomTimeBuffer;
+    int[] trigExponents = new int[3];
+
+    protected void AddHeadMovement()
+    {
+        float coefA = 1.5f;
+        float coefB = 0.4f;
+        float coefC = 0.2f;
+
+        var timeToUse = Time.time + randomTimeBuffer;
+        float a = 1;
+        float b = 1;
+        float c = 1;
+        int j = 0;
+
+        for(int i = 0; i < trigExponents[j]; i++)
+            a *= Mathf.Sin(coefA * timeToUse);
+        j++;
+        
+        for (int i = 0; i < trigExponents[j]; i++)
+            b *= Mathf.Sin(coefB * timeToUse);
+        j++;
+        
+        for (int i = 0; i < trigExponents[j]; i++)
+            c *= -Mathf.Cos(coefC * timeToUse);
+
+        // the multiplier is hardcoded in for best tweaked results
+        var rot = Quaternion.Euler(0f, 0f, a * b * c * 10f);
+        transform.rotation = rot * transform.rotation;
+    }
+
+    float RandomValue()
+    {
+        var value = Mathf.Sin(Vector2.Dot(UnityEngine.Random.insideUnitCircle, new Vector2(12.9898f, 4.1414f))) * 43758.5453;
+        var fract = Convert.ToSingle(value - (int)value);
+        return fract * 100f;
+    }
+    
+    void SetRandomTimeBuffer() => randomTimeBuffer = RandomValue();
+    
+    void SetTrigExponents()
+    {
+        for(int i = 0; i < trigExponents.Length; i++)
+            trigExponents[i] = UnityEngine.Random.Range(1, 4);
+    }
+
     static List<(float radius, float angle)> fovPresets = new List<(float radius, float angle)>()
     {
         (1f, 1f),
@@ -288,7 +341,7 @@ public abstract class AI : Character, IBehaviorTree
         behaviourTreeRoutine = StartCoroutine(RunBehaviorTree());
     }
 
-    public void SetBehavior(IEnumerator behavior, ActionNode node)
+    public void SetBehavior(IEnumerator behavior)
     {
         if (currentAction != null)
         {
@@ -331,8 +384,6 @@ public abstract class AI : Character, IBehaviorTree
 
     public IEnumerator GoTo(MazeCell cell, bool lookAroundOnArrival = false)
     {
-        //IsActive = true;
-
         Move(cell);
 
         yield return null;
@@ -342,14 +393,33 @@ public abstract class AI : Character, IBehaviorTree
 
         if (lookAroundOnArrival)
             yield return LookAround();
+    }
 
-        //IsActive = false;
+    public IEnumerator GoTo(MazeCell cell, MazeCell abortWhenSeen, bool lookAroundOnArrival = false)
+    {
+        Move(cell);
+
+        yield return null;
+
+        while (isMoving)
+        {
+            Debug.Log($"{gameObject.name} can see cell {abortWhenSeen.gameObject.name}? {CanSeeCell(abortWhenSeen)}");
+
+            if (CanSeeCell(abortWhenSeen))
+            {
+                StopGoToDestination();
+                break;
+            }
+
+            yield return null;
+        }
+
+        if (lookAroundOnArrival)
+            yield return LookAround();
     }
 
     public IEnumerator GoTo(MazeCell cell, int forcedIndex, bool lookAroundOnArrival = false)
     {
-        //IsActive = true;
-
         Move(cell, forcedIndex);
 
         yield return null;
@@ -359,20 +429,39 @@ public abstract class AI : Character, IBehaviorTree
 
         if (lookAroundOnArrival)
             yield return LookAround();
+    }
 
-        //IsActive = false;
+    public IEnumerator GoTo(MazeCell cell, int forcedIndex, MazeCell abortWhenSeen, bool lookAroundOnArrival = false)
+    {
+        Move(cell, forcedIndex);
+
+        yield return null;
+
+        while (isMoving)
+        {
+            Debug.Log($"{gameObject.name} can see cell {abortWhenSeen.gameObject.name}? {CanSeeCell(abortWhenSeen)}");
+
+            if (CanSeeCell(abortWhenSeen))
+            {
+                StopGoToDestination();
+                break;
+            }
+
+            yield return null;
+        }
+
+        if (lookAroundOnArrival)
+            yield return LookAround();
     }
 
     public IEnumerator LookAround()
     {
-        var waitTime = Random.Range(this.waitTime.min, this.waitTime.max);
-        var randomRot = Quaternion.Euler(new Vector3(0f, 0f, Random.Range(25f, 180f) * Mathf.Sign(Random.Range(-1f, 1f))));
+        var waitTime = UnityEngine.Random.Range(this.waitTime.min, this.waitTime.max);
+        var randomRot = Quaternion.Euler(new Vector3(0f, 0f, UnityEngine.Random.Range(25f, 180f) * Mathf.Sign(UnityEngine.Random.Range(-1f, 1f))));
         var currentRot = transform.rotation;
         var targetRot = randomRot * currentRot;
-        var lookSpeed = Random.Range(this.lookSpeed.min, this.lookSpeed.max);
+        var lookSpeed = UnityEngine.Random.Range(this.lookSpeed.min, this.lookSpeed.max);
         var lookCurrent = 0f;
-        
-        Debug.Log($"{gameObject.name} starting {waitTime} second look around");
 
         while (waitTime > 0)
         {
@@ -385,19 +474,17 @@ public abstract class AI : Character, IBehaviorTree
             if (transform.rotation == targetRot)
             {
                 currentRot = transform.rotation;
-                randomRot = Quaternion.Euler(new Vector3(0f, 0f, Random.Range(25f, 180f) * Mathf.Sign(Random.Range(-1f, 1f))));
+                randomRot = Quaternion.Euler(new Vector3(0f, 0f, UnityEngine.Random.Range(25f, 180f) * Mathf.Sign(UnityEngine.Random.Range(-1f, 1f))));
                 targetRot = randomRot * currentRot;
-                lookSpeed = Random.Range(this.lookSpeed.min, this.lookSpeed.max);
+                lookSpeed = UnityEngine.Random.Range(this.lookSpeed.min, this.lookSpeed.max);
                 lookCurrent = 0f;
 
-                yield return new WaitForSeconds(Random.Range(1f, 3f));
+                yield return new WaitForSeconds(UnityEngine.Random.Range(1f, 3f));
             }
 
             waitTime -= Time.deltaTime;
             yield return null;
         }
-
-        Debug.Log($"{gameObject.name} finished look around");
     }
 
     #endregion
@@ -425,8 +512,8 @@ public abstract class AI : Character, IBehaviorTree
                     {
                         SetAlertStatus();
                         RegisterPlayer = true;
-                        SetPursuit(GameManager.player.CurrentCell);
-                        UnityEngine.Debug.Log($"{gameObject.name} found player. Exposure: {fieldOfView.ContinuousExposureTime}/{currentRegisterThreshold}, {fieldOfView.ContinuousExposureTime > currentRegisterThreshold}, Is alert: {IsAlert} Can see player: {fieldOfView.CanSeePlayer()} Is too close: {PlayerIsVeryClose()}");
+
+                        //Debug.Log($"{gameObject.name} found player. Exposure: {fieldOfView.ContinuousExposureTime}/{currentRegisterThreshold}, {fieldOfView.ContinuousExposureTime > currentRegisterThreshold}, Is alert: {IsAlert} Can see player: {fieldOfView.CanSeePlayer()} Is too close: {PlayerIsVeryClose()}");
                     }
                 }
                 else
@@ -450,7 +537,7 @@ public abstract class AI : Character, IBehaviorTree
 
             
 
-                if (IsAlert && (int)CurrentBehavior < (int)BehaviorType.Check)
+                if (IsAlert && (int)CurrentBehavior < (int)BehaviorType.Follow)
                 {
                     alertTimer += Time.deltaTime;
 
@@ -475,7 +562,34 @@ public abstract class AI : Character, IBehaviorTree
         (CurrentCell == GameManager.player.CurrentCell) ||
         ((GameManager.player.transform.position - transform.position).sqrMagnitude < GameManager.CellDiagonal
         && !Physics2D.Raycast(transform.position, GameManager.player.transform.position - transform.position, GameManager.CellDiagonal, fieldOfView.obstacleMask));
-    
+
+    //public bool CanSeeCell(MazeCell cell) =>
+    //    (cell.transform.position - transform.position).sqrMagnitude <= fieldOfView.viewRadius * fieldOfView.viewRadius
+    //    && !Physics2D.Raycast(transform.position, cell.transform.position - transform.position, fieldOfView.viewRadius, fieldOfView.obstacleMask);
+
+    public bool CanSeeCell(MazeCell cell)
+    {
+        var dist = cell.transform.position - transform.position;
+        var first = dist.sqrMagnitude <= fieldOfView.viewRadius * fieldOfView.viewRadius;
+        var dir = Quaternion.AngleAxis(transform.rotation.eulerAngles.z, Vector3.forward) * Vector2.up;
+        var second = !Physics2D.Raycast(transform.position, dir, dist.magnitude, fieldOfView.obstacleMask);
+
+        Debug.DrawRay(transform.position, dir * 50f, Color.red);
+
+        return first && second;
+    }
+
+    public Vector3 CalculateAverageHeading(List<MazeCell> path, int start, int lookAheadLimit = -1)
+    {
+        Vector3 heading = Vector3.zero;
+
+        for (int i = start; i < path.Count && (lookAheadLimit == -1 ? true : i < start + lookAheadLimit); i++)
+            heading += path[i].transform.position;
+
+        heading /= path.Count - start;
+
+        return heading;
+    }
 
     #endregion
 }

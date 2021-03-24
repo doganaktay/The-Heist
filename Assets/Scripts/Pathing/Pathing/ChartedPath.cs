@@ -18,6 +18,9 @@ public struct ChartedPath
         travelIndex = -1;
     }
 
+    public MazeCell First => cells[0];
+    public MazeCell Last => cells[cells.Length - 1];
+
     public (MazeCell cell, int index) GetNext(MazeCell cell, bool isEntry = false)
     {
         if (cells == null || indices == null)
