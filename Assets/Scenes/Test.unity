@@ -1823,7 +1823,7 @@ MonoBehaviour:
     max: 0.25
   loopSearchLimit: 30
   recursionLimit: 20
-  showDebugDisplay: 1
+  showDebugDisplay: 0
 --- !u!1001 &1245003532
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2222,8 +2222,8 @@ MonoBehaviour:
   graphFinder: {fileID: 0}
   activeAIs: []
   guardCount:
-    min: 3
-    max: 5
+    min: 1
+    max: 1
   coveragePercent:
     min: 0.3
     max: 0.5

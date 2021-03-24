@@ -149,8 +149,10 @@ public abstract class Character : MonoBehaviour
         Vector3 lookPos;
 
         Vector2 bias = Vector2.zero;
-        if (nextTargetCell != null)
-            bias = MazeDirections.GetDirectionBiasVector(lastCell, currentTargetCell, nextTargetCell) * (GameManager.CellDiagonal * 0.2f);
+        if (nextTargetCell != null && currentCell != currentTargetCell)
+            bias = MazeDirections.GetDirectionBiasVector(lastCell, currentTargetCell, nextTargetCell)
+                   * (GameManager.CellDiagonal * UnityEngine.Random.Range(0, cutCornerPercent));
+
         target += (Vector3)bias;
 
         while (i < path.Count)
@@ -203,7 +205,7 @@ public abstract class Character : MonoBehaviour
 
                 nextTargetCell = i < path.Count - 1 ? path[i + 1] : null;
 
-                if (nextTargetCell != null && UnityEngine.Random.value > 0.5f)
+                if (nextTargetCell != null)
                     bias = MazeDirections.GetDirectionBiasVector(lastCell, currentTargetCell, nextTargetCell)
                         * (GameManager.CellDiagonal * UnityEngine.Random.Range(0, cutCornerPercent));
                 else

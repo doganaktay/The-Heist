@@ -50,8 +50,8 @@ MonoBehaviour:
   isOnGrid: 1
   pathDriftMultiplier: 0.05
   lagPercent:
-    min: 0.4
-    max: 0.8
+    min: 0.1
+    max: 0.4
   cutCornerPercent: 0.1
   speed:
     min: 8

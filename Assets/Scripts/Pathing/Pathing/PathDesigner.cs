@@ -17,10 +17,7 @@ public class PathDesigner : MonoBehaviour
         if(Instance == null)
             Instance = this;
         else
-        {
-            Debug.LogError("Trying to create a second instance of path designer. Destroying game object");
             Destroy(gameObject);
-        }
     }
 
     public ChartedPath GetPursuitPath(AI ai, MazeCell current, MazeCell observation)
@@ -37,7 +34,6 @@ public class PathDesigner : MonoBehaviour
         {
             cellsToExplore.Enqueue((start.cell, start.index));
             cells.Add(current);
-            //indices.Add(-1);
             indices.Add(graph.GetClosestSharedIndex(current, start.cell));
 
             dist += PathRequestManager.RequestPathImmediate(current, start.cell).Count - 1;
@@ -54,10 +50,7 @@ public class PathDesigner : MonoBehaviour
             {
                 dist += next.cell.GetJunctionDistance(candidates[0].cell);
                 if (dist > maxTravelDist)
-                {
-                    Debug.Log($"{ai.gameObject.name} exceeded pursuit distance limit");
                     break;
-                }
 
                 cellsToExplore.Enqueue(candidates[0]);
                 indices.Add(candidates[0].index);
@@ -68,10 +61,8 @@ public class PathDesigner : MonoBehaviour
 
                 dist += next.cell.GetJunctionDistance(selected.cell);
                 if (dist > maxTravelDist)
-                {
-                    Debug.Log($"{ai.gameObject.name} exceeded pursuit distance limit");
                     break;
-                }
+                
 
                 cellsToExplore.Enqueue(selected);
                 indices.Add(selected.index);
@@ -94,7 +85,6 @@ public class PathDesigner : MonoBehaviour
     public (MazeCell cell, int index) GetSearchStart(MazeCell current, MazeCell observation)
     {
         var shareIndex = graph.GetClosestSharedIndex(current, observation);
-        Debug.Log($"{current.gameObject.name} - {observation.gameObject.name} Closest shared index: {shareIndex}");
 
         if(shareIndex != -1)
         {

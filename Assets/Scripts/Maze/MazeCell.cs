@@ -257,8 +257,6 @@ public class MazeCell : FastPriorityQueueNode
     {
 		if (placedItems.ContainsKey(type))
 			placedItems[type] = null;
-		else
-			Debug.Log("Item key not found in cell: " + gameObject.name);
     }
 
 	public bool HasPlacedItem(PlaceableItemType type)

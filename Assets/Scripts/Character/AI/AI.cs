@@ -148,8 +148,7 @@ public abstract class AI : Character, IBehaviorTree
         trackStatusRoutine = StartCoroutine(TrackStatus());
 
         SetRandomTimeBuffer();
-        SetTrigExponents();
-        Debug.Log($"{gameObject.name} randomTimeBuffer: {randomTimeBuffer}");
+        SetExponents();
 
         GenerateBehaviorTree();
         behaviourTreeRoutine = StartCoroutine(RunBehaviorTree());
@@ -242,9 +241,11 @@ public abstract class AI : Character, IBehaviorTree
 
     protected void AddHeadMovement()
     {
-        float coefA = 1.5f;
-        float coefB = 0.4f;
-        float coefC = 0.2f;
+        // hardcoding coefficients graphed on desmos for desired effect
+
+        float coefA = 4.5f;
+        float coefB = 0.1f;
+        float coefC = 0.1f;
 
         var timeToUse = Time.time + randomTimeBuffer;
         float a = 1;
@@ -252,20 +253,34 @@ public abstract class AI : Character, IBehaviorTree
         float c = 1;
         int j = 0;
 
-        for(int i = 0; i < trigExponents[j]; i++)
+        //for (int i = 0; i < trigExponents[j]; i++)
             a *= Mathf.Sin(coefA * timeToUse);
-        j++;
-        
-        for (int i = 0; i < trigExponents[j]; i++)
-            b *= Mathf.Sin(coefB * timeToUse);
-        j++;
-        
-        for (int i = 0; i < trigExponents[j]; i++)
-            c *= -Mathf.Cos(coefC * timeToUse);
+        //j++;
 
-        // the multiplier is hardcoded in for best tweaked results
-        var rot = Quaternion.Euler(0f, 0f, a * b * c * 10f);
+        //for (int i = 0; i < trigExponents[j]; i++)
+        b *= Mathf.Sin(coefB * timeToUse);
+        //j++;
+
+        //for (int i = 0; i < trigExponents[j]; i++)
+        //c *= -Mathf.Cos(coefC * timeToUse);
+
+        //var look = Mathf.Min(1, timeToUse % 6.1f);
+        //var step = Mathf.SmoothStep(0, 1f, look) - Mathf.SmoothStep(0.18f, 0.4f, look);
+        //var final = SmoothMin(SmoothMin(a, b, timeToUse), c, timeToUse);
+
+        var final = a * b * c;
+        //Debug.Log(final);
+
+        //var final = SmoothMin(a, b, -1.5f) * Mathf.Sin(0.5f * timeToUse) * 10f;
+
+        var rot = Quaternion.Euler(0f, 0f, final);
         transform.rotation = rot * transform.rotation;
+    }
+
+    float SmoothMin(float a, float b, float k)
+    {
+        float res = Mathf.Pow(2, -k * a) + Mathf.Pow(2, -k * b);
+        return -Mathf.Log(res) / k;
     }
 
     float RandomValue()
@@ -277,10 +292,11 @@ public abstract class AI : Character, IBehaviorTree
     
     void SetRandomTimeBuffer() => randomTimeBuffer = RandomValue();
     
-    void SetTrigExponents()
+    void SetExponents()
     {
         for(int i = 0; i < trigExponents.Length; i++)
-            trigExponents[i] = UnityEngine.Random.Range(1, 4);
+            //trigExponents[i] = UnityEngine.Random.value > 0.5 ? 1 : 3;
+            trigExponents[i] = 1;
     }
 
     static List<(float radius, float angle)> fovPresets = new List<(float radius, float angle)>()
@@ -439,7 +455,7 @@ public abstract class AI : Character, IBehaviorTree
 
         while (isMoving)
         {
-            Debug.Log($"{gameObject.name} can see cell {abortWhenSeen.gameObject.name}? {CanSeeCell(abortWhenSeen)}");
+            //Debug.Log($"{gameObject.name} can see cell {abortWhenSeen.gameObject.name}? {CanSeeCell(abortWhenSeen)}");
 
             if (CanSeeCell(abortWhenSeen))
             {
@@ -512,8 +528,6 @@ public abstract class AI : Character, IBehaviorTree
                     {
                         SetAlertStatus();
                         RegisterPlayer = true;
-
-                        //Debug.Log($"{gameObject.name} found player. Exposure: {fieldOfView.ContinuousExposureTime}/{currentRegisterThreshold}, {fieldOfView.ContinuousExposureTime > currentRegisterThreshold}, Is alert: {IsAlert} Can see player: {fieldOfView.CanSeePlayer()} Is too close: {PlayerIsVeryClose()}");
                     }
                 }
                 else
@@ -530,8 +544,6 @@ public abstract class AI : Character, IBehaviorTree
                     {
                         RegisterPlayer = false;
                         registerTimer = 0;
-
-                        UnityEngine.Debug.Log($"{gameObject.name} lost player");
                     }
                 }
 
@@ -546,8 +558,6 @@ public abstract class AI : Character, IBehaviorTree
                         IsAlert = false;
                         alertTimer = 0;
                         maintainAlertTime += maintainAlertTimeIncrement;
-
-                        Debug.Log($"{gameObject.name} is no longer alert");
                     }
                 }
 
@@ -563,10 +573,6 @@ public abstract class AI : Character, IBehaviorTree
         ((GameManager.player.transform.position - transform.position).sqrMagnitude < GameManager.CellDiagonal
         && !Physics2D.Raycast(transform.position, GameManager.player.transform.position - transform.position, GameManager.CellDiagonal, fieldOfView.obstacleMask));
 
-    //public bool CanSeeCell(MazeCell cell) =>
-    //    (cell.transform.position - transform.position).sqrMagnitude <= fieldOfView.viewRadius * fieldOfView.viewRadius
-    //    && !Physics2D.Raycast(transform.position, cell.transform.position - transform.position, fieldOfView.viewRadius, fieldOfView.obstacleMask);
-
     public bool CanSeeCell(MazeCell cell)
     {
         var dist = cell.transform.position - transform.position;
@@ -574,7 +580,7 @@ public abstract class AI : Character, IBehaviorTree
         var dir = Quaternion.AngleAxis(transform.rotation.eulerAngles.z, Vector3.forward) * Vector2.up;
         var second = !Physics2D.Raycast(transform.position, dir, dist.magnitude, fieldOfView.obstacleMask);
 
-        Debug.DrawRay(transform.position, dir * 50f, Color.red);
+        //Debug.DrawRay(transform.position, dir * 50f, Color.red);
 
         return first && second;
     }

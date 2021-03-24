@@ -138,8 +138,6 @@ public static class MazeDirections
 		var vector = new Vector2(-first.x, -first.y) + new Vector2(second.x, second.y);
 		var result = first.x == second.x ? new Vector2(0, 0) : vector;
 
-		Debug.Log($"Bias vector ({vector.x},{vector.y}) result({result.x},{result.y}) for cells: {currentPos.gameObject.name}, {currentTarget.gameObject.name}, {nextTarget.gameObject.name}");
-
 		return result;
     }
 }
