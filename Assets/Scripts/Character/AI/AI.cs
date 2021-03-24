@@ -148,7 +148,7 @@ public abstract class AI : Character, IBehaviorTree
         trackStatusRoutine = StartCoroutine(TrackStatus());
 
         SetRandomTimeBuffer();
-        SetExponents();
+        SetExponentsAndCoefficients();
 
         GenerateBehaviorTree();
         behaviourTreeRoutine = StartCoroutine(RunBehaviorTree());
@@ -238,13 +238,16 @@ public abstract class AI : Character, IBehaviorTree
 
     float randomTimeBuffer;
     int[] trigExponents = new int[3];
+    float[] coefficients = new float[3];
+    float multiplier;
+    int lastSign;
 
     protected void AddHeadMovement()
     {
         // hardcoding coefficients graphed on desmos for desired effect
 
-        float coefA = 4.5f;
-        float coefB = 0.1f;
+        float coefA = 5f;
+        float coefB = 1f;
         float coefC = 0.1f;
 
         var timeToUse = Time.time + randomTimeBuffer;
@@ -253,23 +256,31 @@ public abstract class AI : Character, IBehaviorTree
         float c = 1;
         int j = 0;
 
+        a *= Mathf.Sin(coefficients[0] * timeToUse);
+        var sign = Math.Sign(a);
+
+        if(lastSign != sign)
+        {
+            multiplier = UnityEngine.Random.Range(0, 2f);
+            lastSign = sign;
+        }
+
         //for (int i = 0; i < trigExponents[j]; i++)
-            a *= Mathf.Sin(coefA * timeToUse);
+            //a *= Mathf.Sin(coefficients[0] * timeToUse);
         //j++;
 
         //for (int i = 0; i < trigExponents[j]; i++)
-        b *= Mathf.Sin(coefB * timeToUse);
+        //    b *= Mathf.Sin(coefficients[1] * timeToUse);
         //j++;
 
         //for (int i = 0; i < trigExponents[j]; i++)
-        //c *= -Mathf.Cos(coefC * timeToUse);
+        //    c *= -Mathf.Cos(coefC * timeToUse);
 
         //var look = Mathf.Min(1, timeToUse % 6.1f);
         //var step = Mathf.SmoothStep(0, 1f, look) - Mathf.SmoothStep(0.18f, 0.4f, look);
         //var final = SmoothMin(SmoothMin(a, b, timeToUse), c, timeToUse);
 
-        var final = a * b * c;
-        //Debug.Log(final);
+        var final = a * multiplier;
 
         //var final = SmoothMin(a, b, -1.5f) * Mathf.Sin(0.5f * timeToUse) * 10f;
 
@@ -292,11 +303,18 @@ public abstract class AI : Character, IBehaviorTree
     
     void SetRandomTimeBuffer() => randomTimeBuffer = RandomValue();
     
-    void SetExponents()
+    void SetExponentsAndCoefficients()
     {
         for(int i = 0; i < trigExponents.Length; i++)
             //trigExponents[i] = UnityEngine.Random.value > 0.5 ? 1 : 3;
             trigExponents[i] = 1;
+
+        //coefficients[0] = UnityEngine.Random.Range(1, 3f);
+        //coefficients[1] = UnityEngine.Random.Range(0.05f, 0.15f);
+
+        coefficients[0] = UnityEngine.Random.Range(4f, 5f);
+        coefficients[1] = UnityEngine.Random.Range(0.12f, 0.19f);
+        coefficients[2] = 5f;
     }
 
     static List<(float radius, float angle)> fovPresets = new List<(float radius, float angle)>()
