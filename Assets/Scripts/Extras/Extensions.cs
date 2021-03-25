@@ -97,6 +97,34 @@ public static class Extensions
         transform.rotation = Quaternion.Lerp(currentRot, newRot, turnSpeed * Time.deltaTime);
     }
 
+    public static void Face(this Transform t, Transform other, ref Quaternion deriv, float maxDelta)
+    {
+        Vector3 dir = (other.position - t.position).normalized;
+        float angle = (Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg) - 90f;
+        var newRot = Quaternion.AngleAxis(angle, Vector3.forward);
+        t.rotation = QuaternionUtil.SmoothDamp(t.rotation, newRot, ref deriv, maxDelta * Time.deltaTime);
+    }
+
+    public static void Face(this Transform t, Vector3 pos, ref Quaternion deriv, float maxDelta)
+    {
+        Vector3 dir = (pos - t.position).normalized;
+        float angle = (Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg) - 90f;
+        var newRot = Quaternion.AngleAxis(angle, Vector3.forward);
+        t.rotation = QuaternionUtil.SmoothDamp(t.rotation, newRot, ref deriv, maxDelta * Time.deltaTime);
+    }
+
+    public static Vector3 SmoothLerp(Vector3 pastPosition, Vector3 pastTargetPosition, Vector3 targetPosition, float time, float speed)
+    {
+        Vector3 f = pastPosition - pastTargetPosition + (targetPosition - pastTargetPosition) / (speed * time);
+        return targetPosition - (targetPosition - pastTargetPosition) / (speed * time) + f * Mathf.Exp(-speed * time);
+    }
+
+    public static float SmoothLerp(float currentAngle, float pastTargetAngle, float targetAngle, float time, float speed)
+    {
+        float f = currentAngle - pastTargetAngle + (targetAngle - pastTargetAngle) / (speed * time);
+        return targetAngle - (targetAngle - pastTargetAngle) / (speed * time) + f * Mathf.Exp(-speed * time);
+    }
+
     public static bool IsWalkable(this MazeCell cell)
     {
         return cell.state < 2;

@@ -12,7 +12,6 @@ public abstract class Character : MonoBehaviour
     protected Collider2D[] posHits;
     protected Collider2D previousHit;
     [SerializeField] protected bool isOnGrid = true;
-    private bool hasChanged = false;
     [Range(0f, 1f), SerializeField] protected float pathDriftMultiplier = 0.2f;
     [SerializeField] protected MinMaxData lagPercent;
     [SerializeField] protected float cutCornerPercent = 0.15f;
@@ -21,6 +20,8 @@ public abstract class Character : MonoBehaviour
     [SerializeField]
     protected MinMaxData speed;
     protected float currentSpeed;
+    float currentAimAngle, pastAimAngle;
+    Quaternion derivative;
     [SerializeField]
     protected float turnSpeed = 1f;
     public bool ShouldRun { get; set; }
@@ -55,7 +56,9 @@ public abstract class Character : MonoBehaviour
             PositionChange?.Invoke();
 
         if (AimOverride)
-            transform.LookAt2D(aimOverrideTarget, turnSpeed * 2f);
+        {
+            transform.Face(aimOverrideTarget, ref derivative, turnSpeed);
+        }
     }
 
     bool TrackPosition()
@@ -182,9 +185,9 @@ public abstract class Character : MonoBehaviour
                     lookPos = target;
 
                 if (aim != null)
-                    aim.LookAt2D(lookPos, turnSpeed);
+                    aim.Face(lookPos, ref derivative, turnSpeed);
                 else
-                    transform.LookAt2D(lookPos, turnSpeed);
+                    transform.Face(lookPos, ref derivative, turnSpeed);
             }
 
             transform.position = Vector2.MoveTowards(transform.position, target, speed * Time.deltaTime);
