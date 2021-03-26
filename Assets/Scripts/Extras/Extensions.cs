@@ -63,54 +63,26 @@ public static class Extensions
         return intersectionPoint;
     }
 
-    public static void LookAt2D(this Transform transform, Transform target, float turnSpeed)
-    {
-        Vector3 dir = target.position - transform.position;
-        float angle = (Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg) - 90f;
-        var currentRot = transform.rotation;
-        var newRot = Quaternion.AngleAxis(angle, Vector3.forward);
-
-        transform.rotation = Quaternion.Lerp(currentRot, newRot, turnSpeed * Time.deltaTime);
-    }
-
-    public static void LookAt2D(this Transform transform, Transform target)
-    {
-        Vector3 dir = target.position - transform.position;
-        float angle = (Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg) - 90f;
-        transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
-    }
-
-    public static void LookAt2D(this Transform transform, Vector3 target)
-    {
-        Vector3 dir = target - transform.position;
-        float angle = (Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg) - 90f;
-        transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
-    }
-
-    public static void LookAt2D(this Transform transform, Vector3 target, float turnSpeed)
-    {
-        Vector3 dir = target - transform.position;
-        float angle = (Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg) - 90f;
-        var currentRot = transform.rotation;
-        var newRot = Quaternion.AngleAxis(angle, Vector3.forward);
-
-        transform.rotation = Quaternion.Lerp(currentRot, newRot, turnSpeed * Time.deltaTime);
-    }
-
     public static void Face(this Transform t, Transform other, ref Quaternion deriv, float maxDelta)
     {
         Vector3 dir = (other.position - t.position).normalized;
         float angle = (Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg) - 90f;
+        angle = angle < 0 ? angle + 360f : angle;
+
         var newRot = Quaternion.AngleAxis(angle, Vector3.forward);
         t.rotation = QuaternionUtil.SmoothDamp(t.rotation, newRot, ref deriv, maxDelta * Time.deltaTime);
+        Debug.Log($"facing {other.gameObject.name}");
     }
 
     public static void Face(this Transform t, Vector3 pos, ref Quaternion deriv, float maxDelta)
     {
         Vector3 dir = (pos - t.position).normalized;
         float angle = (Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg) - 90f;
+        angle = angle < 0 ? angle + 360f : angle;
+
         var newRot = Quaternion.AngleAxis(angle, Vector3.forward);
         t.rotation = QuaternionUtil.SmoothDamp(t.rotation, newRot, ref deriv, maxDelta * Time.deltaTime);
+        Debug.Log($"facing ({pos.x},{pos.y})");
     }
 
     public static Vector3 SmoothLerp(Vector3 pastPosition, Vector3 pastTargetPosition, Vector3 targetPosition, float time, float speed)
@@ -208,6 +180,4 @@ public static class Extensions
 
     public static bool IsCloseAndInView(this Transform from, Transform to, float distance, LayerMask mask) =>
         (to.position - from.position).sqrMagnitude < distance && !Physics2D.Raycast(from.position, to.position - from.position, distance, mask);
-
-
 }

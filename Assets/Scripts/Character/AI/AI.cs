@@ -62,15 +62,18 @@ public abstract class AI : Character, IBehaviorTree
 
     public bool RegisterPlayer { get; private set; }
     public bool IsAlert { get; private set; }
-    public bool CanSeeAlertPatrol => fieldOfView.CanSeeAlertPatrol();
-    public AI GetAlertPatrol() => fieldOfView.GetAlertPatrol();
+    public AI GetVisibleAI(BehaviorType behaviorType) => fieldOfView.GetVisibleAI(behaviorType);
     public void SetMaxExposureTime() => fieldOfView.SetMaxExposureTime();
     public float AwarenessDistance => fieldOfView.viewRadius;
     public LayerMask ViewMask => fieldOfView.obstacleMask;
     public bool IsActive { get; set; }
     public MazeCell PlayerObservationPoint { get; set; }
     public MazeCell PointOfInterest { get; set; }
+    public Character followTarget;
+
     public int SearchAvoidIndex { get; set; } = -1;
+
+
     public bool ReadyForPursuit { get; set; } = false;
     public void SetPursuit(MazeCell start)
     {
@@ -158,16 +161,7 @@ public abstract class AI : Character, IBehaviorTree
     {
         base.Update();
 
-        if (RegisterPlayer && (fieldOfView.CanSeePlayer() || (IsAlert && PlayerIsVeryClose())))
-        {
-            aimOverrideTarget = GameManager.player.transform;
-            AimOverride = true;
-        }
-        else
-        {
-            AimOverride = false;
-            AddHeadMovement();
-        }
+        Debug.Log($"rot z: {transform.eulerAngles.z}");
     }
 
     #endregion MonoBehaviour
@@ -248,12 +242,12 @@ public abstract class AI : Character, IBehaviorTree
         float amount = 1;
 
         amount *= Mathf.Sin(headMoveCoefficient * timeToUse);
-        var sign = Math.Sign(amount);
+        var sign = Mathf.Sign(amount);
 
         if(lastSign != sign)
         {
             multiplier = UnityEngine.Random.Range(0, 2f);
-            lastSign = sign;
+            lastSign = (int)sign;
         }
 
         var final = amount * multiplier;
@@ -322,7 +316,7 @@ public abstract class AI : Character, IBehaviorTree
         {
             yield return new WaitForSeconds(time);
 
-            Enable();
+            Revive();
         }
     }
 
@@ -336,7 +330,7 @@ public abstract class AI : Character, IBehaviorTree
         ActiveActionNode = null;
     }
 
-    public void Enable()
+    public void Revive()
     {
         SetBehaviorParams(BehaviorType.Investigate, FOVType.Alert, false);
         SetAlertStatus();
@@ -372,19 +366,6 @@ public abstract class AI : Character, IBehaviorTree
 
     public bool CanLoopMap() => PathDesigner.Instance.MapHasCycles;
 
-    public bool GetLoop()
-    {
-        if (PathDesigner.Instance.MapHasCycles)
-        {
-            if(loop.cells.Length == 0)
-                loop = PathDesigner.Instance.RequestPathLoop();
-
-            return true;
-        }
-
-        return false;
-    }
-
     public IEnumerator GoTo(MazeCell cell, bool lookAroundOnArrival = false)
     {
         Move(cell);
@@ -408,6 +389,8 @@ public abstract class AI : Character, IBehaviorTree
         {
             if (CanSeeCell(abortWhenSeen))
             {
+                //Debug.Log($"{gameObject.name} can see path end at {abortWhenSeen.gameObject.name}");
+
                 StopGoToDestination();
                 break;
             }
@@ -442,6 +425,8 @@ public abstract class AI : Character, IBehaviorTree
         {
             if (CanSeeCell(abortWhenSeen))
             {
+                //Debug.Log($"{gameObject.name} can see path end at {abortWhenSeen.gameObject.name}");
+
                 StopGoToDestination();
                 break;
             }
@@ -458,7 +443,8 @@ public abstract class AI : Character, IBehaviorTree
         var waitTime = UnityEngine.Random.Range(this.waitTime.min, this.waitTime.max);
         var randomRot = Quaternion.Euler(new Vector3(0f, 0f, UnityEngine.Random.Range(25f, 180f) * Mathf.Sign(UnityEngine.Random.Range(-1f, 1f))));
         var currentRot = transform.rotation;
-        var targetRot = randomRot * currentRot;
+        //var targetRot = randomRot * currentRot;
+        var targetRot = currentRot;
         var lookSpeed = UnityEngine.Random.Range(this.lookSpeed.min, this.lookSpeed.max);
         var lookCurrent = 0f;
 
@@ -474,7 +460,8 @@ public abstract class AI : Character, IBehaviorTree
             {
                 currentRot = transform.rotation;
                 randomRot = Quaternion.Euler(new Vector3(0f, 0f, UnityEngine.Random.Range(25f, 180f) * Mathf.Sign(UnityEngine.Random.Range(-1f, 1f))));
-                targetRot = randomRot * currentRot;
+                //targetRot = randomRot * currentRot;
+                targetRot = currentRot;
                 lookSpeed = UnityEngine.Random.Range(this.lookSpeed.min, this.lookSpeed.max);
                 lookCurrent = 0f;
 
@@ -506,7 +493,10 @@ public abstract class AI : Character, IBehaviorTree
             {
                 if (!RegisterPlayer)
                 {
-                    if(fieldOfView.ContinuousExposureTime > currentRegisterThreshold
+                    AimOverride = false;
+                    AddHeadMovement();
+
+                    if (fieldOfView.ContinuousExposureTime > currentRegisterThreshold
                        || (IsAlert && (fieldOfView.CanSeePlayer() || PlayerIsVeryClose())))
                     {
                         SetAlertStatus();
@@ -517,20 +507,27 @@ public abstract class AI : Character, IBehaviorTree
                 {
                     if (fieldOfView.CanSeePlayer() || (IsAlert && PlayerIsVeryClose()))
                     {
+                        aimOverrideTarget = GameManager.player.transform;
+                        AimOverride = true;
+                        transform.Face(aimOverrideTarget, ref derivative, turnSpeed);
+
                         registerTimer = 0;
                         alertTimer = 0f;
                     }
                     else
+                    {
                         registerTimer += Time.deltaTime;
+                    }
 
                     if(registerTimer >= lostTargetThreshold)
                     {
+                        AimOverride = false;
+                        AddHeadMovement();
+
                         RegisterPlayer = false;
                         registerTimer = 0;
                     }
                 }
-
-            
 
                 if (IsAlert && (int)CurrentBehavior < (int)BehaviorType.Follow)
                 {
@@ -562,8 +559,6 @@ public abstract class AI : Character, IBehaviorTree
         var first = dist.sqrMagnitude <= fieldOfView.viewRadius * fieldOfView.viewRadius;
         var dir = Quaternion.AngleAxis(transform.rotation.eulerAngles.z, Vector3.forward) * Vector2.up;
         var second = !Physics2D.Raycast(transform.position, dir, dist.magnitude, fieldOfView.obstacleMask);
-
-        //Debug.DrawRay(transform.position, dir * 50f, Color.red);
 
         return first && second;
     }

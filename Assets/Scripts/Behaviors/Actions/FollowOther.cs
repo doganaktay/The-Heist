@@ -20,9 +20,6 @@ public class FollowOther : ActionNode
 
         owner.SetBehaviorParams(BehaviorType.Follow, FOVType.Alert, true);
         owner.SetMaxExposureTime();
-        //owner.SetAlertStatus();
-
-        target = owner.GetAlertPatrol();
 
         var currentTargetCell = target.CurrentCell;
         owner.Move(currentTargetCell);

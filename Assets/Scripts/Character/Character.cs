@@ -20,8 +20,7 @@ public abstract class Character : MonoBehaviour
     [SerializeField]
     protected MinMaxData speed;
     protected float currentSpeed;
-    float currentAimAngle, pastAimAngle;
-    Quaternion derivative;
+    protected Quaternion derivative;
     [SerializeField]
     protected float turnSpeed = 1f;
     public bool ShouldRun { get; set; }
@@ -54,11 +53,6 @@ public abstract class Character : MonoBehaviour
     {
         if (isOnGrid && TrackPosition())
             PositionChange?.Invoke();
-
-        if (AimOverride)
-        {
-            transform.Face(aimOverrideTarget, ref derivative, turnSpeed);
-        }
     }
 
     bool TrackPosition()
@@ -162,7 +156,6 @@ public abstract class Character : MonoBehaviour
         {
             if (!AimOverride)
             {
-
                 if (nextTargetCell != null)
                 {
                     bool wallCheck = currentCell == currentTargetCell ?

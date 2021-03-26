@@ -30,11 +30,12 @@ public class Chase : ActionNode
             {
                 currentTargetCell = GameManager.player.CurrentCell;
                 owner.Move(currentTargetCell);
-                owner.SetPursuit(currentTargetCell);
             }
 
             yield return null;
         }
+
+        owner.SetPursuit(currentTargetCell);
 
         owner.IsActive = false;
         owner.ActiveActionNode = null;

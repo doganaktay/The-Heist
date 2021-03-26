@@ -20,14 +20,13 @@ public class Guard : AI
                                     new HasCellNotification(this),
                                     new Check(this)),
                                 //new Sequence("See Alert Patrol",
-                                //    new SeeAlertPatrol(this),
+                                //    new SeeAlert(this),
                                 //    new FollowOther(this)),
                                 new Sequence("Alert",
                                     new IsAlert(this),
                                     new Investigate(this)),
                                 new Selector("Select Casual",
                                     //new Wander(this),
-                                    //new Loop(this),
                                     new PerformGuardRole(this)
                                 ));
     }

@@ -154,6 +154,7 @@ public class FieldOfView : MonoBehaviour
 		for (int i = 0; i < count; i++)
 		{
 			Transform target = hits[i].transform;
+
 			Vector2 dirToTarget = ((Vector2)target.position - (Vector2)transform.position).normalized;
 			if (Vector2.Angle(aim.up, dirToTarget) < viewAngle / 2)
 			{
@@ -174,27 +175,14 @@ public class FieldOfView : MonoBehaviour
 		return false;
     }
 
-	public bool CanSeeAlertPatrol()
+	public AI GetVisibleAI(BehaviorType behaviorType)
     {
 		foreach(var target in visibleTargets)
-        {
-			if (target.TryGetComponent(out AI ai) && ai.IsAlert)
-				return true;
-        }
-
-		return false;
-    }
-
-	public AI GetAlertPatrol()
-    {
-		foreach(var target in visibleTargets)
-        {
-			if (target.TryGetComponent(out AI ai) && ai.IsAlert)
-				return ai;
-		}
+			if (target.TryGetComponent(out AI tryAI) && tryAI.CurrentBehavior > behaviorType)
+				return tryAI;
 
 		return null;
-    }
+	}
 
 	public void DrawFieldOfView()
     {
