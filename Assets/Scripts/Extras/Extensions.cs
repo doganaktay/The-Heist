@@ -71,7 +71,6 @@ public static class Extensions
 
         var newRot = Quaternion.AngleAxis(angle, Vector3.forward);
         t.rotation = QuaternionUtil.SmoothDamp(t.rotation, newRot, ref deriv, maxDelta * Time.deltaTime);
-        Debug.Log($"facing {other.gameObject.name}");
     }
 
     public static void Face(this Transform t, Vector3 pos, ref Quaternion deriv, float maxDelta)
@@ -82,7 +81,11 @@ public static class Extensions
 
         var newRot = Quaternion.AngleAxis(angle, Vector3.forward);
         t.rotation = QuaternionUtil.SmoothDamp(t.rotation, newRot, ref deriv, maxDelta * Time.deltaTime);
-        Debug.Log($"facing ({pos.x},{pos.y})");
+    }
+
+    public static void Face(this Transform t, Quaternion target, ref Quaternion deriv, float maxDelta)
+    {
+        t.rotation = QuaternionUtil.SmoothDamp(t.rotation, target, ref deriv, maxDelta * Time.deltaTime);
     }
 
     public static Vector3 SmoothLerp(Vector3 pastPosition, Vector3 pastTargetPosition, Vector3 targetPosition, float time, float speed)

@@ -160,8 +160,6 @@ public abstract class AI : Character, IBehaviorTree
     protected override void Update()
     {
         base.Update();
-
-        Debug.Log($"rot z: {transform.eulerAngles.z}");
     }
 
     #endregion MonoBehaviour
@@ -366,7 +364,7 @@ public abstract class AI : Character, IBehaviorTree
 
     public bool CanLoopMap() => PathDesigner.Instance.MapHasCycles;
 
-    public IEnumerator GoTo(MazeCell cell, bool lookAroundOnArrival = false)
+    public IEnumerator GoTo(MazeCell cell)
     {
         Move(cell);
 
@@ -374,12 +372,9 @@ public abstract class AI : Character, IBehaviorTree
 
         while (isMoving)
             yield return null;
-
-        if (lookAroundOnArrival)
-            yield return LookAround();
     }
 
-    public IEnumerator GoTo(MazeCell cell, MazeCell abortWhenSeen, bool lookAroundOnArrival = false)
+    public IEnumerator GoTo(MazeCell cell, MazeCell abortWhenSeen)
     {
         Move(cell);
 
@@ -397,12 +392,9 @@ public abstract class AI : Character, IBehaviorTree
 
             yield return null;
         }
-
-        if (lookAroundOnArrival)
-            yield return LookAround();
     }
 
-    public IEnumerator GoTo(MazeCell cell, int forcedIndex, bool lookAroundOnArrival = false)
+    public IEnumerator GoTo(MazeCell cell, int forcedIndex)
     {
         Move(cell, forcedIndex);
 
@@ -410,12 +402,9 @@ public abstract class AI : Character, IBehaviorTree
 
         while (isMoving)
             yield return null;
-
-        if (lookAroundOnArrival)
-            yield return LookAround();
     }
 
-    public IEnumerator GoTo(MazeCell cell, int forcedIndex, MazeCell abortWhenSeen, bool lookAroundOnArrival = false)
+    public IEnumerator GoTo(MazeCell cell, int forcedIndex, MazeCell abortWhenSeen)
     {
         Move(cell, forcedIndex);
 
@@ -433,37 +422,20 @@ public abstract class AI : Character, IBehaviorTree
 
             yield return null;
         }
-
-        if (lookAroundOnArrival)
-            yield return LookAround();
     }
 
     public IEnumerator LookAround()
     {
         var waitTime = UnityEngine.Random.Range(this.waitTime.min, this.waitTime.max);
-        var randomRot = Quaternion.Euler(new Vector3(0f, 0f, UnityEngine.Random.Range(25f, 180f) * Mathf.Sign(UnityEngine.Random.Range(-1f, 1f))));
-        var currentRot = transform.rotation;
-        //var targetRot = randomRot * currentRot;
-        var targetRot = currentRot;
-        var lookSpeed = UnityEngine.Random.Range(this.lookSpeed.min, this.lookSpeed.max);
-        var lookCurrent = 0f;
+        var targetRot = Quaternion.Euler(0f, 0f, currentCell.GetLookRotationAngle());
 
         while (waitTime > 0)
         {
-            lookCurrent += Time.deltaTime;
-            var ratio = lookCurrent / lookSpeed * (180f / randomRot.eulerAngles.z);
-            var t = Mathf.Min(ratio, 1f);
-
-            transform.rotation = Quaternion.Slerp(currentRot, targetRot, t);
+            transform.Face(targetRot, ref derivative, turnSpeed);
 
             if (transform.rotation == targetRot)
             {
-                currentRot = transform.rotation;
-                randomRot = Quaternion.Euler(new Vector3(0f, 0f, UnityEngine.Random.Range(25f, 180f) * Mathf.Sign(UnityEngine.Random.Range(-1f, 1f))));
-                //targetRot = randomRot * currentRot;
-                targetRot = currentRot;
-                lookSpeed = UnityEngine.Random.Range(this.lookSpeed.min, this.lookSpeed.max);
-                lookCurrent = 0f;
+                targetRot = Quaternion.Euler(0f, 0f, currentCell.GetLookRotationAngle());
 
                 yield return new WaitForSeconds(UnityEngine.Random.Range(1f, 3f));
             }

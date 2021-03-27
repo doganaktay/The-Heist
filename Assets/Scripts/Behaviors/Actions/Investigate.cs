@@ -27,7 +27,9 @@ public class Investigate : ActionNode
             var dest = possiblePositions[Random.Range(0, possiblePositions.Count)];
             owner.ShouldRun = false;
 
-            yield return owner.GoTo(dest.cell, true);
+            yield return owner.GoTo(dest.cell);
+
+            yield return owner.LookAround();
         }
 
         yield return null;
