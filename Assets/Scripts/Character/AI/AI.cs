@@ -112,6 +112,19 @@ public abstract class AI : Character, IBehaviorTree
         return new ChartedPath(null, new int[1]);
     }
 
+    public void SetPath(ChartedPathType type, ChartedPath path)
+    {
+        switch (type)
+        {
+            case ChartedPathType.Loop:
+                loop = path;
+                break;
+            case ChartedPathType.Pursuit:
+                pursuit = path;
+                break;
+        }
+    }
+
     public void ClearPath(ChartedPathType type)
     {
         switch (type)

@@ -2222,8 +2222,8 @@ MonoBehaviour:
   graphFinder: {fileID: 0}
   activeAIs: []
   guardCount:
-    min: 1
-    max: 1
+    min: 3
+    max: 10
   coveragePercent:
     min: 0.3
     max: 0.5

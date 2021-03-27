@@ -1687,6 +1687,13 @@ public class GraphFinder : MonoBehaviour
         return cells[UnityEngine.Random.Range(0, cells.Count - 1)];
     }
 
+    public static MazeCell GetRandomCellFromGraphArea(List<int> indices)
+    {
+        var index = indices[UnityEngine.Random.Range(0, indices.Count)];
+        var cells = GraphAreas[index].all;
+        return cells[UnityEngine.Random.Range(0, cells.Count)];
+    }
+
     public HashSet<int> GetIsolatedArea() => new HashSet<int>(isolatedAreas[UnityEngine.Random.Range(0, isolatedAreas.Count)]);
 
     public HashSet<int> GetIsolatedArea(HashSet<int> exclude)

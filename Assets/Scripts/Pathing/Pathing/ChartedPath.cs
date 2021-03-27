@@ -137,6 +137,16 @@ public struct ChartedPath
         return GraphFinder.GetGraphAreaWeight(new List<int>(indices));
     }
 
+    public bool Contains(int index)
+    {
+        for (int i = 0; i < indices.Length; i++)
+            if (indices[i] == index)
+                return true;
+
+        return false;
+    }
+
+
 #if UNITY_EDITOR
 
     public void DebugPath()

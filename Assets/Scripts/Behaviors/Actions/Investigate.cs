@@ -18,7 +18,8 @@ public class Investigate : ActionNode
 
         owner.SetBehaviorParams(BehaviorType.Investigate, FOVType.Alert, false);
 
-        yield return owner.LookAround();
+        if(Random.value > 0.5f)
+            yield return owner.LookAround();
 
         var possiblePositions = Propagation.instance.Propagate(owner.CurrentCell, 100000, 10);
 
@@ -29,7 +30,8 @@ public class Investigate : ActionNode
 
             yield return owner.GoTo(dest.cell);
 
-            yield return owner.LookAround(Random.Range(0, 4f));
+            if (Random.value > 0.2f)
+                yield return owner.LookAround(Random.Range(0, 4f));
         }
 
         yield return null;
