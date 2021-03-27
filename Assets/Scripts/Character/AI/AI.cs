@@ -36,8 +36,6 @@ public abstract class AI : Character, IBehaviorTree
     [SerializeField]
     Transform body;
     [SerializeField]
-    MinMaxData lookSpeed;
-    [SerializeField]
     MinMaxData waitTime;
     [SerializeField, Tooltip("Time (in seconds) exposure to register player")]
     MinMaxData registerThreshold;
@@ -145,7 +143,7 @@ public abstract class AI : Character, IBehaviorTree
         fieldOfView = GetComponentInChildren<FieldOfView>();
         fieldOfView.AccumulateExposure = true;
         fieldOfView.ExposureLimit = currentRegisterThreshold;
-        currentSpeed = UnityEngine.Random.Range(speed.min, speed.max);
+
         currentRegisterThreshold = UnityEngine.Random.Range(registerThreshold.min, registerThreshold.max);
 
         trackStatusRoutine = StartCoroutine(TrackStatus());
@@ -424,14 +422,14 @@ public abstract class AI : Character, IBehaviorTree
         }
     }
 
-    public IEnumerator LookAround()
+    public IEnumerator LookAround(float time = -1)
     {
-        var waitTime = UnityEngine.Random.Range(this.waitTime.min, this.waitTime.max);
+        var waitTime = time == -1 ? UnityEngine.Random.Range(this.waitTime.min, this.waitTime.max) : time;
         var targetRot = Quaternion.Euler(0f, 0f, currentCell.GetLookRotationAngle());
 
         while (waitTime > 0)
         {
-            transform.Face(targetRot, ref derivative, turnSpeed);
+            transform.Face(targetRot, ref derivative, currentTurnSpeed);
 
             if (transform.rotation == targetRot)
             {
@@ -481,7 +479,7 @@ public abstract class AI : Character, IBehaviorTree
                     {
                         aimOverrideTarget = GameManager.player.transform;
                         AimOverride = true;
-                        transform.Face(aimOverrideTarget, ref derivative, turnSpeed);
+                        transform.Face(aimOverrideTarget, ref derivative, currentTurnSpeed);
 
                         registerTimer = 0;
                         alertTimer = 0f;

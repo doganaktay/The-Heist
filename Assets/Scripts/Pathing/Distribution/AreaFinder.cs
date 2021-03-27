@@ -34,6 +34,7 @@ public class AreaFinder : MonoBehaviour
     public List<MazeCell> GetLowConnectionPoints(int areaIndex){ return lowCellConnected[areaIndex]; }
     public List<MazeCell> GetRandomArea(){ return lowCellAreas.ElementAt(UnityEngine.Random.Range(0, lowCellAreas.Count)).Value; }
     public List<MazeCell> WalkableArea { get { return walkableArea; } }
+    public MazeCell GetRandomCell() => walkableArea[UnityEngine.Random.Range(0, walkableArea.Count)];
 
     List<MazeCellWall> availableWallsForDrop;
 
@@ -243,6 +244,8 @@ public class AreaFinder : MonoBehaviour
     }
 
     // GRID SEARCH IMPLEMENTING CCL
+
+    #region Grid search CCL
 
     public void NewDetermineAreas()
     {
@@ -565,6 +568,8 @@ public class AreaFinder : MonoBehaviour
             }
         }
     }
+
+    #endregion
 
     private void OnGUI()
     {

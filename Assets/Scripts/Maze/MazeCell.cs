@@ -246,14 +246,17 @@ public class MazeCell : FastPriorityQueueNode
 	public float GetLookRotationAngle()
     {
 		var possible = new List<float>();
-		var angle = -90f;
+		var cardinalAngleStep = -90f;
 		for(int i = 0; i < MazeDirections.cardinalVectors.Length; i++)
         {
 			if ((cardinalBits & 1 << i) != 0)
-				possible.Add((i * angle + 360f) % 360f);
-        }
+				possible.Add((i * cardinalAngleStep + 360f) % 360f);
 
-		return possible[UnityEngine.Random.Range(0, possible.Count)];
+			if ((diagonalBits & 1 << i) != 0)
+				possible.Add((i * cardinalAngleStep - 45f + 360f) % 360f);
+		}
+
+        return possible[UnityEngine.Random.Range(0, possible.Count)];
     }
 
 	public HashSet<MazeCell> GetNeighbours() => connectedCells;

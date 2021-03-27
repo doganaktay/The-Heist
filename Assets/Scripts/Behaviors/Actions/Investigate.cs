@@ -29,7 +29,7 @@ public class Investigate : ActionNode
 
             yield return owner.GoTo(dest.cell);
 
-            yield return owner.LookAround();
+            yield return owner.LookAround(Random.Range(0, 4f));
         }
 
         yield return null;

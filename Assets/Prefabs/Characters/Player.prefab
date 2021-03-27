@@ -431,10 +431,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isOnGrid: 1
   pathDriftMultiplier: 0
+  lagPercent:
+    min: 0
+    max: 0
+  cutCornerPercent: 0.15
   speed:
     min: 25
     max: 50
-  turnSpeed: 5
+  turnSpeed:
+    min: 4
+    max: 6
   aim: {fileID: 0}
   aimOverrideTarget: {fileID: 0}
   projectilePrefab: {fileID: 372506298171578869, guid: 3f7dd9ebfb0ea4133bfb93dfe5f47185,

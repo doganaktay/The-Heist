@@ -54,6 +54,14 @@ public class Pathfinder : MonoBehaviour
 
     #endregion
 
+    #region Getters
+
+    
+
+    #endregion
+
+    #region Pathfinding
+
     // For setting maze path from startPos to endPos
     public void NewPath()
     {
@@ -63,7 +71,7 @@ public class Pathfinder : MonoBehaviour
     public List<MazeCell> GetAStarPath(PathLayer layer, MazeCell start, MazeCell end = null, int forcedGraphIndex = -1)
     {
         if(end == null)
-            end = areafinder.WalkableArea[UnityEngine.Random.Range(0, areafinder.WalkableArea.Count - 1)];
+            end = areafinder.GetRandomCell();
 
         List<MazeCell> path;
 
@@ -478,6 +486,8 @@ public class Pathfinder : MonoBehaviour
 
         }
     }
+
+    #endregion
 
 #if UNITY_EDITOR
     private void OnDrawGizmosSelected()

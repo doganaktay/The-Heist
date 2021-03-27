@@ -22,7 +22,8 @@ public abstract class Character : MonoBehaviour
     protected float currentSpeed;
     protected Quaternion derivative;
     [SerializeField]
-    protected float turnSpeed = 1f;
+    protected MinMaxData turnSpeed;
+    protected float currentTurnSpeed;
     public bool ShouldRun { get; set; }
     protected bool isMoving = false;
     protected MazeCell currentTargetCell, nextTargetCell;
@@ -47,6 +48,9 @@ public abstract class Character : MonoBehaviour
     protected virtual void Start()
     {
         posHits = new Collider2D[10];
+
+        currentSpeed = UnityEngine.Random.Range(speed.min, speed.max);
+        currentTurnSpeed = UnityEngine.Random.Range(turnSpeed.min, turnSpeed.max);
     }
     
     protected virtual void Update()
@@ -178,9 +182,9 @@ public abstract class Character : MonoBehaviour
                     lookPos = target;
 
                 if (aim != null)
-                    aim.Face(lookPos, ref derivative, turnSpeed);
+                    aim.Face(lookPos, ref derivative, currentTurnSpeed);
                 else
-                    transform.Face(lookPos, ref derivative, turnSpeed);
+                    transform.Face(lookPos, ref derivative, currentTurnSpeed);
             }
 
             transform.position = Vector2.MoveTowards(transform.position, target, speed * Time.deltaTime);
