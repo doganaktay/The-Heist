@@ -16,7 +16,7 @@ public class HasCellNotification : Condition
 
     protected override NodeStatus OnRun()
     {
-        if ((int)owner.CurrentBehavior < (int)BehaviorType.Pursue && owner.PointOfInterest != null)
+        if ((int)owner.CurrentBehaviorType < (int)BehaviorType.Pursue && owner.PointOfInterest != null)
         {
             owner.SetAlertStatus();
             return NodeStatus.Success;

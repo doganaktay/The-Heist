@@ -18,6 +18,7 @@ public class GuardManager : AIManager
     [SerializeField, Tooltip("Used to determine area coverage by taking area weights into account")]
     MinMaxData coveragePercent;
     float currentCoverage;
+    float minCoverageThreshold = .20f;
 
     Dictionary<AI, HashSet<int>> assignedAreas = new Dictionary<AI, HashSet<int>>();
     Dictionary<AI, ChartedPath> assignedLoops = new Dictionary<AI, ChartedPath>();
@@ -37,7 +38,6 @@ public class GuardManager : AIManager
                 guard.role = GuardRole.Station;
 
                 ai.assignedIndices.Add(index);
-
                 assignedAreas.Add(ai, new HashSet<int> { index });
 
                 foreach (var area in graphFinder.weightedGraphAreas)
@@ -48,15 +48,17 @@ public class GuardManager : AIManager
                     }
 
                 guardCounter++;
+
+                Debug.Log($"{ai.gameObject.name} critical: {index}");
             }
         }
 
         indices = graphFinder.RequestPriorityIndices(IndexPriority.High);
 
         var areas = graphFinder.GetMatchingIsolatedAreas(indices);
-
         var coveredIndices = new HashSet<int>();
-        for(int i = areas.Count - 1; i >= 0; i--)
+
+        for (int i = areas.Count - 1; i >= 0; i--)
         {
             bool covered = false;
             var current = areas[i].area;
@@ -76,13 +78,32 @@ public class GuardManager : AIManager
                 coveredIndices.Add(index);
             }
 
-            var ai = CreateNewAI(GraphFinder.GetRandomCellFromGraphArea(new List<int>(areas[i].area)));
+            var ai = CreateNewAI(GraphFinder.GetRandomCellFromGraphArea(new List<int>(current)));
             Guard guard = (Guard)ai;
             guard.role = GuardRole.Cover;
 
-            ai.assignedIndices.AddRange(new List<int>(current));
-
-            assignedAreas.Add(ai, current);
+            if (current.Count == 1)
+            {
+                foreach (var index in current)
+                {
+                    if(GraphFinder.GetGraphAreaWeight(index) < minCoverageThreshold)
+                    {
+                        var flood = graphFinder.GetFloodCoverage(index, Random.Range(0.1f, 0.2f));
+                        ai.assignedIndices.AddRange(new List<int>(flood));
+                        assignedAreas.Add(ai, flood);
+                    }
+                    else
+                    {
+                        ai.assignedIndices.AddRange(new List<int>(current));
+                        assignedAreas.Add(ai, current);
+                    }
+                }
+            }
+            else
+            {
+                ai.assignedIndices.AddRange(new List<int>(current));
+                assignedAreas.Add(ai, current);
+            }
 
             foreach (var weighted in graphFinder.weightedGraphAreas)
                 foreach(var index in current)
@@ -93,6 +114,9 @@ public class GuardManager : AIManager
                     }
 
             guardCounter++;
+
+            Debug.Log($"{ai.gameObject.name} cover: {current.Debug()}");
+
         }
 
         var loops = graphFinder.GetMatchingLoops(indices);
@@ -132,7 +156,13 @@ public class GuardManager : AIManager
                     }
 
             guardCounter++;
+
+            Debug.Log($"{ai.gameObject.name} loop");
+            current.DebugPath();
         }
+        
+        if(guardCounter < guardCount.max)
+            CreateNewAI((int)guardCount.max - guardCounter);
     }
 
 

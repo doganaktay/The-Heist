@@ -36,7 +36,7 @@ public class Guard : AI
         if (cell != currentCell)
             return;
 
-        if ((int)CurrentBehavior < (int)BehaviorType.Pursue)
+        if ((int)CurrentBehaviorType < (int)BehaviorType.Pursue)
             PointOfInterest = data.signalCenter;
 
         Debug.Log($"{gameObject.name} at {currentCell.pos.x},{currentCell.pos.y} is handling notification: type {data.type}, signal ratio {data.attenuatedSignalRatio}, center {data.signalCenter.gameObject.name}");

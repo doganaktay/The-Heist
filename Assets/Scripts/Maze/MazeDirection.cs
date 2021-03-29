@@ -50,12 +50,20 @@ public static class MazeDirections
 		new IntVector2(-1,1)
     };
 
-	public static Dictionary<IntVector2, int> directionBitmasks = new Dictionary<IntVector2, int>
+	public static Dictionary<IntVector2, int> cardinalBitmasks = new Dictionary<IntVector2, int>
     {
 		{ new IntVector2(0, 1), 1 << 0 },
 		{ new IntVector2(1, 0), 1 << 1 },
 		{ new IntVector2(0, -1), 1 << 2 },
 		{ new IntVector2(-1, 0), 1 << 3 }
+	};
+
+	public static Dictionary<IntVector2, int> diagonalBitmasks = new Dictionary<IntVector2, int>
+	{
+		{ new IntVector2(1, 1), 1 << 0 },
+		{ new IntVector2(1, -1), 1 << 1 },
+		{ new IntVector2(-1, -1), 1 << 2 },
+		{ new IntVector2(-1, 1), 1 << 3 }
 	};
 
 	public static IntVector2 ToIntVector2(this MazeDirection direction)
@@ -121,7 +129,7 @@ public static class MazeDirections
 	public static bool CheckWallAhead(MazeCell current, MazeCell next)
     {
 		var dir = GetDirection(current, next);
-		return (next.cardinalBits & directionBitmasks[dir]) != 0;
+		return (next.cardinalBits & cardinalBitmasks[dir]) != 0;
     }
 
 	public static Vector2 GetDirectionBiasVector(MazeCell currentPos, MazeCell currentTarget, MazeCell nextTarget)

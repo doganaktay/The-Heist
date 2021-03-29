@@ -142,10 +142,10 @@ public abstract class AI : Character, IBehaviorTree
     public NodeBase BehaviorTree { get ; set; }
     Coroutine behaviourTreeRoutine;
     YieldInstruction btWaitTime = new WaitForSeconds(.1f);
-    Coroutine currentAction;
-    public Coroutine CurrentAction => currentAction;
+    Coroutine currentBehavior;
+    public Coroutine CurrentBehavior => currentBehavior;
     public ActionNode ActiveActionNode;
-    public BehaviorType CurrentBehavior { get; set; }
+    public BehaviorType CurrentBehaviorType { get; set; }
 
     #region MonoBehaviour
     
@@ -305,9 +305,9 @@ public abstract class AI : Character, IBehaviorTree
     {
         StopCoroutine(behaviourTreeRoutine);
 
-        if (currentAction != null)
+        if (currentBehavior != null)
         {
-            StopCoroutine(currentAction);
+            StopCoroutine(currentBehavior);
             IsActive = false;
         }
 
@@ -349,9 +349,9 @@ public abstract class AI : Character, IBehaviorTree
 
     public void SetBehavior(IEnumerator behavior)
     {
-        if (currentAction != null)
+        if (currentBehavior != null)
         {
-            StopCoroutine(currentAction);
+            StopCoroutine(currentBehavior);
             IsActive = false;
         }
 
@@ -361,12 +361,12 @@ public abstract class AI : Character, IBehaviorTree
             isMoving = false;
         }
 
-        currentAction = StartCoroutine(behavior);
+        currentBehavior = StartCoroutine(behavior);
     }
 
     public void SetBehaviorParams(BehaviorType behaviorType, FOVType fovType, bool shouldRun)
     {
-        CurrentBehavior = behaviorType;
+        CurrentBehaviorType = behaviorType;
         SetFOV(fovType);
         ShouldRun = shouldRun;
     }
@@ -437,6 +437,8 @@ public abstract class AI : Character, IBehaviorTree
 
     public IEnumerator LookAround(float time = -1)
     {
+        Debug.Log($"{gameObject.name} start LookAround");
+
         var waitTime = time == -1 ? UnityEngine.Random.Range(this.waitTime.min, this.waitTime.max) : time;
         var targetRot = Quaternion.Euler(0f, 0f, currentCell.GetLookRotationAngle());
 
@@ -454,6 +456,8 @@ public abstract class AI : Character, IBehaviorTree
             waitTime -= Time.deltaTime;
             yield return null;
         }
+
+        Debug.Log($"{gameObject.name} end LookAround");
     }
 
     #endregion
@@ -472,7 +476,7 @@ public abstract class AI : Character, IBehaviorTree
 
         while (true)
         {
-            if(CurrentBehavior != BehaviorType.Disabled)
+            if(CurrentBehaviorType != BehaviorType.Disabled)
             {
                 if (!RegisterPlayer)
                 {
@@ -512,7 +516,7 @@ public abstract class AI : Character, IBehaviorTree
                     }
                 }
 
-                if (IsAlert && (int)CurrentBehavior < (int)BehaviorType.Follow)
+                if (IsAlert && (int)CurrentBehaviorType < (int)BehaviorType.Follow)
                 {
                     alertTimer += Time.deltaTime;
 

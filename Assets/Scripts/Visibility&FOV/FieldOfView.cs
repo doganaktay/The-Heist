@@ -178,7 +178,7 @@ public class FieldOfView : MonoBehaviour
 	public AI GetVisibleAI(BehaviorType behaviorType)
     {
 		foreach(var target in visibleTargets)
-			if (target.TryGetComponent(out AI tryAI) && tryAI.CurrentBehavior > behaviorType)
+			if (target.TryGetComponent(out AI tryAI) && tryAI.CurrentBehaviorType > behaviorType)
 				return tryAI;
 
 		return null;

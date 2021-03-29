@@ -23,5 +23,5 @@ public abstract class ActionNode : Node
     protected abstract bool ShouldAssignAction();
     protected abstract IEnumerator Action();
 
-    protected bool IsCurrentAction() => owner.IsActiveNode(this) && owner.CurrentAction != null;
+    protected bool IsCurrentAction() => owner.IsActiveNode(this) && owner.CurrentBehavior != null;
 }

@@ -92,7 +92,7 @@ public class GraphFinder : MonoBehaviour
     public void Initialize()
     {
         CreateGraph();
-        InitializeSearchCollections();
+        InitSearchCollections();
     }
 
     public void CreateGraph()
@@ -1064,7 +1064,7 @@ public class GraphFinder : MonoBehaviour
 
     #region Charted Path
 
-    void InitializeSearchCollections()
+    void InitSearchCollections()
     {
         fromVisited = new bool[indexedJunctions.Count];
         toVisited = new bool[indexedJunctions.Count];
@@ -1861,7 +1861,7 @@ public class GraphFinder : MonoBehaviour
         return final;
     }
 
-    KeyValuePair<int, float> GetWeightedArea(int index)
+    public KeyValuePair<int, float> GetWeightedArea(int index)
     {
         foreach (var pair in weightedGraphAreas)
             if (pair.Key == index)
@@ -2212,17 +2212,17 @@ public class GraphFinder : MonoBehaviour
             UnityEngine.Debug.Log(test);
         }
 
-        foreach (var placement in indexedPlacement)
-        {
-            test = $"Placement area {placement.Key}: ";
+        //foreach (var placement in indexedPlacement)
+        //{
+        //    test = $"Placement area {placement.Key}: ";
 
-            //foreach (var cell in placement.Value.placement)
-            //    test += cell.gameObject.name + " - ";
+        //    //foreach (var cell in placement.Value.placement)
+        //    //    test += cell.gameObject.name + " - ";
 
-            test += placement.Value.score;
+        //    test += placement.Value.score;
 
-            UnityEngine.Debug.Log(test);
-        }
+        //    UnityEngine.Debug.Log(test);
+        //}
 
         //foreach (var area in weightedDeadEnds)
         //{
@@ -2231,12 +2231,12 @@ public class GraphFinder : MonoBehaviour
         //    UnityEngine.Debug.Log(test);
         //}
 
-        //foreach (var area in weightedGraphAreas)
-        //{
-        //    test = "Weighted Area: ";
-        //    test += area.Key + " - weight: " + area.Value;
-        //    UnityEngine.Debug.Log(test);
-        //}
+        foreach (var area in weightedGraphAreas)
+        {
+            test = "Weighted Area: ";
+            test += area.Key + " - weight: " + area.Value;
+            UnityEngine.Debug.Log(test);
+        }
     }
 
     public static void PrintCycle(int[] nodes, int[] edges)

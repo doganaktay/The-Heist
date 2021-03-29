@@ -21,6 +21,22 @@ public static class Extensions
         }
     }
 
+    public static IntVector2 GetDirection(this MazeCell from, MazeCell to)
+    {
+        return new IntVector2(to.pos.x - from.pos.x, to.pos.y - from.pos.y);
+    }
+
+    public static IntVector2 GetNextVector(this IntVector2 current, int stepCount = 1)
+    {
+        for (int i = 0; i < MazeDirections.allVectors.Length; i++)
+        {
+            if (current == MazeDirections.allVectors[i])
+                return MazeDirections.allVectors[(i + stepCount) % MazeDirections.allVectors.Length];
+        }
+
+        return new IntVector2(0, 0);
+    }
+
     public static void Reset(this LineRenderer line) => line.positionCount = 0;
 
     public static Vector2 GetMidPoint(this Vector2 a, Vector2 b)
@@ -135,10 +151,7 @@ public static class Extensions
     public static void ClearChildren(this GameObject holder, int index = 0)
     {
         if (index < 0)
-        {
-            Debug.LogError("Index can't be less than zero.");
-            return;
-        }
+            throw new ArgumentOutOfRangeException();
 
         for (; index < holder.transform.childCount; index++)
         {
@@ -183,4 +196,18 @@ public static class Extensions
 
     public static bool IsCloseAndInView(this Transform from, Transform to, float distance, LayerMask mask) =>
         (to.position - from.position).sqrMagnitude < distance && !Physics2D.Raycast(from.position, to.position - from.position, distance, mask);
+
+#if UNITY_EDITOR
+
+    public static string Debug<T>(this ICollection<T> collection)
+    {
+        string result = "";
+
+        foreach (var item in collection)
+            result += item + "-";
+
+        return result;
+    }
+
+#endif
 }

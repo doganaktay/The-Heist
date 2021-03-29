@@ -49,6 +49,9 @@ public class PerformGuardRole : ActionNode
                         yield return owner.GoTo(next.cell, next.index);
 
                     next = path.GetNext(owner.CurrentCell);
+
+                    if (Random.value < 0.5f)
+                        yield return owner.LookAround();
                 }
 
                 break;

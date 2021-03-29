@@ -28,6 +28,11 @@ public abstract class Character : MonoBehaviour
     protected bool isMoving = false;
     protected MazeCell currentTargetCell, nextTargetCell;
     protected Coroutine currentMovement;
+
+    // arbitrary count of 5
+    protected IEnumerator[] activeSubroutines = new IEnumerator[5];
+    int nextAvailableSubroutineIndex = 0;
+
     [HideInInspector] public Transform aim; // used if Character has aim for LookAt
     [HideInInspector] public bool AimOverride { get; set; } = false;
     [HideInInspector] public Transform aimOverrideTarget;
@@ -221,4 +226,10 @@ public abstract class Character : MonoBehaviour
     }
 
     #endregion Movement
+
+    #region Coroutine Management
+
+    
+
+    #endregion
 }

@@ -26,7 +26,7 @@ public class Investigate : ActionNode
         while (owner.IsAlert)
         {
             var dest = possiblePositions[Random.Range(0, possiblePositions.Count)];
-            owner.ShouldRun = false;
+            owner.ShouldRun = Random.value > 0.5f ? true : false;
 
             yield return owner.GoTo(dest.cell);
 

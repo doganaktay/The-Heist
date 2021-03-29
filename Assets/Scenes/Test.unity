@@ -2223,7 +2223,7 @@ MonoBehaviour:
   activeAIs: []
   guardCount:
     min: 3
-    max: 10
+    max: 5
   coveragePercent:
     min: 0.3
     max: 0.5
