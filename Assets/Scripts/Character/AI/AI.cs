@@ -48,6 +48,7 @@ public abstract class AI : Character, IBehaviorTree
     [SerializeField]
     float maintainAlertTimeIncrement = 5f;
     float alertTimer = 0f;
+    float exposureRatio;
 
     Coroutine FOVRoutine;
     [SerializeField]
@@ -259,7 +260,7 @@ public abstract class AI : Character, IBehaviorTree
             lastSign = (int)sign;
         }
 
-        var final = amount * multiplier;
+        var final = amount * multiplier * Mathf.Max(0, (1 - exposureRatio));
 
         var rot = Quaternion.Euler(0f, 0f, final);
         transform.rotation = rot * transform.rotation;
@@ -478,13 +479,14 @@ public abstract class AI : Character, IBehaviorTree
         {
             if(CurrentBehaviorType != BehaviorType.Disabled)
             {
+                exposureRatio = fieldOfView.ContinuousExposureTime / currentRegisterThreshold;
+
                 if (!RegisterPlayer)
                 {
                     AimOverride = false;
                     AddHeadMovement();
 
-                    if (fieldOfView.ContinuousExposureTime > currentRegisterThreshold
-                       || (IsAlert && (fieldOfView.CanSeePlayer() || PlayerIsVeryClose())))
+                    if (exposureRatio >= 1 || (IsAlert && (fieldOfView.CanSeePlayer() || PlayerIsVeryClose())))
                     {
                         SetAlertStatus();
                         RegisterPlayer = true;
