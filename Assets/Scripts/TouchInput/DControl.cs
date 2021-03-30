@@ -140,7 +140,7 @@ namespace Archi.Touch
                 aiming = true;
 
                 if (player.IsMoving)
-                    player.StopGoToDestination();
+                    player.StopGoTo();
 
                 DrawAimUI(aimTouchPivot);
             }
@@ -207,7 +207,7 @@ namespace Archi.Touch
                     if (cellIsPlayer)
                     {
                         if (player.IsMoving)
-                            player.StopGoToDestination();
+                            player.StopGoTo();
                     }
                     else
                     {

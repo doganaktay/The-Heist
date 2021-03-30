@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Archi.BT;
+using Cysharp.Threading.Tasks;
+using System.Threading;
 
 public enum BehaviorType
 {
@@ -69,24 +71,8 @@ public abstract class AI : Character, IBehaviorTree
     public MazeCell PlayerObservationPoint { get; set; }
     public MazeCell PointOfInterest { get; set; }
     public Character followTarget;
-
     public int SearchAvoidIndex { get; set; } = -1;
-
-
     public bool ReadyForPursuit { get; set; } = false;
-    public void SetPursuit(MazeCell start)
-    {
-        ReadyForPursuit = true;
-        PlayerObservationPoint = start;
-        SearchAvoidIndex = -1;
-    }
-    public void SetPursuit(MazeCell start, int avoidIndex)
-    {
-        ReadyForPursuit = true;
-        PlayerObservationPoint = start;
-        SearchAvoidIndex = avoidIndex;
-    }
-    
 
     Coroutine trackStatusRoutine;
 
@@ -100,44 +86,6 @@ public abstract class AI : Character, IBehaviorTree
     // charted paths
     [HideInInspector] public ChartedPath loop;
     [HideInInspector] public ChartedPath pursuit;
-    public ChartedPath GetPath(ChartedPathType type)
-    {
-        switch (type)
-        {
-            case ChartedPathType.Loop:
-                return loop;
-            case ChartedPathType.Pursuit:
-                return pursuit;
-        }
-
-        return new ChartedPath(null, new int[1]);
-    }
-
-    public void SetPath(ChartedPathType type, ChartedPath path)
-    {
-        switch (type)
-        {
-            case ChartedPathType.Loop:
-                loop = path;
-                break;
-            case ChartedPathType.Pursuit:
-                pursuit = path;
-                break;
-        }
-    }
-
-    public void ClearPath(ChartedPathType type)
-    {
-        switch (type)
-        {
-            case ChartedPathType.Loop:
-                loop.Clear();
-                break;
-            case ChartedPathType.Pursuit:
-                pursuit.Clear();
-                break;
-        }
-    }
     [HideInInspector] public List<int> assignedIndices;
 
     public NodeBase BehaviorTree { get ; set; }
@@ -148,8 +96,11 @@ public abstract class AI : Character, IBehaviorTree
     public ActionNode ActiveActionNode;
     public BehaviorType CurrentBehaviorType { get; set; }
 
+    //UniTask Async
+    protected CancellationTokenSource behaviorTokenSource = new CancellationTokenSource();
+
     #region MonoBehaviour
-    
+
     protected override void Start()
     {
         base.Start();
@@ -160,7 +111,9 @@ public abstract class AI : Character, IBehaviorTree
 
         currentRegisterThreshold = UnityEngine.Random.Range(registerThreshold.min, registerThreshold.max);
 
-        trackStatusRoutine = StartCoroutine(TrackStatus());
+        //trackStatusRoutine = StartCoroutine(TrackStatus());
+        lifetimeToken = this.GetCancellationTokenOnDestroy();
+        Track(lifetimeToken).Forget();
 
         SetRandomTimeBuffer();
         SetExponentsAndCoefficients();
@@ -306,6 +259,8 @@ public abstract class AI : Character, IBehaviorTree
     {
         StopCoroutine(behaviourTreeRoutine);
 
+        behaviorTokenSource.Cancel();
+
         if (currentBehavior != null)
         {
             StopCoroutine(currentBehavior);
@@ -350,6 +305,8 @@ public abstract class AI : Character, IBehaviorTree
 
     public void SetBehavior(IEnumerator behavior)
     {
+        behaviorTokenSource.Cancel();
+
         if (currentBehavior != null)
         {
             StopCoroutine(currentBehavior);
@@ -398,7 +355,7 @@ public abstract class AI : Character, IBehaviorTree
             {
                 //Debug.Log($"{gameObject.name} can see path end at {abortWhenSeen.gameObject.name}");
 
-                StopGoToDestination();
+                StopGoTo();
                 break;
             }
 
@@ -428,7 +385,7 @@ public abstract class AI : Character, IBehaviorTree
             {
                 //Debug.Log($"{gameObject.name} can see path end at {abortWhenSeen.gameObject.name}");
 
-                StopGoToDestination();
+                StopGoTo();
                 break;
             }
 
@@ -438,8 +395,6 @@ public abstract class AI : Character, IBehaviorTree
 
     public IEnumerator LookAround(float time = -1)
     {
-        Debug.Log($"{gameObject.name} start LookAround");
-
         var waitTime = time == -1 ? UnityEngine.Random.Range(this.waitTime.min, this.waitTime.max) : time;
         var targetRot = Quaternion.Euler(0f, 0f, currentCell.GetLookRotationAngle());
 
@@ -457,8 +412,62 @@ public abstract class AI : Character, IBehaviorTree
             waitTime -= Time.deltaTime;
             yield return null;
         }
+    }
 
-        Debug.Log($"{gameObject.name} end LookAround");
+    #endregion
+
+    #region Getters and Setters
+
+    public void SetPursuit(MazeCell start)
+    {
+        ReadyForPursuit = true;
+        PlayerObservationPoint = start;
+        SearchAvoidIndex = -1;
+    }
+    public void SetPursuit(MazeCell start, int avoidIndex)
+    {
+        ReadyForPursuit = true;
+        PlayerObservationPoint = start;
+        SearchAvoidIndex = avoidIndex;
+    }
+
+    public ChartedPath GetPath(ChartedPathType type)
+    {
+        switch (type)
+        {
+            case ChartedPathType.Loop:
+                return loop;
+            case ChartedPathType.Pursuit:
+                return pursuit;
+        }
+
+        return new ChartedPath(null, new int[1]);
+    }
+
+    public void SetPath(ChartedPathType type, ChartedPath path)
+    {
+        switch (type)
+        {
+            case ChartedPathType.Loop:
+                loop = path;
+                break;
+            case ChartedPathType.Pursuit:
+                pursuit = path;
+                break;
+        }
+    }
+
+    public void ClearPath(ChartedPathType type)
+    {
+        switch (type)
+        {
+            case ChartedPathType.Loop:
+                loop.Clear();
+                break;
+            case ChartedPathType.Pursuit:
+                pursuit.Clear();
+                break;
+        }
     }
 
     #endregion
@@ -534,6 +543,72 @@ public abstract class AI : Character, IBehaviorTree
             }
 
             yield return null;
+        }
+    }
+
+    async UniTask Track(CancellationToken lifetimeToken)
+    {
+        await UniTask.Delay(TimeSpan.FromSeconds(1));
+
+        while (!lifetimeToken.IsCancellationRequested)
+        {
+            if (CurrentBehaviorType != BehaviorType.Disabled)
+            {
+                exposureRatio = fieldOfView.ContinuousExposureTime / currentRegisterThreshold;
+
+                if (!RegisterPlayer)
+                {
+                    AimOverride = false;
+                    AddHeadMovement();
+
+                    if (exposureRatio >= 1 || (IsAlert && (fieldOfView.CanSeePlayer() || PlayerIsVeryClose())))
+                    {
+                        SetAlertStatus();
+                        RegisterPlayer = true;
+                    }
+                }
+                else
+                {
+                    if (fieldOfView.CanSeePlayer() || (IsAlert && PlayerIsVeryClose()))
+                    {
+                        aimOverrideTarget = GameManager.player.transform;
+                        AimOverride = true;
+                        transform.Face(aimOverrideTarget, ref derivative, currentTurnSpeed);
+
+                        registerTimer = 0;
+                        alertTimer = 0f;
+                    }
+                    else
+                    {
+                        registerTimer += Time.deltaTime;
+                    }
+
+                    if (registerTimer >= lostTargetThreshold)
+                    {
+                        AimOverride = false;
+                        AddHeadMovement();
+
+                        RegisterPlayer = false;
+                        registerTimer = 0;
+                    }
+                }
+
+                if (IsAlert && (int)CurrentBehaviorType < (int)BehaviorType.Follow)
+                {
+                    alertTimer += Time.deltaTime;
+
+                    if (alertTimer > maintainAlertTime)
+                    {
+                        IsAlert = false;
+                        alertTimer = 0;
+                        maintainAlertTime += maintainAlertTimeIncrement;
+                    }
+                }
+
+                fieldOfView.SetColorBlendFactor(RegisterPlayer || IsAlert ? 1f : fieldOfView.ContinuousExposureTime / currentRegisterThreshold);
+            }
+
+            await UniTask.NextFrame();
         }
     }
 

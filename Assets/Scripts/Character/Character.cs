@@ -2,6 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Cysharp.Threading.Tasks;
+using System.Threading;
 
 public abstract class Character : MonoBehaviour
 {
@@ -39,8 +41,15 @@ public abstract class Character : MonoBehaviour
 
     public Action PositionChange;
 
+    //UniTask Async
+    protected CancellationToken lifetimeToken;
+    protected CancellationTokenSource moveTokenSource;
+    public CancellationToken moveToken => moveTokenSource.Token;
+
     private void OnEnable()
     {
+        lifetimeToken = this.GetCancellationTokenOnDestroy();
+        
         NotificationModule.AddListener(HandleNotification);
     }
 
@@ -120,29 +129,29 @@ public abstract class Character : MonoBehaviour
         if (path[path.Count - 1] == currentCell)
             return;
 
+        _ = RestartGoTo(path);
+
+    }
+
+    async UniTask RestartGoTo(List<MazeCell> path)
+    {
+        moveTokenSource?.Cancel();
+        moveTokenSource = new CancellationTokenSource();
+
         if (!ShouldRun)
-            RestartGoToDestination(path, speed.min);
+            await GoTo(path, speed.min);
         else
-            RestartGoToDestination(path, speed.max);
+            await GoTo(path, speed.max);
     }
 
-    void RestartGoToDestination(List<MazeCell> path, float speed)
-    {
-        StopGoToDestination();
-        currentMovement = StartCoroutine(GoToDestination(path, speed));
-    }
+    public void StopGoTo() => moveTokenSource.Cancel();
 
-    public void StopGoToDestination()
+    async UniTask GoTo(List<MazeCell> path, float speed)
     {
-        if (currentMovement != null)
-        {
-            isMoving = false;
-            StopCoroutine(currentMovement);
-        }
-    }
+        var mergedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(lifetimeToken, moveToken);
 
-    IEnumerator GoToDestination(List<MazeCell> path, float speed)
-    {
+        Debug.Log($"{gameObject.name} is going to {path[path.Count - 1]}. move token cancel requested: {moveToken.IsCancellationRequested}");
+
         isMoving = true;
 
         int i = path[0] == currentCell ? 1 : 0;
@@ -161,7 +170,7 @@ public abstract class Character : MonoBehaviour
 
         target += (Vector3)bias;
 
-        while (i < path.Count)
+        while (i < path.Count && !mergedTokenSource.IsCancellationRequested)
         {
             if (!AimOverride)
             {
@@ -201,7 +210,7 @@ public abstract class Character : MonoBehaviour
 
                 fromPos = transform.position;
 
-                if(i < path.Count)
+                if (i < path.Count)
                 {
                     lastCell = currentTargetCell;
                     currentTargetCell = path[i];
@@ -219,17 +228,11 @@ public abstract class Character : MonoBehaviour
                 target += (Vector3)bias;
             }
 
-            yield return null;
+            await UniTask.NextFrame();
         }
 
         isMoving = false;
     }
-
-    #endregion Movement
-
-    #region Coroutine Management
-
-    
 
     #endregion
 }
