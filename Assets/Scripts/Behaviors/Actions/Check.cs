@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Archi.BT;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 
 public class Check : ActionNode
 {
@@ -11,14 +13,13 @@ public class Check : ActionNode
         Name = "Check";
     }
 
-    protected override IEnumerator Action()
+    protected async override UniTask Action(CancellationToken token)
     {
-        owner.ActiveActionNode = this;
         owner.IsActive = true;
 
         owner.SetBehaviorParams(BehaviorType.Check, FOVType.Alert, Random.value < 0.25f ? false : true);
 
-        yield return owner.GoTo(owner.PointOfInterest);
+        await owner.GoTo(token, owner.PointOfInterest);
 
         owner.PointOfInterest = null;
 

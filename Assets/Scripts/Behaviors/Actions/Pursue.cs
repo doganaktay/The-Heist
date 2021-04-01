@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Archi.BT;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 
 public class Pursue : ActionNode
 {
@@ -14,9 +16,8 @@ public class Pursue : ActionNode
         Name = "Pursue";
     }
 
-    protected override IEnumerator Action()
+    protected async override UniTask Action(CancellationToken token)
     {
-        owner.ActiveActionNode = this;
         owner.IsActive = true;
 
         owner.SetBehaviorParams(BehaviorType.Pursue, FOVType.Chase, shouldRun);
@@ -27,33 +28,31 @@ public class Pursue : ActionNode
         next = path.GetNext(owner.CurrentCell);
         var last = path.Last;
 
-        while (next.cell != null)
+        while (next.cell != null && !token.IsCancellationRequested)
         {
             if(next.cell != last)
             {
                 if (next.index == -1)
-                    yield return owner.GoTo(next.cell);
+                    await owner.GoTo(token, next.cell);
                 else
-                    yield return owner.GoTo(next.cell, next.index);
+                    await owner.GoTo(token, next.cell, next.index);
             }
             else
             {
                 if (next.cell.IsDeadEnd)
                 {
                     if (next.index == -1)
-                        yield return owner.GoTo(next.cell, last);
+                        await owner.GoTo(token, next.cell, last);
                     else
-                        yield return owner.GoTo(next.cell, next.index, last);
+                        await owner.GoTo(token, next.cell, next.index, last);
                 }
                 else
                 {
                     if (next.index == -1)
-                        yield return owner.GoTo(next.cell);
+                        await owner.GoTo(token, next.cell);
                     else
-                        yield return owner.GoTo(next.cell, next.index);
+                        await owner.GoTo(token, next.cell, next.index);
                 }
-
-
 
                 break;
             }

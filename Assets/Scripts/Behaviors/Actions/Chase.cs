@@ -1,7 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using Archi.BT;
+﻿using System.Threading;
+using Cysharp.Threading.Tasks;
 
 public class Chase : ActionNode
 {
@@ -11,9 +9,8 @@ public class Chase : ActionNode
         Name = "Chase";
     }
 
-    protected override IEnumerator Action()
+    protected async override UniTask Action(CancellationToken token)
     {
-        owner.ActiveActionNode = this;
         owner.IsActive = true;
 
         owner.SetBehaviorParams(BehaviorType.Chase, FOVType.Chase, true);
@@ -22,9 +19,9 @@ public class Chase : ActionNode
         owner.SetPursuit(currentTargetCell);
         owner.Move(currentTargetCell);
 
-        yield return null;
+        await UniTask.NextFrame(token);
 
-        while (owner.IsMoving)
+        while (owner.IsMoving && !token.IsCancellationRequested)
         {
             if (currentTargetCell != GameManager.player.CurrentCell)
             {
@@ -33,9 +30,8 @@ public class Chase : ActionNode
                 owner.SetPursuit(currentTargetCell);
             }
 
-            yield return null;
+            await UniTask.NextFrame(token);
         }
-
 
         owner.IsActive = false;
         owner.ActiveActionNode = null;

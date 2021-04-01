@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Archi.BT;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 
 public class Wander : ActionNode
 {
@@ -11,21 +13,20 @@ public class Wander : ActionNode
         Name = "Wander";
     }
 
-    protected override IEnumerator Action()
+    protected async override UniTask Action(CancellationToken token)
     {
-        owner.ActiveActionNode = this;
         owner.IsActive = true;
 
         owner.SetBehaviorParams(BehaviorType.Casual, FOVType.Regular, false);
 
         owner.Move();
 
-        yield return null;
+        await UniTask.NextFrame(token);
 
         while (owner.IsMoving)
-            yield return null;
+            await UniTask.NextFrame(token);
 
-        yield return owner.LookAround();
+        await owner.LookAround(token);
 
         owner.IsActive = false;
         owner.ActiveActionNode = null;

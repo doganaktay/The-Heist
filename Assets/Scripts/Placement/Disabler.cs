@@ -21,7 +21,7 @@ public class Disabler : PlaceableItem
         {
             var guard = collision.gameObject.GetComponent<Guard>();
 
-            guard.SetBehavior(guard.Disable(disableTime));
+            guard.Disable(disableTime);
 
             Destroy(gameObject);
         }

@@ -2,10 +2,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Archi.BT;
+using System;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 
 public abstract class ActionNode : Node
 {
     protected AI owner;
+    protected Func<CancellationToken, UniTask> action;
 
     protected override void OnReset() { }
 
@@ -13,7 +17,9 @@ public abstract class ActionNode : Node
     {
         if (EvaluationCount == 0 && ShouldAssignAction())
         {
-            owner.SetBehavior(Action());
+            action = Action;
+
+            owner.SetBehavior(this, action);
             return NodeStatus.Running;
         }
 
@@ -21,7 +27,7 @@ public abstract class ActionNode : Node
     }
 
     protected abstract bool ShouldAssignAction();
-    protected abstract IEnumerator Action();
+    protected abstract UniTask Action(CancellationToken token);
 
-    protected bool IsCurrentAction() => owner.IsActiveNode(this) && owner.CurrentBehavior != null;
+    protected bool IsCurrentAction() => owner.IsActiveNode(this) && owner.IsActive;
 }

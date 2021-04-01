@@ -43,8 +43,9 @@ public abstract class Character : MonoBehaviour
 
     //UniTask Async
     protected CancellationToken lifetimeToken;
-    protected CancellationTokenSource moveTokenSource;
+    protected CancellationTokenSource moveTokenSource = new CancellationTokenSource();
     public CancellationToken moveToken => moveTokenSource.Token;
+    protected UniTaskVoid restartGoTo;
 
     private void OnEnable()
     {
@@ -129,29 +130,26 @@ public abstract class Character : MonoBehaviour
         if (path[path.Count - 1] == currentCell)
             return;
 
-        _ = RestartGoTo(path);
+        restartGoTo = RestartGoTo(path);
 
     }
 
-    async UniTask RestartGoTo(List<MazeCell> path)
+    async UniTaskVoid RestartGoTo(List<MazeCell> path)
     {
-        moveTokenSource?.Cancel();
-        moveTokenSource = new CancellationTokenSource();
+        StopGoTo();
+        
+        moveTokenSource = new CancellationTokenSource().Token.Merge(lifetimeToken);
 
         if (!ShouldRun)
-            await GoTo(path, speed.min);
+            await GoTo(path, speed.min, moveTokenSource.Token);
         else
-            await GoTo(path, speed.max);
+            await GoTo(path, speed.max, moveTokenSource.Token);
     }
 
     public void StopGoTo() => moveTokenSource.Cancel();
 
-    async UniTask GoTo(List<MazeCell> path, float speed)
+    async UniTask GoTo(List<MazeCell> path, float speed, CancellationToken token)
     {
-        var mergedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(lifetimeToken, moveToken);
-
-        Debug.Log($"{gameObject.name} is going to {path[path.Count - 1]}. move token cancel requested: {moveToken.IsCancellationRequested}");
-
         isMoving = true;
 
         int i = path[0] == currentCell ? 1 : 0;
@@ -170,7 +168,7 @@ public abstract class Character : MonoBehaviour
 
         target += (Vector3)bias;
 
-        while (i < path.Count && !mergedTokenSource.IsCancellationRequested)
+        while (i < path.Count && !token.IsCancellationRequested)
         {
             if (!AimOverride)
             {
@@ -228,7 +226,7 @@ public abstract class Character : MonoBehaviour
                 target += (Vector3)bias;
             }
 
-            await UniTask.NextFrame();
+            await UniTask.NextFrame(token);
         }
 
         isMoving = false;

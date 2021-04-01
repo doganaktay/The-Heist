@@ -89,15 +89,16 @@ public abstract class AI : Character, IBehaviorTree
     [HideInInspector] public List<int> assignedIndices;
 
     public NodeBase BehaviorTree { get ; set; }
-    Coroutine behaviourTreeRoutine;
-    YieldInstruction btWaitTime = new WaitForSeconds(.1f);
-    Coroutine currentBehavior;
-    public Coroutine CurrentBehavior => currentBehavior;
+    float btWaitTime = 0.1f;
+    UniTask currentBehavior;
+    public UniTask CurrentBehavior => currentBehavior;
     public ActionNode ActiveActionNode;
     public BehaviorType CurrentBehaviorType { get; set; }
 
     //UniTask Async
+    protected CancellationTokenSource behaviorTreeTokenSource = new CancellationTokenSource();
     protected CancellationTokenSource behaviorTokenSource = new CancellationTokenSource();
+    protected CancellationTokenSource fovTokenSource = new CancellationTokenSource();
 
     #region MonoBehaviour
 
@@ -111,20 +112,25 @@ public abstract class AI : Character, IBehaviorTree
 
         currentRegisterThreshold = UnityEngine.Random.Range(registerThreshold.min, registerThreshold.max);
 
-        //trackStatusRoutine = StartCoroutine(TrackStatus());
-        lifetimeToken = this.GetCancellationTokenOnDestroy();
         Track(lifetimeToken).Forget();
 
         SetRandomTimeBuffer();
         SetExponentsAndCoefficients();
 
         GenerateBehaviorTree();
-        behaviourTreeRoutine = StartCoroutine(RunBehaviorTree());
+        RunBehaviorTree(behaviorTreeTokenSource.Token.Merge(lifetimeToken).Token).Forget();
     }
 
+    string lastNode = "";
     protected override void Update()
     {
         base.Update();
+
+        if(ActiveActionNode != null && ActiveActionNode.Name != lastNode)
+        {
+            Debug.Log($"{gameObject.name} new active node: {ActiveActionNode.Name}");
+            lastNode = ActiveActionNode.Name;
+        }
     }
 
     #endregion MonoBehaviour
@@ -133,22 +139,24 @@ public abstract class AI : Character, IBehaviorTree
 
     protected abstract void GenerateBehaviorTree();
 
-    IEnumerator RunBehaviorTree()
+    async UniTask RunBehaviorTree(CancellationToken token)
     {
-        yield return new WaitForSeconds(1f);
+        await UniTask.Delay(1000, false, PlayerLoopTiming.Update, token);
 
-        while (enabled)
+        while (!token.IsCancellationRequested && enabled)
         {
             (BehaviorTree as Node).Run();
-            yield return btWaitTime;
+            await UniTask.Delay((int)(btWaitTime * 1000), false, PlayerLoopTiming.Update, token);
         }
     }
+
+    void StopBehaviorTree() => behaviorTreeTokenSource.Cancel();
 
     #endregion
 
     #region Field Of View
 
-    public void SetFOV(FOVType type)
+    void SetFOV(FOVType type)
     {
         float radius, angle;
 
@@ -164,20 +172,19 @@ public abstract class AI : Character, IBehaviorTree
         radius = fovPresets[(int)type].radius;
         angle = fovPresets[(int)type].angle;
 
-        if (FOVRoutine != null)
-            StopCoroutine(FOVRoutine);
+        fovTokenSource = fovTokenSource.Renew();
 
-        StartCoroutine(AdjustFOV(radius, angle));
+        AdjustFOV(radius, angle, fovTokenSource.Token).Forget();
     }
 
-    IEnumerator AdjustFOV(float radius, float angle)
+    async UniTask AdjustFOV(float radius, float angle, CancellationToken token)
     {
         float timer = 0f;
         float ratio = 0f;
         float currentRadius = fieldOfView.viewRadius;
         float currentAngle = fieldOfView.viewAngle;
 
-        while(ratio < 1f)
+        while(ratio < 1f && !token.IsCancellationRequested)
         {
             fieldOfView.viewRadius = Mathf.Lerp(currentRadius, radius, ratio);
             fieldOfView.viewAngle = Mathf.Lerp(currentAngle, angle, ratio);
@@ -185,7 +192,7 @@ public abstract class AI : Character, IBehaviorTree
             timer += Time.deltaTime;
             ratio = timer / FOVAdjustTime;
 
-            yield return null;
+            await UniTask.NextFrame(token);
         }
     }
 
@@ -238,7 +245,6 @@ public abstract class AI : Character, IBehaviorTree
     {
         for(int i = 0; i < trigExponents.Length; i++)
             trigExponents[i] = UnityEngine.Random.value > 0.5 ? 1 : 3;
-            //trigExponents[i] = 1;
 
         headMoveCoefficient = UnityEngine.Random.Range(4f, 5f);
     }
@@ -255,23 +261,12 @@ public abstract class AI : Character, IBehaviorTree
 
     #region AI Actions
 
-    public IEnumerator Disable(float time = -1)
+    public async UniTask Disable(CancellationToken token, float time = -1)
     {
-        StopCoroutine(behaviourTreeRoutine);
+        StopBehaviorTree();
 
-        behaviorTokenSource.Cancel();
-
-        if (currentBehavior != null)
-        {
-            StopCoroutine(currentBehavior);
-            IsActive = false;
-        }
-
-        if (currentMovement != null)
-        {
-            StopCoroutine(currentMovement);
-            isMoving = false;
-        }
+        behaviorTokenSource.Clear();
+        StopGoTo();
 
         SetBehaviorParams(BehaviorType.Disabled, FOVType.Disabled, false);
 
@@ -279,10 +274,15 @@ public abstract class AI : Character, IBehaviorTree
 
         if (time > -1)
         {
-            yield return new WaitForSeconds(time);
+            await UniTask.Delay((int)(time * 1000), false, PlayerLoopTiming.Update, token);
 
             Revive();
         }
+    }
+
+    public void Disable(float time = -1)
+    {
+        Disable(lifetimeToken, time).Forget();
     }
 
     private void ClearBehaviorTreeData()
@@ -300,26 +300,21 @@ public abstract class AI : Character, IBehaviorTree
         SetBehaviorParams(BehaviorType.Investigate, FOVType.Alert, false);
         SetAlertStatus();
 
-        behaviourTreeRoutine = StartCoroutine(RunBehaviorTree());
+        behaviorTreeTokenSource = new CancellationTokenSource();
+        RunBehaviorTree(behaviorTreeTokenSource.Token.Merge(lifetimeToken).Token).Forget();
     }
 
-    public void SetBehavior(IEnumerator behavior)
+    public void SetBehavior(ActionNode nextActiveNode, Func<CancellationToken, UniTask> behavior)
     {
-        behaviorTokenSource.Cancel();
+        behaviorTokenSource = behaviorTokenSource.Renew().Token.Merge(lifetimeToken);
 
-        if (currentBehavior != null)
-        {
-            StopCoroutine(currentBehavior);
-            IsActive = false;
-        }
+        ActiveActionNode = nextActiveNode;
+        IsActive = false;
+        isMoving = false;
 
-        if (currentMovement != null)
-        {
-            StopCoroutine(currentMovement);
-            isMoving = false;
-        }
+        StopGoTo();
 
-        currentBehavior = StartCoroutine(behavior);
+        behavior(behaviorTokenSource.Token).Forget();
     }
 
     public void SetBehaviorParams(BehaviorType behaviorType, FOVType fovType, bool shouldRun)
@@ -333,72 +328,68 @@ public abstract class AI : Character, IBehaviorTree
 
     public bool CanLoopMap() => PathDesigner.Instance.MapHasCycles;
 
-    public IEnumerator GoTo(MazeCell cell)
+    public async UniTask GoTo(CancellationToken token, MazeCell cell)
     {
         Move(cell);
 
-        yield return null;
+        await UniTask.NextFrame(token);
 
-        while (isMoving)
-            yield return null;
+        while (isMoving && !token.IsCancellationRequested)
+            await UniTask.NextFrame(token);
     }
 
-    public IEnumerator GoTo(MazeCell cell, MazeCell abortWhenSeen)
+    public async UniTask GoTo(CancellationToken token, MazeCell cell, MazeCell abortWhenSeen)
     {
         Move(cell);
 
-        yield return null;
+        await UniTask.NextFrame(token);
 
-        while (isMoving)
+        while (isMoving && !token.IsCancellationRequested)
         {
             if (CanSeeCell(abortWhenSeen))
             {
-                //Debug.Log($"{gameObject.name} can see path end at {abortWhenSeen.gameObject.name}");
-
                 StopGoTo();
                 break;
             }
 
-            yield return null;
+            await UniTask.NextFrame(token);
         }
     }
 
-    public IEnumerator GoTo(MazeCell cell, int forcedIndex)
+    public async UniTask GoTo(CancellationToken token, MazeCell cell, int forcedIndex)
     {
         Move(cell, forcedIndex);
 
-        yield return null;
+        await UniTask.NextFrame(token);
 
-        while (isMoving)
-            yield return null;
+        while (isMoving && !token.IsCancellationRequested)
+            await UniTask.NextFrame(token);
     }
 
-    public IEnumerator GoTo(MazeCell cell, int forcedIndex, MazeCell abortWhenSeen)
+    public async UniTask GoTo(CancellationToken token, MazeCell cell, int forcedIndex, MazeCell abortWhenSeen)
     {
         Move(cell, forcedIndex);
 
-        yield return null;
+        await UniTask.NextFrame(token);
 
-        while (isMoving)
+        while (isMoving && !token.IsCancellationRequested)
         {
             if (CanSeeCell(abortWhenSeen))
             {
-                //Debug.Log($"{gameObject.name} can see path end at {abortWhenSeen.gameObject.name}");
-
                 StopGoTo();
                 break;
             }
 
-            yield return null;
+            await UniTask.NextFrame(token);
         }
     }
 
-    public IEnumerator LookAround(float time = -1)
+    public async UniTask LookAround(CancellationToken token, float time = -1)
     {
         var waitTime = time == -1 ? UnityEngine.Random.Range(this.waitTime.min, this.waitTime.max) : time;
         var targetRot = Quaternion.Euler(0f, 0f, currentCell.GetLookRotationAngle());
 
-        while (waitTime > 0)
+        while (waitTime > 0 && !token.IsCancellationRequested)
         {
             transform.Face(targetRot, ref derivative, currentTurnSpeed);
 
@@ -406,11 +397,11 @@ public abstract class AI : Character, IBehaviorTree
             {
                 targetRot = Quaternion.Euler(0f, 0f, currentCell.GetLookRotationAngle());
 
-                yield return new WaitForSeconds(UnityEngine.Random.Range(1f, 3f));
+                await UniTask.Delay((int)(UnityEngine.Random.Range(1f, 3f) * 1000), false, PlayerLoopTiming.Update, token);
             }
 
             waitTime -= Time.deltaTime;
-            yield return null;
+            await UniTask.NextFrame(token);
         }
     }
 
@@ -480,75 +471,9 @@ public abstract class AI : Character, IBehaviorTree
         alertTimer = 0f;
     }
 
-    IEnumerator TrackStatus()
-    {
-        yield return new WaitForSeconds(1f);
-
-        while (true)
-        {
-            if(CurrentBehaviorType != BehaviorType.Disabled)
-            {
-                exposureRatio = fieldOfView.ContinuousExposureTime / currentRegisterThreshold;
-
-                if (!RegisterPlayer)
-                {
-                    AimOverride = false;
-                    AddHeadMovement();
-
-                    if (exposureRatio >= 1 || (IsAlert && (fieldOfView.CanSeePlayer() || PlayerIsVeryClose())))
-                    {
-                        SetAlertStatus();
-                        RegisterPlayer = true;
-                    }
-                }
-                else
-                {
-                    if (fieldOfView.CanSeePlayer() || (IsAlert && PlayerIsVeryClose()))
-                    {
-                        aimOverrideTarget = GameManager.player.transform;
-                        AimOverride = true;
-                        transform.Face(aimOverrideTarget, ref derivative, currentTurnSpeed);
-
-                        registerTimer = 0;
-                        alertTimer = 0f;
-                    }
-                    else
-                    {
-                        registerTimer += Time.deltaTime;
-                    }
-
-                    if(registerTimer >= lostTargetThreshold)
-                    {
-                        AimOverride = false;
-                        AddHeadMovement();
-
-                        RegisterPlayer = false;
-                        registerTimer = 0;
-                    }
-                }
-
-                if (IsAlert && (int)CurrentBehaviorType < (int)BehaviorType.Follow)
-                {
-                    alertTimer += Time.deltaTime;
-
-                    if (alertTimer > maintainAlertTime)
-                    {
-                        IsAlert = false;
-                        alertTimer = 0;
-                        maintainAlertTime += maintainAlertTimeIncrement;
-                    }
-                }
-
-                fieldOfView.SetColorBlendFactor(RegisterPlayer || IsAlert ? 1f : fieldOfView.ContinuousExposureTime / currentRegisterThreshold);
-            }
-
-            yield return null;
-        }
-    }
-
     async UniTask Track(CancellationToken lifetimeToken)
     {
-        await UniTask.Delay(TimeSpan.FromSeconds(1));
+        await UniTask.Delay(TimeSpan.FromSeconds(1), false, PlayerLoopTiming.Update, lifetimeToken);
 
         while (!lifetimeToken.IsCancellationRequested)
         {
@@ -608,7 +533,7 @@ public abstract class AI : Character, IBehaviorTree
                 fieldOfView.SetColorBlendFactor(RegisterPlayer || IsAlert ? 1f : fieldOfView.ContinuousExposureTime / currentRegisterThreshold);
             }
 
-            await UniTask.NextFrame();
+            await UniTask.NextFrame(lifetimeToken);
         }
     }
 

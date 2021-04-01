@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Archi.BT;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 
 public class FollowOther : ActionNode
 {
@@ -13,9 +15,8 @@ public class FollowOther : ActionNode
         Name = "Follow Other";
     }
 
-    protected override IEnumerator Action()
+    protected async override UniTask Action(CancellationToken token)
     {
-        owner.ActiveActionNode = this;
         owner.IsActive = true;
 
         owner.SetBehaviorParams(BehaviorType.Follow, FOVType.Alert, true);
@@ -24,9 +25,9 @@ public class FollowOther : ActionNode
         var currentTargetCell = target.CurrentCell;
         owner.Move(currentTargetCell);
 
-        yield return null;
+        await UniTask.NextFrame(token);
 
-        while (owner.IsMoving)
+        while (owner.IsMoving && !token.IsCancellationRequested)
         {
             if (currentTargetCell != target.CurrentCell)
             {
@@ -34,7 +35,7 @@ public class FollowOther : ActionNode
                 owner.Move(currentTargetCell);
             }
 
-            yield return null;
+            await UniTask.NextFrame(token);
         }
 
         owner.IsActive = false;

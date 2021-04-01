@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Archi.BT;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 
 public class PerformGuardRole : ActionNode
 {
@@ -11,9 +13,8 @@ public class PerformGuardRole : ActionNode
         Name = "Perform Guard Role";
     }
 
-    protected override IEnumerator Action()
+    protected async override UniTask Action(CancellationToken token)
     {
-        owner.ActiveActionNode = this;
         owner.IsActive = true;
 
         var guard = (Guard)owner;
@@ -25,12 +26,12 @@ public class PerformGuardRole : ActionNode
 
                 owner.Move();
 
-                yield return null;
+                await UniTask.NextFrame(token);
 
-                while (owner.IsMoving)
-                    yield return null;
+                while (owner.IsMoving && !token.IsCancellationRequested)
+                    await UniTask.NextFrame(token);
 
-                yield return owner.LookAround();
+                await owner.LookAround(token);
 
                 break;
 
@@ -41,17 +42,17 @@ public class PerformGuardRole : ActionNode
                 (MazeCell cell, int index) next;    
                 next = path.GetNext(owner.CurrentCell, true); 
 
-                while (next.cell != null)
+                while (next.cell != null && !token.IsCancellationRequested)
                 {
                     if (next.index == -1)
-                        yield return owner.GoTo(next.cell);
+                        await owner.GoTo(token, next.cell);
                     else
-                        yield return owner.GoTo(next.cell, next.index);
+                        await owner.GoTo(token, next.cell, next.index);
 
                     next = path.GetNext(owner.CurrentCell);
 
                     if (Random.value < 0.5f)
-                        yield return owner.LookAround();
+                        await owner.LookAround(token);
                 }
 
                 break;
@@ -62,11 +63,11 @@ public class PerformGuardRole : ActionNode
                 var nextIndex = owner.assignedIndices[Random.Range(0, owner.assignedIndices.Count)];
                 var nextCell = GraphFinder.GetRandomCellFromGraphArea(nextIndex);
 
-                while (nextCell != null)
+                while (nextCell != null && !token.IsCancellationRequested)
                 {
-                    yield return owner.GoTo(nextCell);
+                    await owner.GoTo(token, nextCell);
 
-                    yield return owner.LookAround();
+                    await owner.LookAround(token);
 
                     nextIndex = owner.assignedIndices[Random.Range(0, owner.assignedIndices.Count)];
                     nextCell = GraphFinder.GetRandomCellFromGraphArea(nextIndex);
@@ -79,11 +80,11 @@ public class PerformGuardRole : ActionNode
 
                 nextCell = GraphFinder.GetRandomCellFromGraphArea(owner.assignedIndices[0]);
 
-                while (nextCell != null)
+                while (nextCell != null && !token.IsCancellationRequested)
                 {
-                    yield return owner.GoTo(nextCell);
+                    await owner.GoTo(token, nextCell);
 
-                    yield return owner.LookAround();
+                    await owner.LookAround(token);
 
                     nextIndex = owner.assignedIndices[Random.Range(0, owner.assignedIndices.Count)];
                     nextCell = GraphFinder.GetRandomCellFromGraphArea(nextIndex);

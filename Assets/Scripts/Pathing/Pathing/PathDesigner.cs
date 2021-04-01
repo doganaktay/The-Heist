@@ -141,13 +141,13 @@ public class PathDesigner : MonoBehaviour
     public ChartedPath RequestPathLoop() => graph.GetLoop();
     public bool MapHasCycles => graph.HasCycles;
 
-    public void PrintPathLoop()
-    {
-        var pathLoop = RequestPathLoop();
-        pathLoop.DebugPath();
-        pathLoop.ReversePath();
-        pathLoop.DebugPath();
-    }
+    //public void PrintPathLoop()
+    //{
+    //    var pathLoop = RequestPathLoop();
+    //    pathLoop.DebugPath();
+    //    pathLoop.ReversePath();
+    //    pathLoop.DebugPath();
+    //}
 
 
     //private void OnGUI()
