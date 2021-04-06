@@ -12,6 +12,13 @@ public static class UniTaskUtil
         return new CancellationTokenSource();
     }
 
+    public static CancellationTokenSource Renew(this CancellationTokenSource source, CancellationToken tokenToMerge)
+    {
+        source.Clear();
+        var newSource = new CancellationTokenSource().Token.Merge(tokenToMerge);
+        return newSource;
+    }
+
     public static void Clear(this CancellationTokenSource source)
     {
         source.Cancel();

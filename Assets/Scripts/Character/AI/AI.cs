@@ -52,7 +52,6 @@ public abstract class AI : Character, IBehaviorTree
     float alertTimer = 0f;
     float exposureRatio;
 
-    Coroutine FOVRoutine;
     [SerializeField]
     float FOVAdjustTime = 1f;
 

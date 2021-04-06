@@ -29,11 +29,8 @@ public abstract class Character : MonoBehaviour
     public bool ShouldRun { get; set; }
     protected bool isMoving = false;
     protected MazeCell currentTargetCell, nextTargetCell;
-    protected Coroutine currentMovement;
-
-    // arbitrary count of 5
-    protected IEnumerator[] activeSubroutines = new IEnumerator[5];
-    int nextAvailableSubroutineIndex = 0;
+    protected List<MazeCell> currentPath;
+    public List<MazeCell> CurrentPath => currentPath;
 
     [HideInInspector] public Transform aim; // used if Character has aim for LookAt
     [HideInInspector] public bool AimOverride { get; set; } = false;
@@ -44,8 +41,8 @@ public abstract class Character : MonoBehaviour
     //UniTask Async
     public CancellationToken lifetimeToken;
     protected CancellationTokenSource moveTokenSource = new CancellationTokenSource();
-    public CancellationToken moveToken => moveTokenSource.Token;
-    protected UniTaskVoid restartGoTo;
+
+    #region MonoBehaviour
 
     private void OnEnable()
     {
@@ -71,6 +68,8 @@ public abstract class Character : MonoBehaviour
         if (isOnGrid && TrackPosition())
             PositionChange?.Invoke();
     }
+
+    #endregion
 
     bool TrackPosition()
     {
@@ -102,6 +101,17 @@ public abstract class Character : MonoBehaviour
         return false;
     }
 
+    public MazeCell PeekPath() => (!isMoving || currentPath.Count < 2) ? null : currentPath[1];
+    public MazeCell PeekPath(float depthPercent)
+    {
+        if (!isMoving || depthPercent < 0)
+            return null;
+
+        var count = currentPath.Count;
+
+        return currentPath[Mathf.Min(Mathf.RoundToInt((count - 1) * depthPercent), count - 1)];
+    }
+
     protected abstract void HandleNotification(MazeCell cell, CellNotificationData data);
 
     #region Movement
@@ -128,26 +138,36 @@ public abstract class Character : MonoBehaviour
         if (path[path.Count - 1] == currentCell)
             return;
 
-        restartGoTo = RestartGoTo(path);
+        //moveTokenSource.Clear();
+        //moveTokenSource = new CancellationTokenSource().Token.Merge(lifetimeToken);
 
+        StopGoTo();
+
+        StartGoTo(path).Forget();
     }
 
-    async UniTaskVoid RestartGoTo(List<MazeCell> path)
+    async UniTaskVoid StartGoTo(List<MazeCell> path)
     {
-        StopGoTo();
-        
-        moveTokenSource = new CancellationTokenSource().Token.Merge(lifetimeToken);
-
         if (!ShouldRun)
             await GoTo(path, speed.min, moveTokenSource.Token);
         else
             await GoTo(path, speed.max, moveTokenSource.Token);
     }
 
-    public void StopGoTo() => moveTokenSource.Cancel();
+    public void StopGoTo()
+    {
+        moveTokenSource.Cancel();
+        moveTokenSource.Dispose();
+        moveTokenSource = new CancellationTokenSource().Token.Merge(lifetimeToken);
+
+        isMoving = false;
+        currentPath?.Clear();
+    }
 
     async UniTask GoTo(List<MazeCell> path, float speed, CancellationToken token)
     {
+        currentPath = path;
+
         isMoving = true;
 
         int i = path[0] == currentCell ? 1 : 0;
@@ -228,6 +248,7 @@ public abstract class Character : MonoBehaviour
         }
 
         isMoving = false;
+        currentPath.Clear();
     }
 
     #endregion

@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 
 [RequireComponent(typeof(FieldOfView))]
 public class CCTVCamera : MonoBehaviour, ISimulateable, IProjectileTarget
@@ -19,6 +21,8 @@ public class CCTVCamera : MonoBehaviour, ISimulateable, IProjectileTarget
     public bool IsStatic { get => fov.IsStatic; set => fov.IsStatic = value; }
     public bool ShowFOV { get => fov.canDraw; set => fov.canDraw = value; }
     public Transform Aim => aim;
+
+    CancellationToken lifetimeToken;
 
     // interface members
     public GameObject Instance { get => gameObject; }
@@ -39,6 +43,8 @@ public class CCTVCamera : MonoBehaviour, ISimulateable, IProjectileTarget
     {
         fov = GetComponent<FieldOfView>();
         aim = fov.aim = transform.GetChild(0);
+
+        lifetimeToken = this.GetCancellationTokenOnDestroy();
     }
 
     public void SetCamViewDistance(float distance) => fov.viewRadius = distance;
@@ -64,12 +70,28 @@ public class CCTVCamera : MonoBehaviour, ISimulateable, IProjectileTarget
         SetCamViewAngle(viewAngle);
         SetCamRotLimits(new MinMaxData(aim.rotation.eulerAngles.z - rotLimits.min, aim.rotation.eulerAngles.z + rotLimits.max));
 
-        StartCoroutine(SetFinalAngle());
+        //StartCoroutine(SetFinalAngle());
+        SetFinalAngle(lifetimeToken).Forget();
     }
 
     IEnumerator SetFinalAngle()
     {
         yield return null;
+
+        Vector3 rotEuler = aim.rotation.eulerAngles;
+        rotEuler.z = GetTopDirectionAngles()[0].angle;
+        aim.rotation = Quaternion.Euler(rotEuler);
+
+        //Debug.Log($"{gameObject.name} rot min: {rotationLimits.min} max: {rotationLimits.max} current: {aim.eulerAngles.z}" +
+        //    $" Setting angle to {rotEuler.z} with top coverage of {GetTopDirectionAngles()[0].coverage} cells");
+
+        IsStatic = true;
+        fov.DrawFieldOfView();
+    }
+
+    async UniTaskVoid SetFinalAngle(CancellationToken token)
+    {
+        await UniTask.NextFrame();
 
         Vector3 rotEuler = aim.rotation.eulerAngles;
         rotEuler.z = GetTopDirectionAngles()[0].angle;
@@ -94,7 +116,9 @@ public class CCTVCamera : MonoBehaviour, ISimulateable, IProjectileTarget
         SetCamRotLimits(new MinMaxData(aim.rotation.eulerAngles.z - rotLimits.min, aim.rotation.eulerAngles.z + rotLimits.max));
         SetCamWaitTime(waitTime);
 
-        rotateCamRoutine = StartCoroutine(RotateCam());
+        //rotateCamRoutine = StartCoroutine(RotateCam());
+
+        Rotate(lifetimeToken).Forget();
     }
 
     IEnumerator RotateCam()
@@ -124,6 +148,35 @@ public class CCTVCamera : MonoBehaviour, ISimulateable, IProjectileTarget
                 limit = rotationLimits.min;
 
             yield return delay;
+        }
+    }
+
+    async UniTaskVoid Rotate(CancellationToken token)
+    {
+        var limit = Random.value < 0.5f ? rotationLimits.min : rotationLimits.max;
+
+        await UniTask.Delay((int)(Random.Range(0f, waitTime) * 1000));
+
+        while (!token.IsCancellationRequested)
+        {
+            var current = aim.rotation;
+            var end = Quaternion.Euler(0, 0, limit);
+
+            var t = 0f;
+            while (aim.rotation != Quaternion.Euler(0, 0, limit) && t < 1.01f)
+            {
+                t += rotationSpeed * Time.deltaTime;
+                aim.rotation = Quaternion.Slerp(current, end, t);
+
+                await UniTask.NextFrame();
+            }
+
+            if (limit == rotationLimits.min)
+                limit = rotationLimits.max;
+            else
+                limit = rotationLimits.min;
+
+            await UniTask.Delay((int)(waitTime * 1000));
         }
     }
 

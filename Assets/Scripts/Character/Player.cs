@@ -2,6 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 
 [RequireComponent(typeof(ProjectileSelector))]
 public class Player : Character
@@ -35,6 +37,7 @@ public class Player : Character
     public bool lineReset = true;
 
     Coroutine currentTask;
+    CancellationTokenSource taskTokenSource = new CancellationTokenSource();
 
     #region MonoBehaviour
 
@@ -136,40 +139,35 @@ public class Player : Character
 
     public void PutOrRemoveItem(PlaceableItemType itemType, MazeCell cell)
     {
-        if (currentTask != null)
-            StopCoroutine(currentTask);
-        if (currentMovement != null)
-        {
-            isMoving = false;
-            StopCoroutine(currentMovement);
-        }
+        taskTokenSource = taskTokenSource.Renew(lifetimeToken);
+        StopGoTo();
 
         switch (itemType)
         {
             case PlaceableItemType.SoundBomb:
                 {
-                    currentTask = StartCoroutine(ItemTask(PlaceableItemType.SoundBomb, soundBombPrefab, cell));
+                    ItemTask(taskTokenSource.Token, PlaceableItemType.SoundBomb, soundBombPrefab, cell).Forget();
                 }
                 break;
             case PlaceableItemType.Disabler:
                 {
-                    currentTask = StartCoroutine(ItemTask(PlaceableItemType.Disabler, disablerPrefab, cell));
+                    ItemTask(taskTokenSource.Token, PlaceableItemType.Disabler, disablerPrefab, cell).Forget();
                 }
                 break;
         }
     }
 
-    IEnumerator ItemTask(PlaceableItemType itemType, PlaceableItem item, MazeCell targetCell)
+    async UniTaskVoid ItemTask(CancellationToken token, PlaceableItemType itemType, PlaceableItem item, MazeCell targetCell)
     {
         if (targetCell != currentCell)
         {
             Move(targetCell);
         }
 
-        yield return null;
+        await UniTask.NextFrame();
 
-        while (isMoving)
-            yield return null;
+        while (!token.IsCancellationRequested && isMoving)
+            await UniTask.NextFrame();
 
         PutOrRemove(itemType, item, targetCell);
     }
