@@ -42,7 +42,7 @@ public abstract class Character : MonoBehaviour
     public Action PositionChange;
 
     //UniTask Async
-    protected CancellationToken lifetimeToken;
+    public CancellationToken lifetimeToken;
     protected CancellationTokenSource moveTokenSource = new CancellationTokenSource();
     public CancellationToken moveToken => moveTokenSource.Token;
     protected UniTaskVoid restartGoTo;
@@ -50,14 +50,12 @@ public abstract class Character : MonoBehaviour
     private void OnEnable()
     {
         lifetimeToken = this.GetCancellationTokenOnDestroy();
-        
         NotificationModule.AddListener(HandleNotification);
     }
 
     private void OnDisable()
     {
         NotificationModule.RemoveListener(HandleNotification);
-        StopAllCoroutines();
     }
 
     protected virtual void Start()

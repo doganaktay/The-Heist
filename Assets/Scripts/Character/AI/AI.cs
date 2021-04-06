@@ -74,8 +74,14 @@ public abstract class AI : Character, IBehaviorTree
     public int SearchAvoidIndex { get; set; } = -1;
     public bool ReadyForPursuit { get; set; } = false;
 
-    Coroutine trackStatusRoutine;
+    // head movement
+    float randomTimeBuffer;
+    int[] trigExponents = new int[3];
+    float headMoveCoefficient;
+    float multiplier;
+    int lastSign;
 
+    // AI params
     [Range(0f,1f), Tooltip("Used for movement decisions")]
     public float fitness;
     [Range(0f, 1f), Tooltip("Used for coordination and biasing actions to be prescient")]
@@ -88,6 +94,7 @@ public abstract class AI : Character, IBehaviorTree
     [HideInInspector] public ChartedPath pursuit;
     [HideInInspector] public List<int> assignedIndices;
 
+    // behavior tree
     public NodeBase BehaviorTree { get ; set; }
     float btWaitTime = 0.1f;
     UniTask currentBehavior;
@@ -113,6 +120,7 @@ public abstract class AI : Character, IBehaviorTree
         currentRegisterThreshold = UnityEngine.Random.Range(registerThreshold.min, registerThreshold.max);
 
         Track(lifetimeToken).Forget();
+        HeadMovement(lifetimeToken).Forget();
 
         SetRandomTimeBuffer();
         SetExponentsAndCoefficients();
@@ -126,11 +134,11 @@ public abstract class AI : Character, IBehaviorTree
     {
         base.Update();
 
-        if(ActiveActionNode != null && ActiveActionNode.Name != lastNode)
-        {
-            Debug.Log($"{gameObject.name} new active node: {ActiveActionNode.Name}");
-            lastNode = ActiveActionNode.Name;
-        }
+        //if(ActiveActionNode != null && ActiveActionNode.Name != lastNode)
+        //{
+        //    Debug.Log($"{gameObject.name} new active node: {ActiveActionNode.Name}");
+        //    lastNode = ActiveActionNode.Name;
+        //}
     }
 
     #endregion MonoBehaviour
@@ -200,11 +208,30 @@ public abstract class AI : Character, IBehaviorTree
 
     #region Head Movement
 
-    float randomTimeBuffer;
-    int[] trigExponents = new int[3];
-    float headMoveCoefficient;
-    float multiplier;
-    int lastSign;
+    protected async UniTask HeadMovement(CancellationToken token)
+    {
+        while(!token.IsCancellationRequested && AimOverride == false)
+        {
+            var timeToUse = Time.time + randomTimeBuffer;
+            float amount = 1;
+
+            amount *= Mathf.Sin(headMoveCoefficient * timeToUse);
+            var sign = Mathf.Sign(amount);
+
+            if (lastSign != sign)
+            {
+                multiplier = UnityEngine.Random.Range(0, 2f);
+                lastSign = (int)sign;
+            }
+
+            var final = amount * multiplier * Mathf.Max(0, 1 - exposureRatio);
+
+            var rot = Quaternion.Euler(0f, 0f, final);
+            transform.rotation = rot * transform.rotation;
+
+            await UniTask.NextFrame();
+        }
+    }
 
     protected void AddHeadMovement()
     {
@@ -220,7 +247,7 @@ public abstract class AI : Character, IBehaviorTree
             lastSign = (int)sign;
         }
 
-        var final = amount * multiplier * Mathf.Max(0, (1 - exposureRatio));
+        var final = amount * multiplier * Mathf.Max(0, 1 - exposureRatio);
 
         var rot = Quaternion.Euler(0f, 0f, final);
         transform.rotation = rot * transform.rotation;
@@ -484,7 +511,7 @@ public abstract class AI : Character, IBehaviorTree
                 if (!RegisterPlayer)
                 {
                     AimOverride = false;
-                    AddHeadMovement();
+                    //AddHeadMovement();
 
                     if (exposureRatio >= 1 || (IsAlert && (fieldOfView.CanSeePlayer() || PlayerIsVeryClose())))
                     {
@@ -496,10 +523,6 @@ public abstract class AI : Character, IBehaviorTree
                 {
                     if (fieldOfView.CanSeePlayer() || (IsAlert && PlayerIsVeryClose()))
                     {
-                        aimOverrideTarget = GameManager.player.transform;
-                        AimOverride = true;
-                        transform.Face(aimOverrideTarget, ref derivative, currentTurnSpeed);
-
                         registerTimer = 0;
                         alertTimer = 0f;
                     }
@@ -508,11 +531,13 @@ public abstract class AI : Character, IBehaviorTree
                         registerTimer += Time.deltaTime;
                     }
 
+                    AimOverride = true;
+                    aimOverrideTarget = GameManager.player.transform;
+                    transform.Face(aimOverrideTarget, ref derivative, currentTurnSpeed);
+
                     if (registerTimer >= lostTargetThreshold)
                     {
                         AimOverride = false;
-                        AddHeadMovement();
-
                         RegisterPlayer = false;
                         registerTimer = 0;
                     }

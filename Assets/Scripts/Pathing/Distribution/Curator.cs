@@ -44,7 +44,7 @@ public class Curator : MonoBehaviour
 
             assigned.Add(randomIndex);
 
-            Debug.Log($"Asssigning {priority.ToString()} to index {randomIndex}");
+            //Debug.Log($"Asssigning {priority.ToString()} to index {randomIndex}");
         }
     }
 }

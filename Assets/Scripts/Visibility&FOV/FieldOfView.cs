@@ -2,6 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Cysharp.Threading.Tasks;
+using System.Threading;
 
 // Taken and adapted to 2D from Sebastian Lague's FOV tutorial
 
@@ -50,15 +52,18 @@ public class FieldOfView : MonoBehaviour
 	public float ExposureLimit { get; set; }
 	public MazeCell lastKnownPlayerPos;
 
+	CancellationToken lifetimeToken;
+
 	public void SetColorBlendFactor(float factor) => props.SetBlendFactor(factor);
 	public MazeCell GetPlayerPos()
     {
+		// consumes the position
 		var cell = lastKnownPlayerPos;
 		lastKnownPlayerPos = null;
 		return cell;
     }
 
-	void Start()
+    void Start()
 	{
 		props = GetComponent<PerObjectMaterialProperties>();
 
@@ -75,31 +80,43 @@ public class FieldOfView : MonoBehaviour
 		filter.layerMask = obstacleMask;
 		zOffset = transform.parent.transform.position.z;
 
-		StartCoroutine("FindTargetsWithDelay", .35f);
+		// if we intend to disable/enable this component
+		// we need to move this to OnEnable
+		// but need to check initialization order to make it work (currently it causes an issue at startup)
+		lifetimeToken = this.GetCancellationTokenOnDestroy();
+		FindTargets(lifetimeToken, .35f).Forget();
+
+		CheckForPlayer(lifetimeToken).Forget();
 
 		//if (IsStatic)
 		//	DrawFieldOfView();
 	}
 
-    private void Update()
+	private async UniTaskVoid CheckForPlayer(CancellationToken token)
     {
-		if (CanSeePlayer())
-		{
-			ContinuousExposureTime += Time.deltaTime;
-			TotalExposureTime += Time.deltaTime;
-
-			lastKnownPlayerPos = GameManager.player.CurrentCell;
-		}
-        else
+        while (!token.IsCancellationRequested)
         {
-			if (ContinuousExposureTime > ExposureLimit)
-				ContinuousExposureTime = ExposureLimit;
+			if (CanSeePlayer())
+			{
+				var playerPos = GameManager.player.transform.position;
+				ContinuousExposureTime += Time.deltaTime * GetDistanceScalar(playerPos);
+				TotalExposureTime += Time.deltaTime * GetDistanceScalar(playerPos);
 
-			if (!AccumulateExposure)
-				ContinuousExposureTime = 0;
-			else if (ContinuousExposureTime > 0)
-				ContinuousExposureTime -= Time.deltaTime;
-        }
+				lastKnownPlayerPos = GameManager.player.CurrentCell;
+			}
+			else
+			{
+				if (ContinuousExposureTime > ExposureLimit)
+					ContinuousExposureTime = ExposureLimit;
+
+				if (!AccumulateExposure)
+					ContinuousExposureTime = 0;
+				else if (ContinuousExposureTime > 0)
+					ContinuousExposureTime -= Time.deltaTime;
+			}
+
+			await UniTask.NextFrame();
+		}
     }
 
     private void LateUpdate()
@@ -127,16 +144,14 @@ public class FieldOfView : MonoBehaviour
 		visibleTargets.Clear();
     }
 
-    IEnumerator FindTargetsWithDelay(float delay)
-	{
-		var cachedDelay = new WaitForSeconds(delay);
-
-		while (true)
-		{
-			yield return cachedDelay;
+	async UniTaskVoid FindTargets(CancellationToken token, float delay)
+    {
+		while (!token.IsCancellationRequested)
+        {
+			await UniTask.Delay((int)(delay * 1000), false, PlayerLoopTiming.Update, token);
 			FindVisibleTargets();
-		}
-	}
+        }
+    }
 
 	public void ClearMesh()
 	{
@@ -146,7 +161,9 @@ public class FieldOfView : MonoBehaviour
 
 	public void SetMaxExposureTime() => ContinuousExposureTime = ExposureLimit;
 
-	private void FindVisibleTargets()
+    #region Visibility
+
+    private void FindVisibleTargets()
 	{
 		visibleTargets.Clear();
 		var count = Physics2D.OverlapCircleNonAlloc(transform.position, viewRadius, hits, targetMask);
@@ -167,13 +184,7 @@ public class FieldOfView : MonoBehaviour
 		}
 	}
 
-	public bool CanSeePlayer()
-    {
-		if (visibleTargets.Contains(GameManager.player.transform))
-			return true;
-
-		return false;
-    }
+	public bool CanSeePlayer() => visibleTargets.Contains(GameManager.player.transform) ? true : false;
 
 	public AI GetVisibleAI(BehaviorType behaviorType)
     {
@@ -184,7 +195,13 @@ public class FieldOfView : MonoBehaviour
 		return null;
 	}
 
-	public void DrawFieldOfView()
+	public float GetDistanceScalar(Vector3 pos) => 1 + (1 - ((pos - transform.position).magnitude / viewRadius));
+
+    #endregion
+
+    #region FOV Mesh Generation
+
+    public void DrawFieldOfView()
     {
         ConstructViewMesh();
 
@@ -366,4 +383,6 @@ public class FieldOfView : MonoBehaviour
 			pointB = _pointB;
 		}
 	}
+
+    #endregion
 }

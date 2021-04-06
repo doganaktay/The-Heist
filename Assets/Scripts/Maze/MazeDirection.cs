@@ -129,7 +129,7 @@ public static class MazeDirections
 	public static bool CheckWallAhead(MazeCell current, MazeCell next)
     {
 		var dir = GetDirection(current, next);
-		return (next.cardinalBits & cardinalBitmasks[dir]) != 0;
+		return dir.x + dir.y == 0 ? false : (next.cardinalBits & cardinalBitmasks[dir]) != 0;
     }
 
 	public static Vector2 GetDirectionBiasVector(MazeCell currentPos, MazeCell currentTarget, MazeCell nextTarget)
