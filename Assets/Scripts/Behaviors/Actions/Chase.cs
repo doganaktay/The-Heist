@@ -16,6 +16,7 @@ public class Chase : ActionNode
         owner.SetBehaviorParams(BehaviorType.Chase, FOVType.Chase, true);
 
         var currentTargetCell = GameManager.player.CurrentCell;
+
         owner.SetPursuit(currentTargetCell);
         owner.Move(currentTargetCell);
 
@@ -23,7 +24,8 @@ public class Chase : ActionNode
 
         while (owner.IsMoving && !token.IsCancellationRequested)
         {
-            if (currentTargetCell != GameManager.player.CurrentCell)
+            //if (currentTargetCell != GameManager.player.CurrentCell)
+            if (!owner.CurrentPath.Contains(GameManager.player.CurrentCell))
             {
                 currentTargetCell = GameManager.player.CurrentCell;
                 owner.Move(currentTargetCell);

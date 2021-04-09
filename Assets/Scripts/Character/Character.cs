@@ -170,11 +170,15 @@ public abstract class Character : MonoBehaviour
 
         isMoving = true;
 
-        int i = path[0] == currentCell ? 1 : 0;
+        int i = 1;
+
         MazeCell lastCell = currentCell;
         Vector2 drift = UnityEngine.Random.insideUnitCircle.normalized * (GameManager.CellDiagonal * pathDriftMultiplier);
         Vector3 fromPos = transform.position;
         currentTargetCell = path[i];
+
+        Debug.DrawRay(transform.position, (currentTargetCell.transform.position - transform.position) * 2f, Color.red, 5f);
+
         nextTargetCell = i < path.Count - 1 ? path[i + 1] : null;
         Vector3 target = currentTargetCell.transform.position + (Vector3)drift;
         Vector3 lookPos;

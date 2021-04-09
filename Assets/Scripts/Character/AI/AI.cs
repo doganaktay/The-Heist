@@ -114,9 +114,8 @@ public abstract class AI : Character, IBehaviorTree
 
         fieldOfView = GetComponentInChildren<FieldOfView>();
         fieldOfView.AccumulateExposure = true;
-        fieldOfView.ExposureLimit = currentRegisterThreshold;
-
         currentRegisterThreshold = UnityEngine.Random.Range(registerThreshold.min, registerThreshold.max);
+        fieldOfView.ExposureLimit = currentRegisterThreshold;
 
         Track(lifetimeToken).Forget();
         HeadMovement(lifetimeToken).Forget();
@@ -230,32 +229,6 @@ public abstract class AI : Character, IBehaviorTree
 
             await UniTask.NextFrame();
         }
-    }
-
-    protected void AddHeadMovement()
-    {
-        var timeToUse = Time.time + randomTimeBuffer;
-        float amount = 1;
-
-        amount *= Mathf.Sin(headMoveCoefficient * timeToUse);
-        var sign = Mathf.Sign(amount);
-
-        if(lastSign != sign)
-        {
-            multiplier = UnityEngine.Random.Range(0, 2f);
-            lastSign = (int)sign;
-        }
-
-        var final = amount * multiplier * Mathf.Max(0, 1 - exposureRatio);
-
-        var rot = Quaternion.Euler(0f, 0f, final);
-        transform.rotation = rot * transform.rotation;
-    }
-
-    float SmoothMin(float a, float b, float k)
-    {
-        float res = Mathf.Pow(2, -k * a) + Mathf.Pow(2, -k * b);
-        return -Mathf.Log(res) / k;
     }
 
     float RandomValue()
@@ -510,7 +483,6 @@ public abstract class AI : Character, IBehaviorTree
                 if (!RegisterPlayer)
                 {
                     AimOverride = false;
-                    //AddHeadMovement();
 
                     if (exposureRatio >= 1 || (IsAlert && (fieldOfView.CanSeePlayer() || PlayerIsVeryClose())))
                     {
@@ -554,7 +526,7 @@ public abstract class AI : Character, IBehaviorTree
                     }
                 }
 
-                fieldOfView.SetColorBlendFactor(RegisterPlayer || IsAlert ? 1f : fieldOfView.ContinuousExposureTime / currentRegisterThreshold);
+                fieldOfView.SetColorBlendFactor(RegisterPlayer || IsAlert ? 1f : exposureRatio);
             }
 
             await UniTask.NextFrame(lifetimeToken);

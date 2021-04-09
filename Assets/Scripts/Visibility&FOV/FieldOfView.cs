@@ -113,6 +113,7 @@ public class FieldOfView : MonoBehaviour
 					ContinuousExposureTime = 0;
 				else if (ContinuousExposureTime > 0)
 					ContinuousExposureTime -= Time.deltaTime;
+
 			}
 
 			await UniTask.NextFrame();
