@@ -101,7 +101,7 @@ public class GameManager : MonoBehaviour
 
 		// set static getters for parameter deviation and bias multipliers
 		ParameterDeviation = parameterDeviation;
-		BiasMultipliers = GameManager.BiasMultipliers;
+		BiasMultipliers = biasMultipliers;
 
 		// set cell count static reference
 		CellCount = gridSizeX * gridSizeY;

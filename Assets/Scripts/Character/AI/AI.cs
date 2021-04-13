@@ -22,7 +22,8 @@ public enum FOVType
     Disabled,
     Regular,
     Alert,
-    Chase
+    Chase,
+    Social
 }
 
 public enum ChartedPathType
@@ -33,10 +34,29 @@ public enum ChartedPathType
 
 public abstract class AI : Character, IBehaviorTree
 {
-    [SerializeField]
-    protected FieldOfView fieldOfView;
-    [SerializeField]
-    Transform body;
+    [Space]
+    [Header("AI")]
+    // references
+    [SerializeField] protected FieldOfView fieldOfView;
+    [SerializeField] Transform body;
+    [HideInInspector] public AIManager manager;
+    [HideInInspector] public PathDesigner pathDesigner = PathDesigner.Instance;
+
+    [Space]
+    [Header("Main Utility Parameters")]
+    // AI behavior params
+    [Range(0f, 1f), Tooltip("Used for movement decisions")]
+    public float fitness;
+    [Range(0f, 1f), Tooltip("Used for coordination and biasing actions to be prescient")]
+    public float foresight;
+    [Range(0f, 1f), Tooltip("Used for action decisions (lazy - 0 to proactive - 1)")]
+    public float initiative;
+    [Tooltip("Used in constructing pursuit paths")]
+    public int memory;
+
+    [Space]
+    [Header("Base Parameters")]
+    // base params
     [SerializeField]
     MinMaxData waitTime;
     [SerializeField, Tooltip("Time (in seconds) exposure to register player")]
@@ -51,27 +71,32 @@ public abstract class AI : Character, IBehaviorTree
     float maintainAlertTimeIncrement = 5f;
     float alertTimer = 0f;
     float exposureRatio;
-
     [SerializeField]
     float FOVAdjustTime = 1f;
 
-    [HideInInspector]
-    public AIManager manager;
-    [HideInInspector]
-    public PathDesigner pathDesigner = PathDesigner.Instance;
-
+    // behavior params and props
     public bool RegisterPlayer { get; private set; }
     public bool IsAlert { get; private set; }
-    public AI GetVisibleAI(BehaviorType behaviorType) => fieldOfView.GetVisibleAI(behaviorType);
     public void SetMaxExposureTime() => fieldOfView.SetMaxExposureTime();
     public float AwarenessDistance => fieldOfView.viewRadius;
     public LayerMask ViewMask => fieldOfView.obstacleMask;
     public bool IsActive { get; set; }
     public MazeCell PlayerObservationPoint { get; set; }
     public MazeCell PointOfInterest { get; set; }
-    public Character followTarget;
+    [HideInInspector] public Character followTarget;
     public int SearchAvoidIndex { get; set; } = -1;
     public bool ReadyForPursuit { get; set; } = false;
+
+    [Space]
+    [Header("Social Parameters")]
+    [HideInInspector] public List<AI> socialTargets;
+    public bool CanSocialize { get; set; } = true;
+    public bool IsSocializing { get; set; } = false;
+    [SerializeField, Tooltip("Time (in seconds) needed to pass before AI can socialize again")]
+    MinMaxData socialRepeatTime;
+    [SerializeField, Tooltip("Time (in seconds) AI will spend socializing")]
+    MinMaxData socialSpendTime;
+    public bool WillSocialize => CanSocialize && UnityEngine.Random.value > initiative;
 
     // head movement
     float randomTimeBuffer;
@@ -80,21 +105,13 @@ public abstract class AI : Character, IBehaviorTree
     float multiplier;
     int lastSign;
 
-    // AI params
-    [Range(0f,1f), Tooltip("Used for movement decisions")]
-    public float fitness;
-    [Range(0f, 1f), Tooltip("Used for coordination and biasing actions to be prescient")]
-    public float foresight;
-    [Tooltip("Used in constructing pursuit paths")]
-    public int memory;
-
-    // charted paths
+    // charted paths and assigned indices
     [HideInInspector] public ChartedPath loop;
     [HideInInspector] public ChartedPath pursuit;
     [HideInInspector] public List<int> assignedIndices;
 
     // behavior tree
-    public NodeBase BehaviorTree { get ; set; }
+    public NodeBase BehaviorTree { get; set; }
     float btWaitTime = 0.1f;
     UniTask currentBehavior;
     public UniTask CurrentBehavior => currentBehavior;
@@ -121,7 +138,7 @@ public abstract class AI : Character, IBehaviorTree
         HeadMovement(lifetimeToken).Forget();
 
         SetRandomTimeBuffer();
-        SetExponentsAndCoefficients();
+        SetHeadMoveParams();
 
         GenerateBehaviorTree();
         RunBehaviorTree(behaviorTreeTokenSource.Token.Merge(lifetimeToken).Token).Forget();
@@ -132,11 +149,11 @@ public abstract class AI : Character, IBehaviorTree
     {
         base.Update();
 
-        //if(ActiveActionNode != null && ActiveActionNode.Name != lastNode)
-        //{
-        //    Debug.Log($"{gameObject.name} new active node: {ActiveActionNode.Name}");
-        //    lastNode = ActiveActionNode.Name;
-        //}
+        if (ActiveActionNode != null && ActiveActionNode.Name != lastNode)
+        {
+            Debug.Log($"{gameObject.name} new active node: {ActiveActionNode.Name}");
+            lastNode = ActiveActionNode.Name;
+        }
     }
 
     #endregion MonoBehaviour
@@ -156,7 +173,21 @@ public abstract class AI : Character, IBehaviorTree
         }
     }
 
-    void StopBehaviorTree() => behaviorTreeTokenSource.Cancel();
+    void StopBehaviorTree()
+    {
+        behaviorTreeTokenSource.Cancel();
+        //behaviorTreeTokenSource.Renew(lifetimeToken);
+    }
+
+    private void ClearBehaviorTreeData()
+    {
+        ClearPath(ChartedPathType.Pursuit);
+        PointOfInterest = null;
+        PlayerObservationPoint = null;
+        ReadyForPursuit = false;
+        RegisterPlayer = false;
+        ActiveActionNode = null;
+    }
 
     #endregion
 
@@ -202,6 +233,15 @@ public abstract class AI : Character, IBehaviorTree
         }
     }
 
+    static List<(float radius, float angle)> fovPresets = new List<(float radius, float angle)>()
+    {
+        (1, 1),
+        (60, 60),
+        (70, 80),
+        (80, 100),
+        (30, 40)
+    };
+
     #endregion
 
     #region Head Movement
@@ -240,21 +280,13 @@ public abstract class AI : Character, IBehaviorTree
     
     void SetRandomTimeBuffer() => randomTimeBuffer = RandomValue();
     
-    void SetExponentsAndCoefficients()
+    void SetHeadMoveParams()
     {
         for(int i = 0; i < trigExponents.Length; i++)
             trigExponents[i] = UnityEngine.Random.value > 0.5 ? 1 : 3;
 
         headMoveCoefficient = UnityEngine.Random.Range(4f, 5f);
     }
-
-    static List<(float radius, float angle)> fovPresets = new List<(float radius, float angle)>()
-    {
-        (1f, 1f),
-        (60f, 60f),
-        (70, 80f),
-        (80f, 100f)
-    };
 
     #endregion
 
@@ -264,7 +296,7 @@ public abstract class AI : Character, IBehaviorTree
     {
         StopBehaviorTree();
 
-        behaviorTokenSource.Clear();
+        behaviorTokenSource.Cancel();
         StopGoTo();
 
         SetBehaviorParams(BehaviorType.Disabled, FOVType.Disabled, false);
@@ -282,16 +314,6 @@ public abstract class AI : Character, IBehaviorTree
     public void Disable(float time = -1)
     {
         Disable(lifetimeToken, time).Forget();
-    }
-
-    private void ClearBehaviorTreeData()
-    {
-        ClearPath(ChartedPathType.Pursuit);
-        PointOfInterest = null;
-        PlayerObservationPoint = null;
-        ReadyForPursuit = false;
-        RegisterPlayer = false;
-        ActiveActionNode = null;
     }
 
     public void Revive()
@@ -324,8 +346,6 @@ public abstract class AI : Character, IBehaviorTree
     }
 
     public bool IsActiveNode(ActionNode node) => node == ActiveActionNode;
-
-    public bool CanLoopMap() => PathDesigner.Instance.MapHasCycles;
 
     public async UniTask GoTo(CancellationToken token, MazeCell cell)
     {
@@ -408,13 +428,11 @@ public abstract class AI : Character, IBehaviorTree
 
     #region Getters and Setters
 
-    public void SetPursuit(MazeCell start)
-    {
-        ReadyForPursuit = true;
-        PlayerObservationPoint = start;
-        SearchAvoidIndex = -1;
-    }
-    public void SetPursuit(MazeCell start, int avoidIndex)
+    public float GetSocialTimer() => UnityEngine.Random.Range(socialSpendTime.min, socialSpendTime.max);
+
+    public List<T> GetVisible<T>(BehaviorType behaviorType, bool exactMatch = false) where T : AI => fieldOfView.GetVisible<T>(behaviorType, exactMatch);
+
+    public void SetPursuit(MazeCell start, int avoidIndex = -1)
     {
         ReadyForPursuit = true;
         PlayerObservationPoint = start;
@@ -463,6 +481,19 @@ public abstract class AI : Character, IBehaviorTree
     #endregion
 
     #region Utilities and Trackers
+
+    public async UniTaskVoid CanSocializeResetTimer(bool quickReset = false)
+    {
+        while (!lifetimeToken.IsCancellationRequested)
+        {
+            var timer = !quickReset ? UnityEngine.Random.Range(socialRepeatTime.min, socialRepeatTime.max) : 10f;
+
+            await UniTask.Delay((int)(timer * 1000), false, PlayerLoopTiming.Update, lifetimeToken);
+
+            CanSocialize = true;
+        }
+
+    }
 
     public void SetAlertStatus()
     {
@@ -546,6 +577,16 @@ public abstract class AI : Character, IBehaviorTree
         var second = !Physics2D.Raycast(transform.position, dir, dist.magnitude, fieldOfView.obstacleMask);
 
         return first && second;
+    }
+
+    public Vector3 CalculateAverageLookPos(List<AI> others)
+    {
+        var final = Vector3.zero;
+
+        foreach (var other in others)
+            final += other.transform.position;
+
+        return final / others.Count;
     }
 
     public Vector3 CalculateAverageHeading(List<MazeCell> path, int start, int lookAheadLimit = -1)

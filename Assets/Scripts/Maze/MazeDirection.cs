@@ -126,7 +126,7 @@ public static class MazeDirections
 
 	public static IntVector2 GetDirection(MazeCell from, MazeCell to) => new IntVector2(to.pos.x - from.pos.x, to.pos.y - from.pos.y);
 
-	public static bool CheckWallAhead(MazeCell current, MazeCell next)
+	public static bool CheckAhead(MazeCell current, MazeCell next)
     {
 		var dir = GetDirection(current, next);
 		return dir.x + dir.y == 0 ? false : (next.cardinalBits & cardinalBitmasks[dir]) != 0;

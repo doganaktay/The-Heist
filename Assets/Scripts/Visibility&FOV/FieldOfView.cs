@@ -187,13 +187,36 @@ public class FieldOfView : MonoBehaviour
 
 	public bool CanSeePlayer() => visibleTargets.Contains(GameManager.player.transform) ? true : false;
 
-	public AI GetVisibleAI(BehaviorType behaviorType)
-    {
-		foreach(var target in visibleTargets)
-			if (target.TryGetComponent(out AI tryAI) && tryAI.CurrentBehaviorType > behaviorType)
-				return tryAI;
+	//public T GetVisible<T>(BehaviorType behaviorType, bool exactMatch = false) where T : AI
+	//{
+	//    foreach (var target in visibleTargets)
+	//        if (target.TryGetComponent(out T tryVisible) && exactMatch ? tryVisible.CurrentBehaviorType == behaviorType : tryVisible.CurrentBehaviorType > behaviorType)
+	//            return tryVisible;
 
-		return null;
+	//    return null;
+	//}
+
+	public bool CanSee<T>(BehaviorType behaviorType, bool exactMatch = false) where T : AI
+    {
+		foreach (var target in visibleTargets)
+			if (target.TryGetComponent(out T tryVisible) && exactMatch ? tryVisible.CurrentBehaviorType == behaviorType : tryVisible.CurrentBehaviorType > behaviorType)
+				return true;
+
+		return false;
+	}
+
+    public List<T> GetVisible<T>(BehaviorType behaviorType, bool exactMatch = false) where T : AI
+	{
+		var list = new List<T>();
+
+		foreach (var target in visibleTargets)
+			if (target.TryGetComponent(out T tryVisible) && exactMatch ? tryVisible.CurrentBehaviorType == behaviorType : tryVisible.CurrentBehaviorType > behaviorType)
+				list.Add(tryVisible);
+
+		if (list.Count > 0)
+			return list;
+		else
+			return null;
 	}
 
 	public float GetDistanceScalar(Vector3 pos) => 1 + (1 - ((pos - transform.position).magnitude / viewRadius));

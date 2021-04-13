@@ -5,6 +5,7 @@ using Archi.BT;
 
 public class Guard : AI
 {
+    [Header("Guard Parameters")]
     public GuardRole role = GuardRole.Free;
 
     protected override void GenerateBehaviorTree()
@@ -20,13 +21,26 @@ public class Guard : AI
                                     new HasCellNotification(this),
                                     new Check(this)),
                                 //new Sequence("See Alert Patrol",
-                                //    new SeeAlert(this),
+                                //    new SeeOtherAI(this, BehaviorType.Casual, false, typeof(AI)),
                                 //    new FollowOther(this)),
                                 new Sequence("Alert",
+                                    // the inverted register check is less than ideal and is a hotfix
+                                    // because on the edge case that the Chase node has been evaluated
+                                    // and alert is set after, AI will trigger investigate
+                                    // before chase
+                                    new Inverter("No registered target",
+                                        new RegisterPlayer(this)),
                                     new IsAlert(this),
                                     new Investigate(this)),
                                 new Selector("Select Casual",
-                                    //new Wander(this),
+                                    // sequence
+                                        // selector
+                                            // is socializing
+                                            // sequence
+                                                // will socialize
+                                                // see other AI Casual
+                                                // other(s) will socialize
+                                        // socialize
                                     new PerformGuardRole(this)
                                 ));
     }
@@ -36,7 +50,7 @@ public class Guard : AI
         if (cell != currentCell)
             return;
 
-        if ((int)CurrentBehaviorType < (int)BehaviorType.Pursue)
+        if (CurrentBehaviorType < BehaviorType.Pursue)
             PointOfInterest = data.signalCenter;
 
         Debug.Log($"{gameObject.name} at {currentCell.pos.x},{currentCell.pos.y} is handling notification: type {data.type}, signal ratio {data.attenuatedSignalRatio}, center {data.signalCenter.gameObject.name}");

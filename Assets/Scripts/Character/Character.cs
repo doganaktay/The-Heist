@@ -7,6 +7,8 @@ using System.Threading;
 
 public abstract class Character : MonoBehaviour
 {
+    [Header("Character Parameters")]
+
     protected MazeCell currentCell, lastCell;
     public MazeCell CurrentCell { get => currentCell; private set => currentCell = value; }
     public MazeCell LastCell { get => lastCell; private set => lastCell = value; }
@@ -17,14 +19,10 @@ public abstract class Character : MonoBehaviour
     [Range(0f, 1f), SerializeField] protected float pathDriftMultiplier = 0.2f;
     [SerializeField] protected MinMaxData lagPercent;
     [SerializeField] protected float cutCornerPercent = 0.15f;
-
-
-    [SerializeField]
-    protected MinMaxData speed;
+    [SerializeField] protected MinMaxData speed;
     protected float currentSpeed;
     protected Quaternion derivative;
-    [SerializeField]
-    protected MinMaxData turnSpeed;
+    [SerializeField] protected MinMaxData turnSpeed;
     protected float currentTurnSpeed;
     public bool ShouldRun { get; set; }
     protected bool isMoving = false;
@@ -177,8 +175,6 @@ public abstract class Character : MonoBehaviour
         Vector3 fromPos = transform.position;
         currentTargetCell = path[i];
 
-        Debug.DrawRay(transform.position, (currentTargetCell.transform.position - transform.position) * 2f, Color.red, 5f);
-
         nextTargetCell = i < path.Count - 1 ? path[i + 1] : null;
         Vector3 target = currentTargetCell.transform.position + (Vector3)drift;
         Vector3 lookPos;
@@ -186,7 +182,8 @@ public abstract class Character : MonoBehaviour
         Vector2 bias = Vector2.zero;
         if (nextTargetCell != null && currentCell != currentTargetCell)
             bias = MazeDirections.GetDirectionBiasVector(lastCell, currentTargetCell, nextTargetCell)
-                   * (GameManager.CellDiagonal * UnityEngine.Random.Range(0, cutCornerPercent));
+                   * (GameManager.CellDiagonal * (UnityEngine.Random.value * cutCornerPercent));
+                   //* (GameManager.CellDiagonal * UnityEngine.Random.Range(0, cutCornerPercent));
 
         target += (Vector3)bias;
 
@@ -197,8 +194,8 @@ public abstract class Character : MonoBehaviour
                 if (nextTargetCell != null)
                 {
                     bool wallCheck = currentCell == currentTargetCell ?
-                                     MazeDirections.CheckWallAhead(currentTargetCell, nextTargetCell)
-                                   : MazeDirections.CheckWallAhead(currentCell, currentTargetCell);
+                                     MazeDirections.CheckAhead(currentTargetCell, nextTargetCell)
+                                   : MazeDirections.CheckAhead(currentCell, currentTargetCell);
 
                     if (wallCheck)
                     {
@@ -223,6 +220,7 @@ public abstract class Character : MonoBehaviour
 
             transform.position = Vector2.MoveTowards(transform.position, target, speed * Time.deltaTime);
 
+            //if ((target - transform.position).sqrMagnitude < 1f)
             if (transform.position == target)
             {
                 i++;

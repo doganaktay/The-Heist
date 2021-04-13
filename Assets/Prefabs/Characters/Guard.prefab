@@ -63,6 +63,12 @@ MonoBehaviour:
   aimOverrideTarget: {fileID: 0}
   fieldOfView: {fileID: 3954462537585510568}
   body: {fileID: 5833953138234766926}
+  manager: {fileID: 0}
+  pathDesigner: {fileID: 0}
+  fitness: 0.2
+  foresight: 0.5
+  initiative: 0.5
+  memory: 0
   waitTime:
     min: 3
     max: 5
@@ -73,12 +79,14 @@ MonoBehaviour:
   maintainAlertTime: 30
   maintainAlertTimeIncrement: 5
   FOVAdjustTime: 1
-  manager: {fileID: 0}
-  pathDesigner: {fileID: 0}
   followTarget: {fileID: 0}
-  fitness: 0.2
-  foresight: 0
-  memory: 0
+  socialTargets: []
+  socialRepeatTime:
+    min: 0
+    max: 0
+  socialSpendTime:
+    min: 0
+    max: 0
   loop:
     cells: []
     indices: 
