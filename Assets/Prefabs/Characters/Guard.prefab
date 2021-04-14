@@ -67,7 +67,7 @@ MonoBehaviour:
   pathDesigner: {fileID: 0}
   fitness: 0.2
   foresight: 0.5
-  initiative: 0.5
+  initiative: 0
   memory: 0
   waitTime:
     min: 3
@@ -82,11 +82,11 @@ MonoBehaviour:
   followTarget: {fileID: 0}
   socialTargets: []
   socialRepeatTime:
-    min: 0
-    max: 0
+    min: 60
+    max: 120
   socialSpendTime:
-    min: 0
-    max: 0
+    min: 5
+    max: 10
   loop:
     cells: []
     indices: 
@@ -219,6 +219,7 @@ MonoBehaviour:
   obstacleMask:
     serializedVersion: 2
     m_Bits: 8704
+  owner: {fileID: 0}
   visibleTargets: []
   meshResolution: 1
   edgeResolveIterations: 1

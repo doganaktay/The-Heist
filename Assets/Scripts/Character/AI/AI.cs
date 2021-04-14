@@ -97,6 +97,7 @@ public abstract class AI : Character, IBehaviorTree
     [SerializeField, Tooltip("Time (in seconds) AI will spend socializing")]
     MinMaxData socialSpendTime;
     public bool WillSocialize => CanSocialize && UnityEngine.Random.value > initiative;
+    public float CurrentSocialTime { get; set; }
 
     // head movement
     float randomTimeBuffer;
@@ -176,7 +177,6 @@ public abstract class AI : Character, IBehaviorTree
     void StopBehaviorTree()
     {
         behaviorTreeTokenSource.Cancel();
-        //behaviorTreeTokenSource.Renew(lifetimeToken);
     }
 
     private void ClearBehaviorTreeData()
@@ -429,6 +429,14 @@ public abstract class AI : Character, IBehaviorTree
     #region Getters and Setters
 
     public float GetSocialTimer() => UnityEngine.Random.Range(socialSpendTime.min, socialSpendTime.max);
+    public float GetSocialResetTimer() => UnityEngine.Random.Range(socialRepeatTime.min, socialRepeatTime.max);
+    public void SetSocialTargets(List<AI> targets)
+    {
+        if (targets.Contains(this))
+            targets.Remove(this);
+
+        socialTargets = targets;
+    }
 
     public List<T> GetVisible<T>(BehaviorType behaviorType, bool exactMatch = false) where T : AI => fieldOfView.GetVisible<T>(behaviorType, exactMatch);
 
@@ -482,7 +490,7 @@ public abstract class AI : Character, IBehaviorTree
 
     #region Utilities and Trackers
 
-    public async UniTaskVoid CanSocializeResetTimer(bool quickReset = false)
+    public async UniTaskVoid WaitUntilCanSocialize(bool quickReset = false)
     {
         while (!lifetimeToken.IsCancellationRequested)
         {
@@ -490,6 +498,7 @@ public abstract class AI : Character, IBehaviorTree
 
             await UniTask.Delay((int)(timer * 1000), false, PlayerLoopTiming.Update, lifetimeToken);
 
+            socialTargets = null;
             CanSocialize = true;
         }
 
@@ -579,7 +588,7 @@ public abstract class AI : Character, IBehaviorTree
         return first && second;
     }
 
-    public Vector3 CalculateAverageLookPos(List<AI> others)
+    public Vector3 CalculateAverageLookPos<T>(List<T> others) where T : MonoBehaviour
     {
         var final = Vector3.zero;
 

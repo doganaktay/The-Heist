@@ -45,8 +45,14 @@ public class GameManager : MonoBehaviour
 	public static MazeCell StartCell => startCell;
 	public static MazeCell EndCell => endCell;
 
+	// initialize random here adhoc
+	// will move into proper class when I switch
+	// the project over to System.Random entirely
+	public static System.Random Random;
+
 	private void Start()
 	{
+		Random = new System.Random();
 		BeginGame();
 	}
 

@@ -20,8 +20,8 @@ public class FieldOfView : MonoBehaviour
 	Collider2D[] hits;
 	ContactFilter2D filter;
 
-	[HideInInspector]
-	public List<Transform> visibleTargets = new List<Transform>();
+	[HideInInspector] public Character owner;
+	[HideInInspector] public List<Transform> visibleTargets = new List<Transform>();
 
 	public float meshResolution;
 	public int edgeResolveIterations;
@@ -166,57 +166,60 @@ public class FieldOfView : MonoBehaviour
 
     private void FindVisibleTargets()
 	{
-		visibleTargets.Clear();
-		var count = Physics2D.OverlapCircleNonAlloc(transform.position, viewRadius, hits, targetMask);
+        lock (visibleTargets)
+        {
+			visibleTargets.Clear();
+			var count = Physics2D.OverlapCircleNonAlloc(transform.position, viewRadius, hits, targetMask);
 
-		for (int i = 0; i < count; i++)
-		{
-			Transform target = hits[i].transform;
-
-			Vector2 dirToTarget = ((Vector2)target.position - (Vector2)transform.position).normalized;
-			if (Vector2.Angle(aim.up, dirToTarget) < viewAngle / 2)
+			for (int i = 0; i < count; i++)
 			{
-				float dstToTarget = Vector2.Distance(transform.position, target.position);
-				if (!Physics2D.Raycast(transform.position, dirToTarget, dstToTarget, obstacleMask))
+				Transform target = hits[i].transform;
+
+				if(transform.position == target.position)
+					continue;
+
+				Vector2 dirToTarget = ((Vector2)target.position - (Vector2)transform.position).normalized;
+				if (Vector2.Angle(aim.up, dirToTarget) < viewAngle / 2)
 				{
-					visibleTargets.Add(target);
+					float dstToTarget = Vector2.Distance(transform.position, target.position);
+					if (!Physics2D.Raycast(transform.position, dirToTarget, dstToTarget, obstacleMask))
+					{
+						visibleTargets.Add(target);
+					}
 				}
 			}
-		}
+        }
 	}
 
 	public bool CanSeePlayer() => visibleTargets.Contains(GameManager.player.transform) ? true : false;
 
-	//public T GetVisible<T>(BehaviorType behaviorType, bool exactMatch = false) where T : AI
-	//{
-	//    foreach (var target in visibleTargets)
-	//        if (target.TryGetComponent(out T tryVisible) && exactMatch ? tryVisible.CurrentBehaviorType == behaviorType : tryVisible.CurrentBehaviorType > behaviorType)
-	//            return tryVisible;
-
-	//    return null;
-	//}
-
 	public bool CanSee<T>(BehaviorType behaviorType, bool exactMatch = false) where T : AI
     {
-		foreach (var target in visibleTargets)
-			if (target.TryGetComponent(out T tryVisible) && exactMatch ? tryVisible.CurrentBehaviorType == behaviorType : tryVisible.CurrentBehaviorType > behaviorType)
-				return true;
+        lock (visibleTargets)
+        {
+			foreach (var target in visibleTargets)
+				if (target.TryGetComponent(out T tryVisible) && exactMatch ? tryVisible.CurrentBehaviorType == behaviorType : tryVisible.CurrentBehaviorType > behaviorType)
+					return true;
 
-		return false;
+			return false;
+        }
 	}
 
     public List<T> GetVisible<T>(BehaviorType behaviorType, bool exactMatch = false) where T : AI
 	{
-		var list = new List<T>();
+		lock (visibleTargets)
+        {
+			var list = new List<T>();
 
-		foreach (var target in visibleTargets)
-			if (target.TryGetComponent(out T tryVisible) && exactMatch ? tryVisible.CurrentBehaviorType == behaviorType : tryVisible.CurrentBehaviorType > behaviorType)
-				list.Add(tryVisible);
+			foreach (var target in visibleTargets)
+				if (target.TryGetComponent(out T tryVisible) && exactMatch ? tryVisible.CurrentBehaviorType == behaviorType : tryVisible.CurrentBehaviorType > behaviorType)
+					list.Add(tryVisible);
 
-		if (list.Count > 0)
-			return list;
-		else
-			return null;
+			if (list.Count > 0)
+				return list;
+			else
+				return null;
+        }
 	}
 
 	public float GetDistanceScalar(Vector3 pos) => 1 + (1 - ((pos - transform.position).magnitude / viewRadius));

@@ -19,15 +19,12 @@ public class WillSocialize : Condition
         if (owner.WillSocialize)
             return NodeStatus.Success;
 
-        // there can be a smarter way to handle a WillSocialize fail
-        // (such as a shorter, separate timer just for running the social check)
-        // currently we're resetting the ability by triggering the full wait timer
-        // if the social check fails (there's a random roll against initiative)
-        // without this, valid AIs in view would repeatedly ask each other to socialize
-        // until the check passes, invalidating the value of the initiative score of the AI
+        // the reset timer is called with true
+        // to implement a shorter wait (currently hard-coded 10f)
+        // than the full reset time
 
         owner.CanSocialize = false;
-        owner.CanSocializeResetTimer(true).Forget();
+        owner.WaitUntilCanSocialize(true).Forget();
         return NodeStatus.Failure;
     }
 }

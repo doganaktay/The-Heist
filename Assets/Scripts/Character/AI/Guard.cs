@@ -32,17 +32,20 @@ public class Guard : AI
                                         new RegisterPlayer(this)),
                                     new IsAlert(this),
                                     new Investigate(this)),
+
                                 new Selector("Select Casual",
-                                    // sequence
-                                        // selector
-                                            // is socializing
-                                            // sequence
-                                                // will socialize
-                                                // see other AI Casual
-                                                // other(s) will socialize
-                                        // socialize
-                                    new PerformGuardRole(this)
-                                ));
+
+                                    new Sequence("Socialize",
+                                        new SelectorWithFail("Social Check",
+                                            new IsSocializing(this),
+                                            new Sequence("New Social Check",
+                                                new WillSocialize(this),
+                                                new SeeOtherAI(this, BehaviorType.Casual, true),
+                                                new HasSocialTarget(this))),
+                                        new Socialize(this)),
+
+                                    new PerformGuardRole(this))
+                                );
     }
 
     protected override void HandleNotification(MazeCell cell, CellNotificationData data)
@@ -51,8 +54,11 @@ public class Guard : AI
             return;
 
         if (CurrentBehaviorType < BehaviorType.Pursue)
+        {
             PointOfInterest = data.signalCenter;
-
-        Debug.Log($"{gameObject.name} at {currentCell.pos.x},{currentCell.pos.y} is handling notification: type {data.type}, signal ratio {data.attenuatedSignalRatio}, center {data.signalCenter.gameObject.name}");
+            Debug.Log($"{gameObject.name} at {currentCell.pos.x},{currentCell.pos.y} is handling notification: type {data.type}, signal ratio {data.attenuatedSignalRatio}, center {data.signalCenter.gameObject.name}");
+        }
+        else
+            Debug.Log($"{gameObject.name} at {currentCell.pos.x},{currentCell.pos.y} received notification, but has higher priority behavior");
     }
 }
