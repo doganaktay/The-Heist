@@ -73,6 +73,10 @@ public abstract class AI : Character, IBehaviorTree
     float exposureRatio;
     [SerializeField]
     float FOVAdjustTime = 1f;
+    [SerializeField]
+    MinMaxData defaultPostTime;
+    public bool ShouldPost { get; private set; } = false;
+    public bool IsPosting { get; set; } = false;
 
     // behavior params and props
     public bool RegisterPlayer { get; private set; }
@@ -135,6 +139,9 @@ public abstract class AI : Character, IBehaviorTree
         currentRegisterThreshold = UnityEngine.Random.Range(registerThreshold.min, registerThreshold.max);
         fieldOfView.ExposureLimit = currentRegisterThreshold;
 
+        maxTravelDistance = Mathf.RoundToInt(GameManager.CellCount * fitness);
+        distanceTravelled = UnityEngine.Random.Range(0, maxTravelDistance);
+
         Track(lifetimeToken).Forget();
         HeadMovement(lifetimeToken).Forget();
 
@@ -145,16 +152,16 @@ public abstract class AI : Character, IBehaviorTree
         RunBehaviorTree(behaviorTreeTokenSource.Token.Merge(lifetimeToken).Token).Forget();
     }
 
-    string lastNode = "";
+    //string lastNode = "";
     protected override void Update()
     {
         base.Update();
 
-        if (ActiveActionNode != null && ActiveActionNode.Name != lastNode)
-        {
-            Debug.Log($"{gameObject.name} new active node: {ActiveActionNode.Name}");
-            lastNode = ActiveActionNode.Name;
-        }
+        //if (ActiveActionNode != null && ActiveActionNode.Name != lastNode)
+        //{
+        //    Debug.Log($"{gameObject.name} new active node: {ActiveActionNode.Name}");
+        //    lastNode = ActiveActionNode.Name;
+        //}
     }
 
     #endregion MonoBehaviour
@@ -193,7 +200,7 @@ public abstract class AI : Character, IBehaviorTree
 
     #region Field Of View
 
-    void SetFOV(FOVType type)
+    public void SetFOV(FOVType type)
     {
         float radius, angle;
 
@@ -248,7 +255,7 @@ public abstract class AI : Character, IBehaviorTree
 
     protected async UniTask HeadMovement(CancellationToken token)
     {
-        while(!token.IsCancellationRequested && AimOverride == false)
+        while(!token.IsCancellationRequested && !AimOverride)
         {
             var timeToUse = Time.time + randomTimeBuffer;
             float amount = 1;
@@ -375,6 +382,42 @@ public abstract class AI : Character, IBehaviorTree
         }
     }
 
+    public async UniTask GoTo(CancellationToken token, MazeCell cell, Transform target, float stopDistance)
+    {
+        Move(cell);
+
+        await UniTask.NextFrame(token);
+
+        while (isMoving && !token.IsCancellationRequested)
+        {
+            if ((target.position - transform.position).sqrMagnitude < stopDistance * stopDistance)
+            {
+                StopGoTo();
+                break;
+            }
+
+            await UniTask.NextFrame(token);
+        }
+    }
+
+    public async UniTask GoTo(CancellationToken token, MazeCell cell, Transform target, Func<bool> stopCondition)
+    {
+        Move(cell);
+
+        await UniTask.NextFrame(token);
+
+        while (isMoving && !token.IsCancellationRequested)
+        {
+            if (stopCondition())
+            {
+                StopGoTo();
+                break;
+            }
+
+            await UniTask.NextFrame(token);
+        }
+    }
+
     public async UniTask GoTo(CancellationToken token, MazeCell cell, int forcedIndex)
     {
         Move(cell, forcedIndex);
@@ -424,9 +467,37 @@ public abstract class AI : Character, IBehaviorTree
         }
     }
 
+    public void CopyBehaviorState(AI other)
+    {
+        // this is a brutish way of copying
+        // need to be mindful of a growing behavior tree
+        // as more state copies may be needed
+
+        RegisterPlayer = other.RegisterPlayer;
+        ReadyForPursuit = other.ReadyForPursuit;
+        PlayerObservationPoint = other.PlayerObservationPoint;
+        PointOfInterest = other.PointOfInterest;
+        IsAlert = other.IsAlert;
+    }
+
     #endregion
 
-    #region Getters and Setters
+    #region Getters and Setters    
+
+    //public float GetPostTime() => defaultPostTime.GetRandomInRange() * (AreaFinder.WalkableCellCount / (1 + GetCoverageSize()));
+    public float GetPostTime() => defaultPostTime.GetRandomInRange();
+
+    public int GetCoverageSize()
+    {
+        var size = loop.GetSize();
+
+        if (size > 0)
+            return size;
+
+        size = GraphFinder.GetAreaCellCount(assignedIndices);
+
+        return size;
+    }
 
     public float GetSocialTimer() => UnityEngine.Random.Range(socialSpendTime.min, socialSpendTime.max);
     public float GetSocialResetTimer() => UnityEngine.Random.Range(socialRepeatTime.min, socialRepeatTime.max);
@@ -490,18 +561,17 @@ public abstract class AI : Character, IBehaviorTree
 
     #region Utilities and Trackers
 
-    public async UniTaskVoid WaitUntilCanSocialize(bool quickReset = false)
+    public async UniTaskVoid WaitUntilCanSocialize()
     {
         while (!lifetimeToken.IsCancellationRequested)
         {
-            var timer = !quickReset ? UnityEngine.Random.Range(socialRepeatTime.min, socialRepeatTime.max) : 10f;
+            var timer = socialRepeatTime.GetRandomInRange();
 
             await UniTask.Delay((int)(timer * 1000), false, PlayerLoopTiming.Update, lifetimeToken);
 
-            socialTargets = null;
+            socialTargets.Clear();
             CanSocialize = true;
         }
-
     }
 
     public void SetAlertStatus()
@@ -554,7 +624,7 @@ public abstract class AI : Character, IBehaviorTree
                     }
                 }
 
-                if (IsAlert && (int)CurrentBehaviorType < (int)BehaviorType.Follow)
+                if (IsAlert && CurrentBehaviorType < BehaviorType.Follow)
                 {
                     alertTimer += Time.deltaTime;
 
@@ -565,6 +635,9 @@ public abstract class AI : Character, IBehaviorTree
                         maintainAlertTime += maintainAlertTimeIncrement;
                     }
                 }
+
+
+                ShouldPost = distanceTravelled >= maxTravelDistance ? true : false;
 
                 fieldOfView.SetColorBlendFactor(RegisterPlayer || IsAlert ? 1f : exposureRatio);
             }
@@ -608,6 +681,25 @@ public abstract class AI : Character, IBehaviorTree
         heading /= path.Count - start;
 
         return heading;
+    }
+
+    public MazeCell GetCenterCell<T>(List<T> others) where T : AI
+    {
+        Vector3 center = transform.position;
+        foreach (var other in others)
+            center += other.transform.position;
+
+        center /= others.Count + 1;
+
+        Collider2D[] results = new Collider2D[1];
+
+        if(Physics2D.OverlapCircleNonAlloc(center, 2f, results, 1<<10) > 0)
+        {
+            if (results[0].TryGetComponent(out MazeCell cell))
+                return cell;
+        }
+
+        return null;
     }
 
     #endregion

@@ -93,11 +93,11 @@ public abstract class AIManager : MonoBehaviour
         GameManager.MazeGenFinished -= InitializeAI;
     }
 
-    private void OnGUI()
-    {
-        if (GUI.Button(new Rect(10, 10, 80, 60), $"New {aiTypeName}"))
-            CreateNewAI(1);
-    }
+    //private void OnGUI()
+    //{
+    //    if (GUI.Button(new Rect(10, 10, 80, 60), $"New {aiTypeName}"))
+    //        CreateNewAI(1);
+    //}
 
     protected abstract void AssignRoles();
     protected abstract void OnInitializeAI();

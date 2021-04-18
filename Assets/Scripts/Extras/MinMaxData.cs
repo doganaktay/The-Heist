@@ -8,4 +8,7 @@ public struct MinMaxData
         this.min = min;
         this.max = max;
     }
+
+    public float GetRandomInRange() => GameManager.Random.NextSingle(min, max);
+
 }

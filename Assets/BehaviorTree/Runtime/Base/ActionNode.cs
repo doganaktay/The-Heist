@@ -17,9 +17,7 @@ public abstract class ActionNode : Node
     {
         if (EvaluationCount == 0 && ShouldAssignAction())
         {
-            action = Action;
-
-            owner.SetBehavior(this, action);
+            owner.SetBehavior(this, Action);
             return NodeStatus.Running;
         }
 

@@ -571,11 +571,11 @@ public class AreaFinder : MonoBehaviour
 
     #endregion
 
-    private void OnGUI()
-    {
-        if (GUI.Button(new Rect(10, 70, 80, 60), "Drop Walls"))
-            DropWalls();
-        if (GUI.Button(new Rect(10, 130, 80, 60), "Pass Walls"))
-            SetPassableWalls();
-    }
+    //private void OnGUI()
+    //{
+    //    if (GUI.Button(new Rect(10, 70, 80, 60), "Drop Walls"))
+    //        DropWalls();
+    //    if (GUI.Button(new Rect(10, 130, 80, 60), "Pass Walls"))
+    //        SetPassableWalls();
+    //}
 }

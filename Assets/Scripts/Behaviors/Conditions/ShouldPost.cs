@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using Archi.BT;
 
-public class WillSocialize : Condition
+public class ShouldPost : Condition
 {
     private AI owner;
 
-    public WillSocialize(AI owner) : base($"Will Socialize?")
+    public ShouldPost(AI owner) : base($"Should post?")
     {
         this.owner = owner;
     }
@@ -16,11 +16,14 @@ public class WillSocialize : Condition
 
     protected override NodeStatus OnRun()
     {
-        if (owner.WillSocialize)
-            return NodeStatus.Success;
+        if (owner.ShouldPost)
+        {
+            owner.ResetDistanceTravelled();
+            owner.IsPosting = true;
 
-        owner.CanSocialize = false;
-        owner.WaitUntilCanSocialize().Forget();
+            return NodeStatus.Success;
+        }
+
         return NodeStatus.Failure;
     }
 }

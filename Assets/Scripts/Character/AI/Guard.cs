@@ -35,14 +35,20 @@ public class Guard : AI
 
                                 new Selector("Select Casual",
 
-                                    new Sequence("Socialize",
-                                        new SelectorWithFail("Social Check",
-                                            new IsSocializing(this),
-                                            new Sequence("New Social Check",
-                                                new WillSocialize(this),
-                                                new SeeOtherAI(this, BehaviorType.Casual, true),
-                                                new HasSocialTarget(this))),
-                                        new Socialize(this)),
+                                    //new Sequence("Socialize",
+                                    //    new SelectorWithFail("Social Check",
+                                    //        new IsSocializing(this),
+                                    //        new Sequence("New Social Check",
+                                    //            new WillSocialize(this),
+                                    //            new SeeOtherAI(this, BehaviorType.Casual, true),
+                                    //            new HasSocialTarget(this))),
+                                    //    new Socialize(this)),
+
+                                    new Sequence("Post",
+                                        new SelectorWithFail("Post Check",
+                                            new IsPosting(this),
+                                            new ShouldPost(this)),
+                                        new Post(this)),
 
                                     new PerformGuardRole(this))
                                 );

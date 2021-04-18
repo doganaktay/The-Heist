@@ -232,4 +232,23 @@ public class GameManager : MonoBehaviour
 
         BeginGame();
 	}
+
+	string x, y;
+	private void OnGUI()
+	{
+		x = GUI.TextField(new Rect(90, 70, 20, 60), x);
+		y = GUI.TextField(new Rect(110, 70, 20, 60), y);
+
+		if (GUI.Button(new Rect(10, 70, 80, 60), "Check Post"))
+		{
+			int a, b;
+			Int32.TryParse(x, out a);
+			Int32.TryParse(y, out b);
+
+			var dirs = mazeInstance.cells[a, b].GetPostDirections();
+			Debug.Log($"{mazeInstance.cells[a, b].gameObject.name}");
+			foreach (var dir in dirs)
+				Debug.Log($"({dir.x},{dir.y})");
+		}
+	}
 }

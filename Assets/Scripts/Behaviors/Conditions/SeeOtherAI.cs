@@ -23,7 +23,7 @@ public class SeeOtherAI : Condition
     {
         owner.socialTargets = owner.GetVisible<AI>(behaviorType, wantExactBehaviorMatch);
 
-        if (owner.socialTargets != null)
+        if (owner.socialTargets.Count > 0)
             return NodeStatus.Success;
         else
             return NodeStatus.Failure;

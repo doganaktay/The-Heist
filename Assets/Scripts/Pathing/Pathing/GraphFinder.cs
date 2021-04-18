@@ -629,7 +629,8 @@ public class GraphFinder : MonoBehaviour
         {
             //if (currentConnectedCount == 3 && cell.connectedCells.Count == 3)
             //{
-            //    var bitPatternToCheck = currentCell.cardinalBits.RotatePattern(4, 2);
+            //    var bitPatternToCheck = currentCell.cardinalBits;
+            //    bitPatternToCheck.RotatePattern(4, 2);
 
             //    if ((bitPatternToCheck ^ cell.cardinalBits) == 0)
             //        continue;
@@ -687,44 +688,6 @@ public class GraphFinder : MonoBehaviour
         foreach (var end in ends)
             CheckJunction(end);
     }
-
-    //void CheckJunction(MazeCell cell, HashSet<int> area = null)
-    //{
-    //    if (area == null)
-    //    {
-    //        area = new HashSet<int>();
-
-    //        var indices = cell.GetGraphAreaIndices();
-
-    //        if (indices.Count == 1)
-    //            area.Add(indices[0]);
-    //        else
-    //            foreach (var index in indices)
-    //                if(GraphAreas[index].ends.Count <= 2)
-    //                    area.Add(index);
-    //    }
-
-    //    bool found = false;
-
-    //    foreach (var connection in GetConnections(cell))
-    //    {
-    //        connection.DeadConnectionCount++;
-
-    //        if (!connection.IsDeadEnd && connection.DeadConnectionCount == GetConnections(connection).Count - 1)
-    //        {
-    //            found = true;
-
-    //            foreach (var index in connection.GetGraphAreaIndices())
-    //                area.Add(index);
-
-    //            connection.IsUnloopable = true;
-    //            CheckJunction(connection, area);
-    //        }
-    //    }
-
-    //    if (!found && area.Count > 0)
-    //        isolatedAreas.Add(area);
-    //}
 
     void CheckJunction(MazeCell cell, List<HashSet<int>> areas = null)
     {
@@ -1548,6 +1511,18 @@ public class GraphFinder : MonoBehaviour
         }
     }
 
+    public static int GetAreaCellCount(int index) => GraphAreas[index].all.Count;
+    public static int GetAreaCellCount(List<int> indices)
+    {
+        int total = 0;
+
+        foreach (var area in GraphAreas)
+            if (indices.Contains(area.Key))
+                total += area.Value.all.Count;
+
+        return total;
+    }
+
     public int GetAreaCellCount(MazeCell cell, int index = -1) => GetAreaCells(cell, index).Count;
 
     public List<MazeCell> GetAreaCells(MazeCell cell, int index = -1)
@@ -2252,22 +2227,23 @@ public class GraphFinder : MonoBehaviour
         UnityEngine.Debug.Log($"{strIndices}");
     }
 
-    string fromIndex, toIndex;
+    //string fromIndex, toIndex;
 
     private void OnGUI()
     {
-        if (GUI.Button(new Rect(10, 190, 80, 60), "Test Search"))
+        if (GUI.Button(new Rect(10, 10, 80, 60), "Test Search"))
             TestAreas();
-        fromIndex = GUI.TextField(new Rect(90, 250, 20, 60), fromIndex);
-        toIndex = GUI.TextField(new Rect(110, 250, 20, 60), toIndex);
 
-        if (GUI.Button(new Rect(10, 250, 80, 60), "Check Path"))
-        {
-            int a, b;
-            Int32.TryParse(fromIndex, out a);
-            Int32.TryParse(toIndex, out b);
+        //fromIndex = GUI.TextField(new Rect(90, 70, 20, 60), fromIndex);
+        //toIndex = GUI.TextField(new Rect(110, 70, 20, 60), toIndex);
 
-            BiDirSearch(a, b);
-        }
+        //if (GUI.Button(new Rect(10, 70, 80, 60), "Check Path"))
+        //{
+        //    int a, b;
+        //    Int32.TryParse(fromIndex, out a);
+        //    Int32.TryParse(toIndex, out b);
+
+        //    BiDirSearch(a, b);
+        //}
     }
 }

@@ -24,8 +24,22 @@ public struct IntVector2
 		return new IntVector2(-a.x, -a.y);
     }
 
+	public static implicit operator Vector2(IntVector2 vec)
+    {
+		return new Vector2(vec.x, vec.y);
+    }
+
     public override bool Equals(object obj) => obj is IntVector2 i && this == i;
 	public override int GetHashCode() => x.GetHashCode() ^ y.GetHashCode();
     public static bool operator ==(IntVector2 a, IntVector2 b) => a.x == b.x && a.y == b.y;
 	public static bool operator !=(IntVector2 a, IntVector2 b) => a.x != b.x || a.y != b.y;
+
+#if UNITY_EDITOR
+
+    public override string ToString()
+    {
+        return $"({x},{y})";
+    }
+
+#endif
 }

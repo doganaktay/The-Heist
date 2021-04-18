@@ -18,26 +18,43 @@ public class Socialize : ActionNode
 
         var timer = 0f;
 
+
         try
         {
-            while (!token.IsCancellationRequested && timer < owner.CurrentSocialTime)
+            if(owner.socialTargets.Count > 0)
             {
-                timer += Time.deltaTime;
+                var target = owner.socialTargets[0];
+                await owner.GoTo(token, target.CurrentCell, target.transform,
+                        () => { return owner.transform.IsWithinRange(target.transform, owner.transform.localScale.x * 2f) || owner.CurrentCell == target.CurrentCell; });
 
-                Debug.Log($"{owner.gameObject.name} is socializing");
+                while (!token.IsCancellationRequested && timer < owner.CurrentSocialTime)
+                {
+                    foreach (var other in owner.socialTargets)
+                        if (other.CurrentBehaviorType > BehaviorType.Casual)
+                        {
+                            owner.CopyBehaviorState(other);
+                        }
 
-                await UniTask.NextFrame(token);
+                    owner.AimOverride = true;
+                    owner.Face(target.transform);
+
+                    timer += Time.deltaTime;
+
+                    await UniTask.NextFrame(token);
+                }
             }
         }
         finally
         {
             if (!owner.lifetimeToken.IsCancellationRequested)
             {
+                owner.SetFOV(FOVType.Regular);
+
+                owner.AimOverride = false;
                 owner.IsSocializing = false;
                 owner.WaitUntilCanSocialize().Forget();
             }
         }
-
 
         owner.IsActive = false;
         owner.ActiveActionNode = null;

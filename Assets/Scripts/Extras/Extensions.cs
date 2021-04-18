@@ -165,6 +165,16 @@ public static class Extensions
         return (to - from).sqrMagnitude < distance * distance;
     }
 
+    public static bool IsWithinRange(this Transform from, Transform to, float distance)
+    {
+        return (to.position - from.position).sqrMagnitude < distance * distance;
+    }
+
+    public static bool IsWithinRange(this Transform from, Vector3 to, float distance)
+    {
+        return (to - from.position).sqrMagnitude < distance * distance;
+    }
+
     public static bool IsConnectedTo(this MazeCell current, MazeCell next, bool isCardinal)
     {
         if (isCardinal)
@@ -196,6 +206,8 @@ public static class Extensions
 
     public static bool IsCloseAndInView(this Transform from, Transform to, float distance, LayerMask mask) =>
         (to.position - from.position).sqrMagnitude < distance && !Physics2D.Raycast(from.position, to.position - from.position, distance, mask);
+
+    public static float NextSingle(this System.Random random, float min = 0f, float max = 1f) => Mathf.Lerp(min, max, (float)random.NextDouble());
 
 #if UNITY_EDITOR
 

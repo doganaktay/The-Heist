@@ -132,10 +132,9 @@ public struct ChartedPath
         travelIndex = -1;
     }
 
-    public float GetWeight()
-    {
-        return GraphFinder.GetGraphAreaWeight(new List<int>(indices));
-    }
+    public int GetSize() => cells.Length;
+
+    public float GetWeight() => GraphFinder.GetGraphAreaWeight(new List<int>(indices));
 
     public bool Contains(int index)
     {

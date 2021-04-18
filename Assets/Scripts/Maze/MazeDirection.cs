@@ -66,6 +66,18 @@ public static class MazeDirections
 		{ new IntVector2(-1, 1), 1 << 3 }
 	};
 
+	public static Dictionary<int, IntVector2> postDirections = new Dictionary<int, IntVector2>
+	{
+		{ 1 << 0, cardinalVectors[0]},
+		{ 1 << 1, cardinalVectors[1]},
+		{ 1 << 2, cardinalVectors[2]},
+		{ 1 << 3, cardinalVectors[3]},
+		{ 1 << 0 | 1 << 1, diagonalVectors[0]},
+		{ 1 << 1 | 1 << 2, diagonalVectors[1]},
+		{ 1 << 2 | 1 << 3, diagonalVectors[2]},
+		{ 1 << 3 | 1 << 0, diagonalVectors[3]}
+	};
+
 	public static IntVector2 ToIntVector2(this MazeDirection direction)
 	{
 		return cardinalVectors[(int)direction];
@@ -116,6 +128,25 @@ public static class MazeDirections
 		return rotatedPattern;
     }
 
+	public static List<IntVector2> ConstructPostDirections(int bitfield)
+    {
+		var directions = new List<IntVector2>();
+
+		bitfield = ~bitfield;
+
+		if(bitfield == 0)
+        {
+			directions.Add(new IntVector2(0, 0));
+			return directions;
+        }
+
+		foreach (var dir in postDirections)
+			if ((dir.Key & bitfield) == dir.Key)
+				directions.Add(dir.Value);
+
+		return directions;
+    }
+
 	public static void RemoveWall(this MazeCellWall wall)
 	{
 		wall.cellA.connectedCells.Add(wall.cellB);
@@ -128,6 +159,10 @@ public static class MazeDirections
 
 	public static bool CheckAhead(MazeCell current, MazeCell next)
     {
+		// we never check diagonals with this method
+		// otherwise the condition for the return ternary could fail
+		// if the direction was diagoal: eg. (1, -1)
+
 		var dir = GetDirection(current, next);
 		return dir.x + dir.y == 0 ? false : (next.cardinalBits & cardinalBitmasks[dir]) != 0;
     }

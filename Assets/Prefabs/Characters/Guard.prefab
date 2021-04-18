@@ -59,6 +59,8 @@ MonoBehaviour:
   turnSpeed:
     min: 4.8
     max: 5.2
+  maxTravelDistance: 0
+  distanceTravelled: 0
   aim: {fileID: 0}
   aimOverrideTarget: {fileID: 0}
   fieldOfView: {fileID: 3954462537585510568}
@@ -79,11 +81,15 @@ MonoBehaviour:
   maintainAlertTime: 30
   maintainAlertTimeIncrement: 5
   FOVAdjustTime: 1
+  defaultPostTime:
+    min: 20
+    max: 45
+  postTime: 0
   followTarget: {fileID: 0}
   socialTargets: []
   socialRepeatTime:
-    min: 60
-    max: 120
+    min: 5
+    max: 10
   socialSpendTime:
     min: 5
     max: 10

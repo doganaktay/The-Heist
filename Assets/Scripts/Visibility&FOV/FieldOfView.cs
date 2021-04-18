@@ -175,7 +175,8 @@ public class FieldOfView : MonoBehaviour
 			{
 				Transform target = hits[i].transform;
 
-				if(transform.position == target.position)
+				//if(transform.position == target.position)
+				if (transform.parent == target)
 					continue;
 
 				Vector2 dirToTarget = ((Vector2)target.position - (Vector2)transform.position).normalized;
@@ -212,13 +213,18 @@ public class FieldOfView : MonoBehaviour
 			var list = new List<T>();
 
 			foreach (var target in visibleTargets)
-				if (target.TryGetComponent(out T tryVisible) && exactMatch ? tryVisible.CurrentBehaviorType == behaviorType : tryVisible.CurrentBehaviorType > behaviorType)
-					list.Add(tryVisible);
+            {
+                //if (target.TryGetComponent(out T tryVisible) && exactMatch ? tryVisible.CurrentBehaviorType == behaviorType : tryVisible.CurrentBehaviorType > behaviorType)
+                //    list.Add(tryVisible);
 
-			if (list.Count > 0)
-				return list;
-			else
-				return null;
+                if (target.TryGetComponent(out T tryVisible))
+                {
+					if (exactMatch ? tryVisible.CurrentBehaviorType == behaviorType : tryVisible.CurrentBehaviorType > behaviorType)
+						list.Add(tryVisible);
+                }
+            }
+
+			return list;
         }
 	}
 

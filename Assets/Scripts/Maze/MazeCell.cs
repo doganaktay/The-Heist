@@ -29,6 +29,8 @@ public class MazeCell : FastPriorityQueueNode
 	// cells only connected through special connections through walls (like grates)
 	public HashSet<MazeCell> specialConnectedCells = new HashSet<MazeCell>();
 
+	public List<IntVector2> postDirections;
+
 	#region Graph
 
 	// for use in identifying corridors and islands
@@ -259,57 +261,17 @@ public class MazeCell : FastPriorityQueueNode
         return possible[UnityEngine.Random.Range(0, possible.Count)];
     }
 
-	public List<Vector2> GetPostDirections()
+	public List<IntVector2> GetPostDirections()
     {
-		if (cardinalBits == 15)
-			return null;
-
-		var result = new List<Vector2>();
-
-		for(int i = 0; i < 4; i++)
+		if (postDirections == null || postDirections.Count == 0)
         {
-			if ((cardinalBits & 1 << i) == 0)
-            {
-				result.Add(new Vector2(MazeDirections.cardinalVectors[i].x, MazeDirections.cardinalVectors[i].y));
-
-				if ((cardinalBits & 1 << (i + 1) % 4) == 0)
-					result.Add(new Vector2(MazeDirections.diagonalVectors[i].x, MazeDirections.diagonalVectors[i].y));
-            }
-		}
-
-		return result;
-    }
-
-	public List<Vector2> GetPostDirections(int requiredIndex)
-	{
-		if (cardinalBits == 15)
-			return null;
-
-		var directionsForIndex = new List<IntVector2>();
-		foreach (var cell in connectedCells)
-			if (cell.GetGraphAreaIndices().Contains(requiredIndex))
-				directionsForIndex.Add(-this.GetDirection(cell));
-
-		if (directionsForIndex.Count == 0)
-			return null;
-
-		var result = new List<Vector2>();
-
-		for(int i = 0; i < directionsForIndex.Count; i++)
-        {
-			if ((cardinalBits & MazeDirections.cardinalBitmasks[directionsForIndex[i]]) == 0)
-            {
-				result.Add(new Vector2(directionsForIndex[i].x, directionsForIndex[i].y));
-
-				if ((cardinalBits & MazeDirections.cardinalBitmasks[directionsForIndex[i].GetNextVector(2)]) == 0)
-					result.Add(new Vector2(directionsForIndex[i].GetNextVector().x, directionsForIndex[i].GetNextVector().y));
-            }
+			postDirections = MazeDirections.ConstructPostDirections(cardinalBits);
         }
 
-		return result;
-	}
+		return new List<IntVector2>(postDirections);
+    }
 
-	public HashSet<MazeCell> GetNeighbours() => connectedCells;
+    public HashSet<MazeCell> GetNeighbours() => connectedCells;
 
 	public void PlaceItem(PlaceableItemType type, PlaceableItem item)
     {

@@ -21,7 +21,7 @@ public class HasSocialTarget : Condition
 
         foreach(var candidate in owner.socialTargets)
         {
-            if (candidate.WillSocialize)
+            if (!candidate.IsSocializing && candidate.WillSocialize)
             {
                 finalGroup.Add(candidate);
                 timeToSpend.Add(candidate.GetSocialTimer());
@@ -29,7 +29,7 @@ public class HasSocialTarget : Condition
         }
 
         timeToSpend.Add(owner.GetSocialTimer());
-        timeToSpend.Shuffle();
+        timeToSpend.Sort();
 
         if (finalGroup.Count > 0)
         {
@@ -39,6 +39,7 @@ public class HasSocialTarget : Condition
             {
                 final.SetSocialTargets(new List<AI>(finalGroup));
                 final.CurrentSocialTime = timeToSpend[0];
+                final.CanSocialize = false;
                 final.IsSocializing = true;
             }
 

@@ -30,6 +30,8 @@ public abstract class Character : MonoBehaviour
     protected List<MazeCell> currentPath;
     public List<MazeCell> CurrentPath => currentPath;
 
+    public int maxTravelDistance, distanceTravelled;
+
     [HideInInspector] public Transform aim; // used if Character has aim for LookAt
     [HideInInspector] public bool AimOverride { get; set; } = false;
     [HideInInspector] public Transform aimOverrideTarget;
@@ -65,6 +67,7 @@ public abstract class Character : MonoBehaviour
     {
         if (isOnGrid && TrackPosition())
             PositionChange?.Invoke();
+
     }
 
     #endregion
@@ -228,6 +231,9 @@ public abstract class Character : MonoBehaviour
 
                 fromPos = transform.position;
 
+                // increment distance travelled for AI calculations
+                distanceTravelled++;
+
                 if (i < path.Count)
                 {
                     lastCell = currentTargetCell;
@@ -252,6 +258,32 @@ public abstract class Character : MonoBehaviour
         isMoving = false;
         currentPath.Clear();
     }
+
+    public async UniTask GoToLocal(CancellationToken token, Vector3 target, bool shouldRun = false)
+    {
+        isMoving = true;
+
+        while (!token.IsCancellationRequested && transform.position != target)
+        {
+            Face(target);
+
+            transform.position = Vector2.MoveTowards(transform.position, target, (shouldRun ? speed.max : speed.min) * Time.deltaTime);
+
+            await UniTask.NextFrame();
+        }
+
+        isMoving = false;
+    }
+
+    public void ResetDistanceTravelled() => distanceTravelled = 0;
+
+    public void Face(Transform target) => transform.Face(target, ref derivative, currentTurnSpeed);
+    public void Face(Vector3 target) => transform.Face(target, ref derivative, currentTurnSpeed);
+    public void Face(Quaternion target) => transform.Face(target, ref derivative, currentTurnSpeed);
+
+    public void Face(Transform target, float maxDelta) => transform.Face(target, ref derivative, maxDelta);
+    public void Face(Vector3 target, float maxDelta) => transform.Face(target, ref derivative, maxDelta);
+    public void Face(Quaternion target, float maxDelta) => transform.Face(target, ref derivative, maxDelta);
 
     #endregion
 }
