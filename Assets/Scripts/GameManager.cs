@@ -6,7 +6,7 @@ using Archi.Touch;
 
 public class GameManager : MonoBehaviour
 {
-	[Header("Setup")]
+	[Header("Grid Setup")]
 	[SerializeField] int gridSizeX;
 	[SerializeField] int gridSizeY;
 	[SerializeField] float cellSizeX;
@@ -45,6 +45,8 @@ public class GameManager : MonoBehaviour
 	public static MazeCell StartCell => startCell;
 	public static MazeCell EndCell => endCell;
 
+	public static Action MazeGenFinished;
+
 	// initialize random here adhoc
 	// will move into proper class when I switch
 	// the project over to System.Random entirely
@@ -64,7 +66,6 @@ public class GameManager : MonoBehaviour
 		}
 	}
 
-	public static Action MazeGenFinished;
 
 	private void BeginGame()
 	{
@@ -233,22 +234,15 @@ public class GameManager : MonoBehaviour
         BeginGame();
 	}
 
-	string x, y;
-	private void OnGUI()
-	{
-		x = GUI.TextField(new Rect(90, 70, 20, 60), x);
-		y = GUI.TextField(new Rect(110, 70, 20, 60), y);
+    #region Utility
 
-		if (GUI.Button(new Rect(10, 70, 80, 60), "Check Post"))
-		{
-			int a, b;
-			Int32.TryParse(x, out a);
-			Int32.TryParse(y, out b);
+	public static MinMaxData GetScaledRange(float param, bool canBeNegative = false)
+    {
+		var min = param - (param * ParameterDeviation * BiasMultipliers.min);
+		var max = param + (param * ParameterDeviation * BiasMultipliers.max);
 
-			var dirs = mazeInstance.cells[a, b].GetPostDirections();
-			Debug.Log($"{mazeInstance.cells[a, b].gameObject.name}");
-			foreach (var dir in dirs)
-				Debug.Log($"({dir.x},{dir.y})");
-		}
+		return canBeNegative ? new MinMaxData(min, max) : new MinMaxData(Mathf.Max(0,min), max);
 	}
+
+    #endregion
 }

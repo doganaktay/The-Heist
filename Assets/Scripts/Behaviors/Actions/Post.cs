@@ -19,29 +19,17 @@ public class Post : ActionNode
         owner.SetBehaviorParams(BehaviorType.Casual, FOVType.Regular, false);
 
         var timeLimit = owner.GetPostTime();
-        var timer = 0f;
 
+        Debug.Log($"Posting at: {owner.CurrentCell.gameObject.name}");
         var directions = owner.CurrentCell.GetPostDirections();
         var selected = directions[Random.Range(0, directions.Count)];
-        var invertSelected = -selected;
-        var angle = Mathf.Atan2(invertSelected.y, invertSelected.x) * Mathf.Rad2Deg - 90f;
-        var rot = Quaternion.AngleAxis(angle, Vector3.forward);
 
         var finalPos = (Vector2)owner.CurrentCell.transform.position + ((Vector2)selected * GameManager.CellDiagonal * 0.15f);
         await owner.GoToLocal(token, finalPos); 
 
         try
         {
-
-            while (!token.IsCancellationRequested && timer < timeLimit)
-            {
-                owner.Face(rot);
-
-                timer += Time.deltaTime;
-                //await UniTask.NextFrame(token);
-                await owner.LookAround(token, timeLimit);
-            }
-            
+            await owner.LookAround(token, timeLimit);
         }
         finally
         {

@@ -263,6 +263,10 @@ public class MazeCell : FastPriorityQueueNode
 
 	public List<IntVector2> GetPostDirections()
     {
+		// placed cell no post direction
+		if (state > 1)
+			return null;
+
 		if (postDirections == null || postDirections.Count == 0)
         {
 			postDirections = MazeDirections.ConstructPostDirections(cardinalBits);

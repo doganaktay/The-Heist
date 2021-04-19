@@ -58,11 +58,11 @@ public class CCTV : MonoBehaviour
     {
         camDisplacement = GameManager.CellDiagonal / 2f * camDisplacementPercent;
 
-        camViewRadius = GetLimits(defaultViewRadius);
-        camViewAngle = GetLimits(defaultViewAngle);
-        camRotSpeed = GetLimits(defaultRotSpeed);
-        camWaitTime = GetLimits(defaultWaitTime);
-        camRotChance = GetLimits(defaultRotChance);
+        camViewRadius = GameManager.GetScaledRange(defaultViewRadius);
+        camViewAngle = GameManager.GetScaledRange(defaultViewAngle);
+        camRotSpeed = GameManager.GetScaledRange(defaultRotSpeed);
+        camWaitTime = GameManager.GetScaledRange(defaultWaitTime);
+        camRotChance = GameManager.GetScaledRange(defaultRotChance);
 
         StartCoroutine(PlaceCams());
     }
@@ -73,17 +73,10 @@ public class CCTV : MonoBehaviour
         PlaceSecurityCameras();
     }
 
-    private MinMaxData GetLimits(float original)
-    {
-        var min = original - (original * GameManager.ParameterDeviation * GameManager.BiasMultipliers.min);
-        var max = original + (original * GameManager.ParameterDeviation * GameManager.BiasMultipliers.max);
-        return new MinMaxData(min, max);
-    }
-
-    private float GetViewRadius() => Random.Range(camViewRadius.min, camViewRadius.max);
-    private float GetViewAngle() => Random.Range(camViewAngle.min, camViewAngle.max);
-    private float GetRotSpeed() => Random.Range(camRotSpeed.min, camRotSpeed.max);
-    private float GetWaitTime() => Random.Range(camWaitTime.min, camWaitTime.max);
+    private float GetViewRadius() => camViewRadius.GetRandomInRange();
+    private float GetViewAngle() => camViewAngle.GetRandomInRange();
+    private float GetRotSpeed() => camRotSpeed.GetRandomInRange();
+    private float GetWaitTime() => camWaitTime.GetRandomInRange();
 
     public struct CamSpotData
     {

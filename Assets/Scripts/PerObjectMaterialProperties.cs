@@ -6,6 +6,8 @@ public class PerObjectMaterialProperties : MonoBehaviour
     static readonly int baseColorId = Shader.PropertyToID("_BaseColor");
     static readonly int secondaryColorId = Shader.PropertyToID("_SecondaryColor");
     static readonly int blendFactorId = Shader.PropertyToID("_BlendFactor");
+    static readonly int objectWorldPosId = Shader.PropertyToID("_ObjectPos");
+    static readonly int fovRadiusId = Shader.PropertyToID("_Radius");
 
     static MaterialPropertyBlock block;
 
@@ -52,6 +54,24 @@ public class PerObjectMaterialProperties : MonoBehaviour
         myRenderer.GetPropertyBlock(block);
 
         block.SetFloat(blendFactorId, factor);
+        myRenderer.SetPropertyBlock(block);
+    }
+
+    public void SetObjectPos(Vector3 pos)
+    {
+        block.Clear();
+        myRenderer.GetPropertyBlock(block);
+
+        block.SetVector(objectWorldPosId, new Vector4(pos.x, pos.y, pos.z, 1f));
+        myRenderer.SetPropertyBlock(block);
+    }
+
+    public void SetFOVRadius(float radius)
+    {
+        block.Clear();
+        myRenderer.GetPropertyBlock(block);
+
+        block.SetFloat(fovRadiusId, radius);
         myRenderer.SetPropertyBlock(block);
     }
 }

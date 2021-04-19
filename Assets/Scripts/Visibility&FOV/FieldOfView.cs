@@ -52,9 +52,13 @@ public class FieldOfView : MonoBehaviour
 	public float ExposureLimit { get; set; }
 	public MazeCell lastKnownPlayerPos;
 
+	// UniTask async
 	CancellationToken lifetimeToken;
 
-	public void SetColorBlendFactor(float factor) => props.SetBlendFactor(factor);
+	public void SetShaderBlend(float factor) => props.SetBlendFactor(factor);
+	public void SetShaderRadius(float radius) => props.SetFOVRadius(radius);
+	public void SetShaderPosition(Vector3 pos) => props.SetObjectPos(pos);
+
 	public MazeCell GetPlayerPos()
     {
 		// consumes the position
@@ -62,6 +66,8 @@ public class FieldOfView : MonoBehaviour
 		lastKnownPlayerPos = null;
 		return cell;
     }
+
+    #region MonoBehaviour
 
     void Start()
 	{
@@ -85,14 +91,29 @@ public class FieldOfView : MonoBehaviour
 		// but need to check initialization order to make it work (currently it causes an issue at startup)
 		lifetimeToken = this.GetCancellationTokenOnDestroy();
 		FindTargets(lifetimeToken, .35f).Forget();
-
 		CheckForPlayer(lifetimeToken).Forget();
-
-		//if (IsStatic)
-		//	DrawFieldOfView();
 	}
 
-	private async UniTaskVoid CheckForPlayer(CancellationToken token)
+	void LateUpdate()
+	{
+		if (!IsStatic)
+		{
+			if (canDraw)
+			{
+				DrawFieldOfView();
+				meshCleared = false;
+			}
+			else if (!meshCleared)
+			{
+				viewMesh.Clear();
+				meshCleared = true;
+			}
+		}
+	}
+
+    #endregion
+
+    private async UniTaskVoid CheckForPlayer(CancellationToken token)
     {
         while (!token.IsCancellationRequested)
         {
@@ -118,23 +139,6 @@ public class FieldOfView : MonoBehaviour
 
 			await UniTask.NextFrame();
 		}
-    }
-
-    private void LateUpdate()
-	{
-        if (!IsStatic)
-        {
-			if (canDraw)
-			{
-				DrawFieldOfView();
-				meshCleared = false;
-			}
-			else if (!meshCleared)
-			{
-				viewMesh.Clear();
-				meshCleared = true;
-			}
-        }
     }
 
     public void Disable()

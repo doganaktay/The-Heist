@@ -209,6 +209,13 @@ public static class Extensions
 
     public static float NextSingle(this System.Random random, float min = 0f, float max = 1f) => Mathf.Lerp(min, max, (float)random.NextDouble());
 
+    public static MinMaxData GetScaledRange(this float param)
+    {
+        var min = param - (param * GameManager.ParameterDeviation * GameManager.BiasMultipliers.min);
+        var max = param + (param * GameManager.ParameterDeviation * GameManager.BiasMultipliers.max);
+        return new MinMaxData(min, max);
+    }
+
 #if UNITY_EDITOR
 
     public static string Debug<T>(this ICollection<T> collection)

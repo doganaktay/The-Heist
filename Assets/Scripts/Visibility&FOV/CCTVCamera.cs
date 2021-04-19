@@ -14,7 +14,6 @@ public class CCTVCamera : MonoBehaviour, ISimulateable, IProjectileTarget
     float rotationSpeed;
     MinMaxData rotationLimits;
     float waitTime;
-    Coroutine rotateCamRoutine;
     [SerializeField][Tooltip("Used to iterate the sweep search for possible placement angle")]
     int placementAngleResolution = 1;
 
@@ -22,7 +21,9 @@ public class CCTVCamera : MonoBehaviour, ISimulateable, IProjectileTarget
     public bool ShowFOV { get => fov.canDraw; set => fov.canDraw = value; }
     public Transform Aim => aim;
 
+    // UniTask async
     CancellationToken lifetimeToken;
+    CancellationTokenSource rotateTokenSource = new CancellationTokenSource();
 
     // interface members
     public GameObject Instance { get => gameObject; }
@@ -30,14 +31,7 @@ public class CCTVCamera : MonoBehaviour, ISimulateable, IProjectileTarget
     public bool IsDynamic { get; set; } = true;
     public bool IsDestructible { get; set; } = true;
 
-    public void TakeHit()
-    {
-        fov.ClearMesh();
-        fov.enabled = false;
-
-        if(rotateCamRoutine != null)
-            StopCoroutine(rotateCamRoutine);
-    }
+    #region MonoBehaviour
 
     void Awake()
     {
@@ -47,12 +41,24 @@ public class CCTVCamera : MonoBehaviour, ISimulateable, IProjectileTarget
         lifetimeToken = this.GetCancellationTokenOnDestroy();
     }
 
-    public void SetCamViewDistance(float distance) => fov.viewRadius = distance;
-    public void SetCamViewAngle(float angle) => fov.viewAngle = angle;
-    public void SetCamRotAngle(float angle) => rotationAngle = angle;
-    public void SetCamRotSpeed(float speed) => rotationSpeed = speed;
-    public void SetCamWaitTime(float time) => waitTime = time;
-    public void SetCamRotLimits(MinMaxData limits) => rotationLimits = limits;
+    float blend = 0;
+    void Update()
+    {
+        if (fov.CanSeePlayer())
+        {
+            blend = (blend + Time.deltaTime / 2) % 1;
+        }
+        else if (blend > 0)
+        {
+            blend -= Time.deltaTime;
+        }
+        else
+            blend = 0;
+
+        fov.SetShaderBlend(blend);
+    }
+
+    #endregion
 
     public void InitCam(float viewDistance, float viewAngle)
     {
@@ -70,38 +76,9 @@ public class CCTVCamera : MonoBehaviour, ISimulateable, IProjectileTarget
         SetCamViewAngle(viewAngle);
         SetCamRotLimits(new MinMaxData(aim.rotation.eulerAngles.z - rotLimits.min, aim.rotation.eulerAngles.z + rotLimits.max));
 
-        //StartCoroutine(SetFinalAngle());
+        SetShaderStatics().Forget();
+
         SetFinalAngle(lifetimeToken).Forget();
-    }
-
-    IEnumerator SetFinalAngle()
-    {
-        yield return null;
-
-        Vector3 rotEuler = aim.rotation.eulerAngles;
-        rotEuler.z = GetTopDirectionAngles()[0].angle;
-        aim.rotation = Quaternion.Euler(rotEuler);
-
-        //Debug.Log($"{gameObject.name} rot min: {rotationLimits.min} max: {rotationLimits.max} current: {aim.eulerAngles.z}" +
-        //    $" Setting angle to {rotEuler.z} with top coverage of {GetTopDirectionAngles()[0].coverage} cells");
-
-        IsStatic = true;
-        fov.DrawFieldOfView();
-    }
-
-    async UniTaskVoid SetFinalAngle(CancellationToken token)
-    {
-        await UniTask.NextFrame();
-
-        Vector3 rotEuler = aim.rotation.eulerAngles;
-        rotEuler.z = GetTopDirectionAngles()[0].angle;
-        aim.rotation = Quaternion.Euler(rotEuler);
-
-        //Debug.Log($"{gameObject.name} rot min: {rotationLimits.min} max: {rotationLimits.max} current: {aim.eulerAngles.z}" +
-        //    $" Setting angle to {rotEuler.z} with top coverage of {GetTopDirectionAngles()[0].coverage} cells");
-
-        IsStatic = true;
-        fov.DrawFieldOfView();
     }
 
     public void InitCam(float viewDistance, float viewAngle, float lookDirAngle, MinMaxData rotLimits, float rotSpeed, float waitTime)
@@ -116,39 +93,30 @@ public class CCTVCamera : MonoBehaviour, ISimulateable, IProjectileTarget
         SetCamRotLimits(new MinMaxData(aim.rotation.eulerAngles.z - rotLimits.min, aim.rotation.eulerAngles.z + rotLimits.max));
         SetCamWaitTime(waitTime);
 
-        //rotateCamRoutine = StartCoroutine(RotateCam());
+        SetShaderStatics().Forget();
 
-        Rotate(lifetimeToken).Forget();
+        rotateTokenSource = rotateTokenSource.Token.Merge(lifetimeToken);
+        Rotate(rotateTokenSource.Token).Forget();
     }
 
-    IEnumerator RotateCam()
+    async UniTaskVoid SetShaderStatics()
     {
-        var limit = Random.value < 0.5f ? rotationLimits.min : rotationLimits.max;
-        var delay = new WaitForSeconds(waitTime);
+        await UniTask.Delay(1000, false, PlayerLoopTiming.Update, lifetimeToken);
 
-        yield return new WaitForSeconds(Random.Range(0f, waitTime));
+        fov.SetShaderPosition(transform.position);
+        fov.SetShaderRadius(fov.viewRadius);
+    }
 
-        while (true)
-        {
-            var current = aim.rotation;
-            var end = Quaternion.Euler(0, 0, limit);
+    async UniTaskVoid SetFinalAngle(CancellationToken token)
+    {
+        await UniTask.NextFrame(token);
 
-            var t = 0f;
-            while(aim.rotation != Quaternion.Euler(0, 0, limit) && t < 1.01f)
-            {
-                t += rotationSpeed * Time.deltaTime;
-                aim.rotation = Quaternion.Slerp(current, end, t);
+        Vector3 rotEuler = aim.rotation.eulerAngles;
+        rotEuler.z = GetTopDirectionAngles()[0].angle;
+        aim.rotation = Quaternion.Euler(rotEuler);
 
-                yield return null;
-            }
-
-            if (limit == rotationLimits.min)
-                limit = rotationLimits.max;
-            else
-                limit = rotationLimits.min;
-
-            yield return delay;
-        }
+        IsStatic = true;
+        fov.DrawFieldOfView();
     }
 
     async UniTaskVoid Rotate(CancellationToken token)
@@ -163,12 +131,12 @@ public class CCTVCamera : MonoBehaviour, ISimulateable, IProjectileTarget
             var end = Quaternion.Euler(0, 0, limit);
 
             var t = 0f;
-            while (aim.rotation != Quaternion.Euler(0, 0, limit) && t < 1.01f)
+            while (!token.IsCancellationRequested && aim.rotation != Quaternion.Euler(0, 0, limit) && t < 1.01f)
             {
                 t += rotationSpeed * Time.deltaTime;
                 aim.rotation = Quaternion.Slerp(current, end, t);
 
-                await UniTask.NextFrame();
+                await UniTask.NextFrame(token);
             }
 
             if (limit == rotationLimits.min)
@@ -176,9 +144,27 @@ public class CCTVCamera : MonoBehaviour, ISimulateable, IProjectileTarget
             else
                 limit = rotationLimits.min;
 
-            await UniTask.Delay((int)(waitTime * 1000));
+            await UniTask.Delay((int)(waitTime * 1000), false, PlayerLoopTiming.Update, token);
         }
     }
+
+    public void TakeHit()
+    {
+        fov.ClearMesh();
+        fov.enabled = false;
+
+        rotateTokenSource.Cancel();
+        rotateTokenSource.Dispose();
+    }
+
+    #region Getters and Setters
+
+    public void SetCamViewDistance(float distance) => fov.viewRadius = distance;
+    public void SetCamViewAngle(float angle) => fov.viewAngle = angle;
+    public void SetCamRotAngle(float angle) => rotationAngle = angle;
+    public void SetCamRotSpeed(float speed) => rotationSpeed = speed;
+    public void SetCamWaitTime(float time) => waitTime = time;
+    public void SetCamRotLimits(MinMaxData limits) => rotationLimits = limits;
 
     public float GetCoverageSize()
     {
@@ -288,26 +274,28 @@ public class CCTVCamera : MonoBehaviour, ISimulateable, IProjectileTarget
         return cellsInView;
     }
 
-    bool firstTime = true;
-    Color randomColor;
+    #endregion
 
-    private void OnDrawGizmos()
-    {
-        var list = GetCellsInView();
+    //bool firstTime = true;
+    //Color randomColor;
 
-        if (firstTime)
-        {
-            randomColor = new Color(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f), 1f);
-            Gizmos.color = randomColor;
-            firstTime = false;
-        }
+    //private void OnDrawGizmos()
+    //{
+    //    var list = GetCellsInView();
 
-        int i = 0;
-        for(; i < list.Count; )
-        {
-            Gizmos.color = randomColor;
-            Gizmos.DrawWireSphere(list[i].transform.position, GameManager.CellDiagonal / 4f);
-            i++;
-        }
-    }
+    //    if (firstTime)
+    //    {
+    //        randomColor = new Color(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f), 1f);
+    //        Gizmos.color = randomColor;
+    //        firstTime = false;
+    //    }
+
+    //    int i = 0;
+    //    for(; i < list.Count; )
+    //    {
+    //        Gizmos.color = randomColor;
+    //        Gizmos.DrawWireSphere(list[i].transform.position, GameManager.CellDiagonal / 4f);
+    //        i++;
+    //    }
+    //}
 }

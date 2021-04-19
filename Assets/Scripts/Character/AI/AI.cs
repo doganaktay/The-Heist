@@ -134,6 +134,8 @@ public abstract class AI : Character, IBehaviorTree
     {
         base.Start();
 
+        SetUtilityParams();
+
         fieldOfView = GetComponentInChildren<FieldOfView>();
         fieldOfView.AccumulateExposure = true;
         currentRegisterThreshold = UnityEngine.Random.Range(registerThreshold.min, registerThreshold.max);
@@ -238,6 +240,9 @@ public abstract class AI : Character, IBehaviorTree
 
             await UniTask.NextFrame(token);
         }
+
+        if(!token.IsCancellationRequested)
+            fieldOfView.SetShaderRadius(fieldOfView.viewRadius);
     }
 
     static List<(float radius, float angle)> fovPresets = new List<(float radius, float angle)>()
@@ -484,6 +489,13 @@ public abstract class AI : Character, IBehaviorTree
 
     #region Getters and Setters    
 
+    void SetUtilityParams()
+    {
+        fitness = fitness.GetScaledRange().GetRandomInRange();
+        foresight = foresight.GetScaledRange().GetRandomInRange();
+        initiative = initiative.GetScaledRange().GetRandomInRange();
+    }
+
     //public float GetPostTime() => defaultPostTime.GetRandomInRange() * (AreaFinder.WalkableCellCount / (1 + GetCoverageSize()));
     public float GetPostTime() => defaultPostTime.GetRandomInRange();
 
@@ -639,7 +651,8 @@ public abstract class AI : Character, IBehaviorTree
 
                 ShouldPost = distanceTravelled >= maxTravelDistance ? true : false;
 
-                fieldOfView.SetColorBlendFactor(RegisterPlayer || IsAlert ? 1f : exposureRatio);
+                fieldOfView.SetShaderPosition(transform.position);
+                fieldOfView.SetShaderBlend(RegisterPlayer || IsAlert ? 1f : exposureRatio);
             }
 
             await UniTask.NextFrame(lifetimeToken);
