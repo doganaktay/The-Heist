@@ -23,7 +23,8 @@ public enum FOVType
     Regular,
     Alert,
     Chase,
-    Social
+    Social,
+    Post
 }
 
 public enum ChartedPathType
@@ -230,7 +231,10 @@ public abstract class AI : Character, IBehaviorTree
         float currentRadius = fieldOfView.viewRadius;
         float currentAngle = fieldOfView.viewAngle;
 
-        while(ratio < 1f && !token.IsCancellationRequested)
+        if (!token.IsCancellationRequested)
+            fieldOfView.SetShaderRadius(radius);
+
+        while (ratio < 1f && !token.IsCancellationRequested)
         {
             fieldOfView.viewRadius = Mathf.Lerp(currentRadius, radius, ratio);
             fieldOfView.viewAngle = Mathf.Lerp(currentAngle, angle, ratio);
@@ -241,8 +245,8 @@ public abstract class AI : Character, IBehaviorTree
             await UniTask.NextFrame(token);
         }
 
-        if(!token.IsCancellationRequested)
-            fieldOfView.SetShaderRadius(fieldOfView.viewRadius);
+        //if(!token.IsCancellationRequested)
+        //    fieldOfView.SetShaderRadius(fieldOfView.viewRadius);
     }
 
     static List<(float radius, float angle)> fovPresets = new List<(float radius, float angle)>()
@@ -251,7 +255,8 @@ public abstract class AI : Character, IBehaviorTree
         (60, 60),
         (70, 80),
         (80, 100),
-        (30, 40)
+        (30, 40),
+        (70, 120)
     };
 
     #endregion

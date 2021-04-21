@@ -52,9 +52,16 @@ public class GameManager : MonoBehaviour
 	// the project over to System.Random entirely
 	public static System.Random Random;
 
-	private void Start()
+	// RNG
+	public static RNG baseRNG;
+
+    private void Awake()
+    {
+		InitRNG();
+	}
+
+    private void Start()
 	{
-		Random = new System.Random();
 		BeginGame();
 	}
 
@@ -234,7 +241,17 @@ public class GameManager : MonoBehaviour
         BeginGame();
 	}
 
-    #region Utility
+	#region RNG
+
+	void InitRNG()
+    {
+		Random = new System.Random();
+        baseRNG = new RNG((uint)DateTime.Now.Ticks);
+    }
+
+	#endregion
+
+	#region Utility
 
 	public static MinMaxData GetScaledRange(float param, bool canBeNegative = false)
     {
@@ -244,5 +261,23 @@ public class GameManager : MonoBehaviour
 		return canBeNegative ? new MinMaxData(min, max) : new MinMaxData(Mathf.Max(0,min), max);
 	}
 
-    #endregion
+	#endregion
+
+	#region Test
+
+	private void OnGUI()
+	{
+		if (GUI.Button(new Rect(10, 70, 80, 60), "SysRand"))
+			Debug.Log($"{Random.Next()}");
+
+		if (GUI.Button(new Rect(10, 130, 80, 60), "SqrRand"))
+        {
+            Debug.Log($"{baseRNG.NextDouble()}");
+
+        }
+
+
+	}
+
+	#endregion
 }

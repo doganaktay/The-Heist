@@ -82,7 +82,8 @@ public abstract class Character : MonoBehaviour
             int closestIndex = 0;
             for (int i = 0; i < hitCount; i++)
             {
-                var temp = Vector2.Distance(posHits[i].transform.position, transform.position);
+                //var temp = Vector2.Distance(posHits[i].transform.position, transform.position);
+                var temp = (posHits[i].transform.position - transform.position).sqrMagnitude;
                 if (temp < dist)
                 {
                     dist = temp;

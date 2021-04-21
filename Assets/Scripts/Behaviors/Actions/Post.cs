@@ -16,7 +16,7 @@ public class Post : ActionNode
 
         owner.IsActive = true;
 
-        owner.SetBehaviorParams(BehaviorType.Casual, FOVType.Regular, false);
+        owner.SetBehaviorParams(BehaviorType.Casual, FOVType.Post, false);
 
         var timeLimit = owner.GetPostTime();
 

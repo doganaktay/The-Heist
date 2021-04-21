@@ -1823,7 +1823,7 @@ MonoBehaviour:
     max: 0.25
   loopSearchLimit: 30
   recursionLimit: 20
-  showDebugDisplay: 0
+  showDebugDisplay: 1
 --- !u!1001 &1245003532
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2282,7 +2282,7 @@ MonoBehaviour:
   obstacleMask:
     serializedVersion: 2
     m_Bits: 512
-  camCount: 3
+  camCount: 0
   defaultViewRadius: 50
   camDisplacementPercent: 0.3
   defaultViewAngle: 60
