@@ -130,7 +130,7 @@ public class Spotfinder : MonoBehaviour
 
         while(availableSpots.Count > 0 && count > 0)
         {
-            int random = Random.Range(0, availableSpots.Count);            
+            int random = GameManager.rngSeeded.Range(0, availableSpots.Count);
 
             if(pathfinder.TryNeighbourPaths(availableSpots[random]) && !HasDiagonalDisconnect(availableSpots[random]))
             {

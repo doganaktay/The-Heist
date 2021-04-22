@@ -101,7 +101,7 @@ public abstract class AI : Character, IBehaviorTree
     MinMaxData socialRepeatTime;
     [SerializeField, Tooltip("Time (in seconds) AI will spend socializing")]
     MinMaxData socialSpendTime;
-    public bool WillSocialize => CanSocialize && UnityEngine.Random.value > initiative;
+    public bool WillSocialize => CanSocialize && GameManager.rngFree.Roll() > initiative;
     public float CurrentSocialTime { get; set; }
 
     // head movement
@@ -139,11 +139,11 @@ public abstract class AI : Character, IBehaviorTree
 
         fieldOfView = GetComponentInChildren<FieldOfView>();
         fieldOfView.AccumulateExposure = true;
-        currentRegisterThreshold = UnityEngine.Random.Range(registerThreshold.min, registerThreshold.max);
+        currentRegisterThreshold = GameManager.rngFree.Range(registerThreshold.min, registerThreshold.max);
         fieldOfView.ExposureLimit = currentRegisterThreshold;
 
         maxTravelDistance = Mathf.RoundToInt(GameManager.CellCount * fitness);
-        distanceTravelled = UnityEngine.Random.Range(0, maxTravelDistance);
+        distanceTravelled = GameManager.rngFree.Range(0, maxTravelDistance);
 
         Track(lifetimeToken).Forget();
         HeadMovement(lifetimeToken).Forget();
@@ -275,7 +275,7 @@ public abstract class AI : Character, IBehaviorTree
 
             if (lastSign != sign)
             {
-                multiplier = UnityEngine.Random.Range(0, 2f);
+                multiplier = GameManager.rngFree.Range(0, 2f);
                 lastSign = (int)sign;
             }
 
@@ -290,7 +290,7 @@ public abstract class AI : Character, IBehaviorTree
 
     float RandomValue()
     {
-        var value = Mathf.Sin(Vector2.Dot(UnityEngine.Random.insideUnitCircle, new Vector2(12.9898f, 4.1414f))) * 43758.5453;
+        var value = Mathf.Sin(Vector2.Dot(GameManager.rngFree.NextInsideUnitCircle(), new Vector2(12.9898f, 4.1414f))) * 43758.5453;
         var fract = Convert.ToSingle(value - (int)value);
         return fract * 100f;
     }
@@ -300,9 +300,9 @@ public abstract class AI : Character, IBehaviorTree
     void SetHeadMoveParams()
     {
         for(int i = 0; i < trigExponents.Length; i++)
-            trigExponents[i] = UnityEngine.Random.value > 0.5 ? 1 : 3;
+            trigExponents[i] = GameManager.rngFree.Roll() > 0.5 ? 1 : 3;
 
-        headMoveCoefficient = UnityEngine.Random.Range(4f, 5f);
+        headMoveCoefficient = GameManager.rngFree.Range(4f, 5f);
     }
 
     #endregion
@@ -458,7 +458,7 @@ public abstract class AI : Character, IBehaviorTree
 
     public async UniTask LookAround(CancellationToken token, float time = -1)
     {
-        var waitTime = time == -1 ? UnityEngine.Random.Range(this.waitTime.min, this.waitTime.max) : time;
+        var waitTime = time == -1 ? GameManager.rngFree.Range(this.waitTime.min, this.waitTime.max) : time;
         var targetRot = Quaternion.Euler(0f, 0f, currentCell.GetLookRotationAngle());
 
         while (waitTime > 0 && !token.IsCancellationRequested)
@@ -469,7 +469,7 @@ public abstract class AI : Character, IBehaviorTree
             {
                 targetRot = Quaternion.Euler(0f, 0f, currentCell.GetLookRotationAngle());
 
-                await UniTask.Delay((int)(UnityEngine.Random.Range(1f, 3f) * 1000), false, PlayerLoopTiming.Update, token);
+                await UniTask.Delay((int)(GameManager.rngFree.Range(1f, 3f) * 1000), false, PlayerLoopTiming.Update, token);
             }
 
             waitTime -= Time.deltaTime;
@@ -516,8 +516,8 @@ public abstract class AI : Character, IBehaviorTree
         return size;
     }
 
-    public float GetSocialTimer() => UnityEngine.Random.Range(socialSpendTime.min, socialSpendTime.max);
-    public float GetSocialResetTimer() => UnityEngine.Random.Range(socialRepeatTime.min, socialRepeatTime.max);
+    public float GetSocialTimer() => GameManager.rngFree.Range(socialSpendTime.min, socialSpendTime.max);
+    public float GetSocialResetTimer() => GameManager.rngFree.Range(socialRepeatTime.min, socialRepeatTime.max);
     public void SetSocialTargets(List<AI> targets)
     {
         if (targets.Contains(this))

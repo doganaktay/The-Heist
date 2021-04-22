@@ -22,10 +22,19 @@ public class RNG
 
     #endregion
 
-    #region RNG Generation
+    #region Roll
 
-    const double REAL_UNIT_INT = 1.0 / ((double)int.MaxValue + 1.0);
-    const double REAL_UNIT_UINT = 1.0 / ((double)uint.MaxValue + 1.0);
+    public float Roll() => NextSingleInclusive();
+    public bool Roll(float successPercent) => NextSingleInclusive() <= successPercent;
+
+    #endregion
+
+    #region RNG
+
+    const double REAL_UNIT_INT_INCLUSIVE = 1.0 / ((double)int.MaxValue);
+    const double REAL_UNIT_UINT_INCLUSIVE = 1.0 / ((double)uint.MaxValue);
+    const double REAL_UNIT_INT_EXCLUSIVE = 1.0 / ((double)int.MaxValue + 1.0);
+    const double REAL_UNIT_UINT_EXCLUSIVE = 1.0 / ((double)uint.MaxValue + 1.0);
 
     /// <summary>
     /// Generates a uint over [uint.MinValue, uint.MaxValue]
@@ -56,7 +65,7 @@ public class RNG
         if (upperBound < 0)
             throw new ArgumentOutOfRangeException("upperBound", upperBound, "upperBound must be >= 0");
 
-        return (int)(REAL_UNIT_INT * (int)(0x7FFFFFFF & NextUint()) * upperBound);
+        return (int)(REAL_UNIT_INT_EXCLUSIVE * (int)(0x7FFFFFFF & NextUint()) * upperBound);
     }
 
     /// <summary>
@@ -77,32 +86,62 @@ public class RNG
             // if range is < 0 here, we have overflow.
             // must resort to using longs and full 32-bit precision
 
-            return lowerBound + (int)((REAL_UNIT_UINT * (double)NextUint()) * (double)((long)upperBound - (long)lowerBound));
+            return lowerBound + (int)((REAL_UNIT_UINT_EXCLUSIVE * (double)NextUint()) * (double)((long)upperBound - (long)lowerBound));
         }
 
         // if range <= int.MaxValue, 31-bit precision suffices
-        return lowerBound + (int)((REAL_UNIT_INT * (double)(int)(0x7FFFFFFF & NextUint())) * (double)range);
+        return lowerBound + (int)((REAL_UNIT_INT_EXCLUSIVE * (double)(int)(0x7FFFFFFF & NextUint())) * (double)range);
     }
 
     /// <summary>
     /// Generates a random double over [0.0, 1.0)
     /// </summary>
     /// <returns></returns>
-    public double NextDouble() => REAL_UNIT_INT * (int)(0x7FFFFFFF & NextUint());
+    public double NextDoubleExclusive() => REAL_UNIT_INT_EXCLUSIVE * (int)(0x7FFFFFFF & NextUint());
 
     /// <summary>
     /// Generates a random single over [0.0, 1.0)
     /// </summary>
     /// <returns></returns>
-    public float NextSingle(float min = 0f, float max = 1f) => Lerp(min, max, (float)NextDouble());
+    public float NextSingleExclusive(float min = 0f, float max = 1f) => Lerp(min, max, (float)NextDoubleExclusive());
+
+    /// <summary>
+    /// Generates a random double over [0.0, 1.0)
+    /// </summary>
+    /// <returns></returns>
+    public double NextDoubleInclusive() => REAL_UNIT_INT_INCLUSIVE * (int)(0x7FFFFFFF & NextUint());
+
+    /// <summary>
+    /// Generates a random single over [0.0, 1.0)
+    /// </summary>
+    /// <returns></returns>
+    public float NextSingleInclusive(float min = 0f, float max = 1f) => Lerp(min, max, (float)NextDoubleInclusive());
 
     #endregion
 
     #region Unity Random equivalents
 
+    /// <summary>
+    /// Generates a random int over [min, max)
+    /// max must be >= min. min may be negative.
+    /// </summary>
+    /// <param name="min"></param>
+    /// <param name="max"></param>
+    /// <returns></returns>
+    public int Range(int min, int max) => Next(min, max);
+
+    /// <summary>
+    /// Generates a random float over [min, max]
+    /// max must be >= min. min may be negative.
+    /// </summary>
+    /// <param name="min"></param>
+    /// <param name="max"></param>
+    /// <returns></returns>
+    public float Range(float min, float max) => NextSingleInclusive(min, max);
+
     public Vector2 NextOnUnitCircle()
     {
-        var angle = NextSingle(0, 360f) * Mathf.Deg2Rad;
+        var angle = NextSingleExclusive(0, 360f) * Mathf.Deg2Rad;
         var x = Mathf.Cos(angle);
         var y = Mathf.Sin(angle);
         return new Vector2(x, y);
@@ -110,8 +149,8 @@ public class RNG
 
     public Vector3 NextOnUnitSphere()
     {
-        var angle = NextSingle(0, 360f) * Mathf.Deg2Rad;
-        var z = NextSingle(-1f, 1f);
+        var angle = NextSingleExclusive(0, 360f) * Mathf.Deg2Rad;
+        var z = NextSingleExclusive(-1f, 1f);
         var mp = Mathf.Sqrt(1 - z * z);
         var x = mp * Mathf.Cos(angle);
         var y = mp * Mathf.Sin(angle);
@@ -120,19 +159,19 @@ public class RNG
 
     public Vector3 NextInsideUnitSphere()
     {
-        return NextOnUnitSphere() * NextSingle();
+        return NextOnUnitSphere() * NextSingleExclusive();
     }
 
     public Vector2 NextInsideUnitCircle()
     {
-        return NextOnUnitCircle() * NextSingle();
+        return NextOnUnitCircle() * NextSingleExclusive();
     }
 
     public Quaternion NextRotation()
     {
-        var x = NextSingle(0f, 360f);
-        var y = NextSingle(0f, 360f);
-        var z = NextSingle(0f, 360f);
+        var x = NextSingleExclusive(0f, 360f);
+        var y = NextSingleExclusive(0f, 360f);
+        var z = NextSingleExclusive(0f, 360f);
         return Quaternion.Euler(x, y, z);
     }
 
@@ -142,10 +181,10 @@ public class RNG
 
         do
         {
-            w = NextSingle(-1f, 1f);
-            x = NextSingle(-1f, 1f);
-            y = NextSingle(-1f, 1f);
-            z = NextSingle(-1f, 1f);
+            w = NextSingleExclusive(-1f, 1f);
+            x = NextSingleExclusive(-1f, 1f);
+            y = NextSingleExclusive(-1f, 1f);
+            z = NextSingleExclusive(-1f, 1f);
             normal = w * w + x * x + y * y + z * z;
         }
         while (normal > 1f || normal == 0f);
@@ -194,11 +233,11 @@ public class RNG
         float minAlpha,
         float maxAlpha)
     {
-        var h = Lerp(minHue, maxHue, NextSingle());
-        var s = Lerp(minSaturation, maxSaturation, NextSingle());
-        var v = Lerp(minValue, maxValue, NextSingle());
+        var h = Lerp(minHue, maxHue, NextSingleExclusive());
+        var s = Lerp(minSaturation, maxSaturation, NextSingleExclusive());
+        var v = Lerp(minValue, maxValue, NextSingleExclusive());
         var color = Color.HSVToRGB(h, s, v, true);
-        color.a = Lerp(minAlpha, maxAlpha, NextSingle());
+        color.a = Lerp(minAlpha, maxAlpha, NextSingleExclusive());
         return color;
     }
 

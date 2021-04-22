@@ -28,18 +28,18 @@ public class Curator : MonoBehaviour
         for(int i = 0; i < 10; i++)
         {
             int attempt = 0;
-            var randomIndex = GraphFinder.FinalGraphIndices[Random.Range(0, GraphFinder.FinalGraphIndices.Count)];
+            var randomIndex = GraphFinder.FinalGraphIndices[GameManager.rngSeeded.Range(0, GraphFinder.FinalGraphIndices.Count)];
 
             while(assigned.Contains(randomIndex) && attempt < maxAttempt)
             {
-                randomIndex = GraphFinder.FinalGraphIndices[Random.Range(0, GraphFinder.FinalGraphIndices.Count)];
+                randomIndex = GraphFinder.FinalGraphIndices[GameManager.rngSeeded.Range(0, GraphFinder.FinalGraphIndices.Count)];
                 attempt++;
             }
 
             if (attempt >= maxAttempt)
                 continue;
 
-            var priority = Random.value < 0.1f ? IndexPriority.Critical : IndexPriority.High;
+            var priority = GameManager.rngFree.Roll(0.1f) ? IndexPriority.Critical : IndexPriority.High;
             graphfinder.RegisterPriorityIndex(randomIndex, priority);
 
             assigned.Add(randomIndex);

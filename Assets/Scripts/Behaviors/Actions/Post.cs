@@ -22,7 +22,7 @@ public class Post : ActionNode
 
         Debug.Log($"Posting at: {owner.CurrentCell.gameObject.name}");
         var directions = owner.CurrentCell.GetPostDirections();
-        var selected = directions[Random.Range(0, directions.Count)];
+        var selected = directions[GameManager.rngFree.Range(0, directions.Count)];
 
         var finalPos = (Vector2)owner.CurrentCell.transform.position + ((Vector2)selected * GameManager.CellDiagonal * 0.15f);
         await owner.GoToLocal(token, finalPos); 

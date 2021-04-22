@@ -525,7 +525,7 @@ public class GraphFinder : MonoBehaviour
 
             foreach(var area in GraphAreas)
             {
-                var randomColor = new Color(UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f));
+                var randomColor = new Color(GameManager.rngFree.Range(0f, 1f), GameManager.rngFree.Range(0f, 1f), GameManager.rngFree.Range(0f, 1f));
 
                 foreach(var cell in area.Value.all)
                 {
@@ -1398,7 +1398,7 @@ public class GraphFinder : MonoBehaviour
     public int GetRandomAreaIndex(MazeCell cell)
     {
         var indices = cell.GetGraphAreaIndices();
-        return indices[UnityEngine.Random.Range(0, indices.Count)];
+        return indices[GameManager.rngFree.Range(0, indices.Count)];
     }
 
     public List<MazeCell> GetConnections(MazeCell cell, bool includeSelf = false)
@@ -1546,7 +1546,7 @@ public class GraphFinder : MonoBehaviour
 
     public ChartedPath GetLoop(int index = -1)
     {
-        int indexToUse = index >= 0 ? index : UnityEngine.Random.Range(0, cycles.Count);
+        int indexToUse = index >= 0 ? index : GameManager.rngFree.Range(0, cycles.Count);
 
         var cycle = cycles[indexToUse];
         var waypoints = new MazeCell[cycle.nodes.Length];
@@ -1659,17 +1659,17 @@ public class GraphFinder : MonoBehaviour
     public static MazeCell GetRandomCellFromGraphArea(int index)
     {
         var cells = GraphAreas[index].all;
-        return cells[UnityEngine.Random.Range(0, cells.Count - 1)];
+        return cells[GameManager.rngFree.Range(0, cells.Count - 1)];
     }
 
     public static MazeCell GetRandomCellFromGraphArea(List<int> indices)
     {
-        var index = indices[UnityEngine.Random.Range(0, indices.Count)];
+        var index = indices[GameManager.rngFree.Range(0, indices.Count)];
         var cells = GraphAreas[index].all;
-        return cells[UnityEngine.Random.Range(0, cells.Count)];
+        return cells[GameManager.rngFree.Range(0, cells.Count)];
     }
 
-    public HashSet<int> GetIsolatedArea() => new HashSet<int>(isolatedAreas[UnityEngine.Random.Range(0, isolatedAreas.Count)]);
+    public HashSet<int> GetIsolatedArea() => new HashSet<int>(isolatedAreas[GameManager.rngFree.Range(0, isolatedAreas.Count)]);
 
     public HashSet<int> GetIsolatedArea(HashSet<int> exclude)
     {
@@ -1685,7 +1685,7 @@ public class GraphFinder : MonoBehaviour
 
         temp.Remove(mark);
 
-        return new HashSet<int>(temp[UnityEngine.Random.Range(0, temp.Count)]);
+        return new HashSet<int>(temp[GameManager.rngFree.Range(0, temp.Count)]);
     }
 
     public HashSet<int> GetIsolatedArea(List<HashSet<int>> excludes)
@@ -1711,7 +1711,7 @@ public class GraphFinder : MonoBehaviour
         if (temp.Count == 0)
             return null;
         else
-            return new HashSet<int>(temp[UnityEngine.Random.Range(0, temp.Count)]);
+            return new HashSet<int>(temp[GameManager.rngFree.Range(0, temp.Count)]);
     }
 
     public static float GetGraphAreaWeight(int index) => GraphAreas[index].all.Count / (float)AreaFinder.WalkableCellCount;

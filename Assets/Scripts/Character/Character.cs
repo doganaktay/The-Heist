@@ -59,8 +59,8 @@ public abstract class Character : MonoBehaviour
     {
         posHits = new Collider2D[10];
 
-        currentSpeed = UnityEngine.Random.Range(speed.min, speed.max);
-        currentTurnSpeed = UnityEngine.Random.Range(turnSpeed.min, turnSpeed.max);
+        currentSpeed = GameManager.rngFree.Range(speed.min, speed.max);
+        currentTurnSpeed = GameManager.rngFree.Range(turnSpeed.min, turnSpeed.max);
     }
     
     protected virtual void Update()
@@ -175,7 +175,7 @@ public abstract class Character : MonoBehaviour
         int i = 1;
 
         MazeCell lastCell = currentCell;
-        Vector2 drift = UnityEngine.Random.insideUnitCircle.normalized * (GameManager.CellDiagonal * pathDriftMultiplier);
+        Vector2 drift = GameManager.rngFree.NextInsideUnitCircle().normalized * (GameManager.CellDiagonal * pathDriftMultiplier);
         Vector3 fromPos = transform.position;
         currentTargetCell = path[i];
 
@@ -186,8 +186,8 @@ public abstract class Character : MonoBehaviour
         Vector2 bias = Vector2.zero;
         if (nextTargetCell != null && currentCell != currentTargetCell)
             bias = MazeDirections.GetDirectionBiasVector(lastCell, currentTargetCell, nextTargetCell)
-                   * (GameManager.CellDiagonal * (UnityEngine.Random.value * cutCornerPercent));
-                   //* (GameManager.CellDiagonal * UnityEngine.Random.Range(0, cutCornerPercent));
+                   * (GameManager.CellDiagonal * (GameManager.rngFree.Roll() * cutCornerPercent));
+                   //* (GameManager.CellDiagonal * GameManager.rngFree.Range(0, cutCornerPercent));
 
         target += (Vector3)bias;
 
@@ -205,7 +205,7 @@ public abstract class Character : MonoBehaviour
                     {
                         var total = (target - fromPos).sqrMagnitude;
                         var current = (transform.position - fromPos).sqrMagnitude;
-                        var t = (current / total) - UnityEngine.Random.Range(lagPercent.min, lagPercent.max);
+                        var t = (current / total) - GameManager.rngFree.Range(lagPercent.min, lagPercent.max);
 
                         lookPos = t < 0 ? (Vector2)target : Vector2.Lerp(target, nextTargetCell.transform.position, t);
                     }
@@ -228,7 +228,7 @@ public abstract class Character : MonoBehaviour
             if (transform.position == target)
             {
                 i++;
-                drift = UnityEngine.Random.insideUnitCircle.normalized * (GameManager.CellDiagonal * pathDriftMultiplier);
+                drift = GameManager.rngFree.NextInsideUnitCircle().normalized * (GameManager.CellDiagonal * pathDriftMultiplier);
 
                 fromPos = transform.position;
 
@@ -246,7 +246,7 @@ public abstract class Character : MonoBehaviour
 
                 if (nextTargetCell != null)
                     bias = MazeDirections.GetDirectionBiasVector(lastCell, currentTargetCell, nextTargetCell)
-                        * (GameManager.CellDiagonal * UnityEngine.Random.Range(0, cutCornerPercent));
+                        * (GameManager.CellDiagonal * GameManager.rngFree.Range(0, cutCornerPercent));
                 else
                     bias = Vector2.zero;
 

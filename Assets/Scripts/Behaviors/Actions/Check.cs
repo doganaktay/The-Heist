@@ -17,7 +17,7 @@ public class Check : ActionNode
     {
         owner.IsActive = true;
 
-        owner.SetBehaviorParams(BehaviorType.Check, FOVType.Alert, Random.value < 0.25f ? false : true);
+        owner.SetBehaviorParams(BehaviorType.Check, FOVType.Alert, GameManager.rngFree.Roll(0.25f) ? false : true);
 
         await owner.GoTo(token, owner.PointOfInterest);
 

@@ -144,7 +144,7 @@ public class CCTV : MonoBehaviour
                 float viewAngle = GetViewAngle();
                 float viewRadius = GetViewRadius();
 
-                bool isStatic = Random.value > camRotChance.max || sortedSpots[i].maxViewAngle < viewAngle;
+                bool isStatic = GameManager.rngSeeded.Roll() > camRotChance.max || sortedSpots[i].maxViewAngle < viewAngle;
                 float rotMin = (sortedSpots[i].maxViewAngle / 2f) - (viewAngle / 2f);
                 float rotMax = (sortedSpots[i].maxViewAngle / 2f) - (viewAngle / 2f);
                 MinMaxData rotLimits = new MinMaxData(rotMin, rotMax);

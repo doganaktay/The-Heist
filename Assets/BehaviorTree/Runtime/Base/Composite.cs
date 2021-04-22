@@ -29,7 +29,7 @@ namespace Archi.BT
             {
                 foreach((int, Node) node in availableNodes)
                 {
-                    if(UnityEngine.Random.Range(0, availableNodes.Sum(w => w.Item1)) < node.Item1)
+                    if(GameManager.rngFree.Range(0, availableNodes.Sum(w => w.Item1)) < node.Item1)
                     {
                         newChildList.Add(node.Item2);
                         availableNodes.Remove(node);

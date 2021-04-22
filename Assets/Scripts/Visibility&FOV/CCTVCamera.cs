@@ -121,9 +121,9 @@ public class CCTVCamera : MonoBehaviour, ISimulateable, IProjectileTarget
 
     async UniTaskVoid Rotate(CancellationToken token)
     {
-        var limit = Random.value < 0.5f ? rotationLimits.min : rotationLimits.max;
+        var limit = GameManager.rngSeeded.Roll(0.5f)? rotationLimits.min : rotationLimits.max;
 
-        await UniTask.Delay((int)(Random.Range(0f, waitTime) * 1000));
+        await UniTask.Delay((int)(GameManager.rngFree.Range(0f, waitTime) * 1000));
 
         while (!token.IsCancellationRequested)
         {
@@ -285,7 +285,7 @@ public class CCTVCamera : MonoBehaviour, ISimulateable, IProjectileTarget
 
     //    if (firstTime)
     //    {
-    //        randomColor = new Color(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f), 1f);
+    //        randomColor = new Color(GameManager.rngFree.Range(0f, 1f), GameManager.rngFree.Range(0f, 1f), GameManager.rngFree.Range(0f, 1f), 1f);
     //        Gizmos.color = randomColor;
     //        firstTime = false;
     //    }

@@ -25,7 +25,7 @@ public abstract class AIManager : MonoBehaviour
     {
         for (int i = 0; i < count; i++)
         {
-            var randomCell = areafinder.WalkableArea[Random.Range(0, areafinder.WalkableArea.Count)];
+            var randomCell = areafinder.WalkableArea[GameManager.rngSeeded.Range(0, areafinder.WalkableArea.Count)];
             var ai = Instantiate(aiPrefab, new Vector3(randomCell.transform.position.x, randomCell.transform.position.y, -1f), Quaternion.identity);
 
             ai.name = aiTypeName + " " + activeAIs.Count;

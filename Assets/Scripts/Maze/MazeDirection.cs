@@ -18,7 +18,7 @@ public static class MazeDirections
 	{
 		get
 		{
-			return (MazeDirection)Random.Range(0, Count);
+			return (MazeDirection)GameManager.rngSeeded.Range(0, Count);
 		}
 	}
 

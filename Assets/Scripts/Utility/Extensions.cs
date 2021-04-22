@@ -3,13 +3,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
 public static class Extensions
 {
     // material extensions are in the ShaderControl script
 
-    public static void Shuffle<T>(this IList<T> list)
+    public static void Shuffle<T>(this IList<T> list, bool seeded = false)
     {
-        System.Random rng = GameManager.Random;
+        RNG rng = seeded ? GameManager.rngSeeded : GameManager.rngFree;
+
         int n = list.Count;
         while (n > 1)
         {

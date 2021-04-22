@@ -47,13 +47,12 @@ public class GameManager : MonoBehaviour
 
 	public static Action MazeGenFinished;
 
-	// initialize random here adhoc
-	// will move into proper class when I switch
-	// the project over to System.Random entirely
-	public static System.Random Random;
-
 	// RNG
-	public static RNG baseRNG;
+	[Header("RNG")]
+	public bool reuseSeed = true;
+	public uint seed = 1;
+	public static RNG rngFree;
+	public static RNG rngSeeded;
 
     private void Awake()
     {
@@ -90,7 +89,7 @@ public class GameManager : MonoBehaviour
 		possibleCorners.Add(new IntVector2(0, mazeInstance.size.y - 1));
 		possibleCorners.Add(new IntVector2(mazeInstance.size.x - 1, 0));
 		possibleCorners.Add(new IntVector2(mazeInstance.size.x - 1, mazeInstance.size.y - 1));
-		possibleCorners.Shuffle();
+		possibleCorners.Shuffle(true);
 		var selectedStart = possibleCorners[0];
 		var selectedEnd = possibleCorners[1];
 
@@ -238,15 +237,18 @@ public class GameManager : MonoBehaviour
 		spawnedObjects.ClearChildren();
 		cctvHolder.ClearChildren(1);
 
-        BeginGame();
+		if (reuseSeed)
+			rngSeeded.ResetSeed(seed);
+
+		BeginGame();
 	}
 
 	#region RNG
 
 	void InitRNG()
     {
-		Random = new System.Random();
-        baseRNG = new RNG((uint)DateTime.Now.Ticks);
+        rngFree = new RNG((uint)DateTime.Now.Ticks);
+		rngSeeded = new RNG(seed);
     }
 
 	#endregion
@@ -259,24 +261,6 @@ public class GameManager : MonoBehaviour
 		var max = param + (param * ParameterDeviation * BiasMultipliers.max);
 
 		return canBeNegative ? new MinMaxData(min, max) : new MinMaxData(Mathf.Max(0,min), max);
-	}
-
-	#endregion
-
-	#region Test
-
-	private void OnGUI()
-	{
-		if (GUI.Button(new Rect(10, 70, 80, 60), "SysRand"))
-			Debug.Log($"{Random.Next()}");
-
-		if (GUI.Button(new Rect(10, 130, 80, 60), "SqrRand"))
-        {
-            Debug.Log($"{baseRNG.NextDouble()}");
-
-        }
-
-
 	}
 
 	#endregion

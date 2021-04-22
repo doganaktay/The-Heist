@@ -99,7 +99,7 @@ public class GuardManager : AIManager
                 {
                     if (GraphFinder.GetGraphAreaWeight(index) < minCoverageThreshold)
                     {
-                        var flood = graphFinder.GetFloodCoverage(index, Random.Range(0.1f, 0.2f));
+                        var flood = graphFinder.GetFloodCoverage(index, GameManager.rngFree.Range(0.1f, 0.2f));
                         ai.assignedIndices.AddRange(new List<int>(flood));
                         assignedAreas.Add(ai, flood);
                     }

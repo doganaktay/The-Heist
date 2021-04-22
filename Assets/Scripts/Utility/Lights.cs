@@ -20,7 +20,7 @@ public class Lights : MonoBehaviour
     {
         foreach(var light in lights)
         {
-            light.transform.rotation = Quaternion.Euler(Random.Range(-30f, 30f), Random.Range(-30f, 30f), 0f);
+            light.transform.rotation = Quaternion.Euler(GameManager.rngSeeded.Range(-30f, 30f), GameManager.rngSeeded.Range(-30f, 30f), 0f);
         }
 
         //if(rotate != null)

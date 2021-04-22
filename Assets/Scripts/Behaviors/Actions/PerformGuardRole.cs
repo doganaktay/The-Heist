@@ -51,7 +51,7 @@ public class PerformGuardRole : ActionNode
 
                     next = path.GetNext(owner.CurrentCell);
 
-                    if (Random.value < 0.5f)
+                    if (GameManager.rngFree.Roll(0.5f))
                         await owner.LookAround(token);
                 }
 
@@ -60,7 +60,7 @@ public class PerformGuardRole : ActionNode
             case GuardRole.Cover:
                 owner.SetBehaviorParams(BehaviorType.Casual, FOVType.Regular, false);
 
-                var nextIndex = owner.assignedIndices[Random.Range(0, owner.assignedIndices.Count)];
+                var nextIndex = owner.assignedIndices[GameManager.rngFree.Range(0, owner.assignedIndices.Count)];
                 var nextCell = GraphFinder.GetRandomCellFromGraphArea(nextIndex);
 
                 while (nextCell != null && !token.IsCancellationRequested)
@@ -69,7 +69,7 @@ public class PerformGuardRole : ActionNode
 
                     await owner.LookAround(token);
 
-                    nextIndex = owner.assignedIndices[Random.Range(0, owner.assignedIndices.Count)];
+                    nextIndex = owner.assignedIndices[GameManager.rngFree.Range(0, owner.assignedIndices.Count)];
                     nextCell = GraphFinder.GetRandomCellFromGraphArea(nextIndex);
                 }
 
@@ -86,7 +86,7 @@ public class PerformGuardRole : ActionNode
 
                     await owner.LookAround(token);
 
-                    nextIndex = owner.assignedIndices[Random.Range(0, owner.assignedIndices.Count)];
+                    nextIndex = owner.assignedIndices[GameManager.rngFree.Range(0, owner.assignedIndices.Count)];
                     nextCell = GraphFinder.GetRandomCellFromGraphArea(nextIndex);
                 }
 

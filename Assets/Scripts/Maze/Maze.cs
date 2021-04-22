@@ -54,7 +54,7 @@ public class Maze : MonoBehaviour
     {
         get
         {
-            return new IntVector2(UnityEngine.Random.Range(0, size.x), UnityEngine.Random.Range(0, size.y));
+            return new IntVector2(GameManager.rngSeeded.Range(0, size.x), GameManager.rngSeeded.Range(0, size.y));
         }
     }
 

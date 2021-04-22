@@ -57,7 +57,7 @@ public class PathDesigner : MonoBehaviour
             }
             else if (candidates.Count > 1)
             {
-                var selected = candidates[Random.Range(0, candidates.Count)];
+                var selected = candidates[GameManager.rngFree.Range(0, candidates.Count)];
 
                 dist += next.cell.GetJunctionDistance(selected.cell);
                 if (dist > maxTravelDist)

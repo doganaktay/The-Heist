@@ -228,7 +228,7 @@ public class MazeCell : FastPriorityQueueNode
 	{
 		get
 		{
-			int skips = UnityEngine.Random.Range(0, MazeDirections.Count - initializedEdgeCount);
+			int skips = GameManager.rngSeeded.Range(0, MazeDirections.Count - initializedEdgeCount);
 			for (int i = 0; i < MazeDirections.Count; i++)
 			{
 				if (edges[i] == null)
@@ -258,7 +258,7 @@ public class MazeCell : FastPriorityQueueNode
 				possible.Add((i * cardinalAngleStep - 45f + 360f) % 360f);
 		}
 
-        return possible[UnityEngine.Random.Range(0, possible.Count)];
+        return possible[GameManager.rngFree.Range(0, possible.Count)];
     }
 
 	public List<IntVector2> GetPostDirections()

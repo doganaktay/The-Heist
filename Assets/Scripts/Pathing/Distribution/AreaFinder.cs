@@ -32,9 +32,9 @@ public class AreaFinder : MonoBehaviour
     public List<MazeCell> GetHighCellArea(int areaIndex) { return highCellAreas[areaIndex]; }
     public List<MazeCell> GetPatrolAreaByIndex(int areaIndex){ return lowCellAreas[areaIndex]; }
     public List<MazeCell> GetLowConnectionPoints(int areaIndex){ return lowCellConnected[areaIndex]; }
-    public List<MazeCell> GetRandomArea(){ return lowCellAreas.ElementAt(UnityEngine.Random.Range(0, lowCellAreas.Count)).Value; }
+    public List<MazeCell> GetRandomArea(){ return lowCellAreas.ElementAt(GameManager.rngFree.Range(0, lowCellAreas.Count)).Value; }
     public List<MazeCell> WalkableArea { get { return walkableArea; } }
-    public MazeCell GetRandomCell() => walkableArea[UnityEngine.Random.Range(0, walkableArea.Count)];
+    public MazeCell GetRandomCell() => walkableArea[GameManager.rngFree.Range(0, walkableArea.Count)];
 
     List<MazeCellWall> availableWallsForDrop;
 
@@ -197,7 +197,7 @@ public class AreaFinder : MonoBehaviour
             totalCount = weights[i];
         }
 
-        var rand = UnityEngine.Random.Range(0, totalCount);
+        var rand = GameManager.rngFree.Range(0, totalCount);
         var destinationIndex = -1;
 
         for(int i = 0; i < lowCellAreas.Count; i++)
