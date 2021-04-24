@@ -10,41 +10,26 @@ using System.Threading;
 [RequireComponent(typeof(MeshFilter)), RequireComponent(typeof(MeshRenderer))]
 public class FieldOfView : MonoBehaviour
 {
-	[Header("Mesh Settings")]
-	public float viewRadius;
-	[Range(0, 360)]
-	public float viewAngle;
+    #region Data
 
+	// INSTANCE
+
+	// PUBLIC
+    [Header("Mesh Settings")]
+	public float viewRadius;
+	[Range(0, 360)] public float viewAngle;
 	public LayerMask targetMask;
 	public LayerMask obstacleMask;
-	Collider2D[] hits;
-	ContactFilter2D filter;
-
-	[HideInInspector] public Character owner;
-	[HideInInspector] public List<Transform> visibleTargets = new List<Transform>();
-
 	public float meshResolution;
 	public int edgeResolveIterations;
 	public float edgeDstThreshold;
-
 	public float maskCutawayDst = .1f;
-
-	MeshFilter viewMeshFilter;
-	Mesh viewMesh;
-
+	[HideInInspector] public Character owner;
+	[HideInInspector] public List<Transform> visibleTargets = new List<Transform>();
 	public Transform aim;
 	public float zOffset;
-
 	public bool canDraw = true;
-	bool meshCleared = false;
 	public bool IsStatic { get; set; } = false;
-
-	List<Vector3> viewPoints = new List<Vector3>();
-	Vector3[] vertices;
-	List<int> triangles;
-
-	PerObjectMaterialProperties props;
-
 	// detection settings
 	public bool AccumulateExposure { get; set; } = false;
 	public float ContinuousExposureTime { get; private set; }
@@ -52,20 +37,19 @@ public class FieldOfView : MonoBehaviour
 	public float ExposureLimit { get; set; }
 	public MazeCell lastKnownPlayerPos;
 
-	// UniTask async
+	// PRIVATE
+	Collider2D[] hits;
+	ContactFilter2D filter;
+	MeshFilter viewMeshFilter;
+	Mesh viewMesh;
+	bool meshCleared = false;
+	List<Vector3> viewPoints = new List<Vector3>();
+	Vector3[] vertices;
+	List<int> triangles;
+	PerObjectMaterialProperties props;
 	CancellationToken lifetimeToken;
 
-	public void SetShaderBlend(float factor) => props.SetBlendFactor(factor);
-	public void SetShaderRadius(float radius) => props.SetFOVRadius(radius);
-	public void SetShaderPosition(Vector3 pos) => props.SetObjectPos(pos);
-
-	public MazeCell GetPlayerPos()
-    {
-		// consumes the position
-		var cell = lastKnownPlayerPos;
-		lastKnownPlayerPos = null;
-		return cell;
-    }
+    #endregion
 
     #region MonoBehaviour
 
@@ -111,7 +95,49 @@ public class FieldOfView : MonoBehaviour
 		}
 	}
 
+	#endregion
+
+	#region Getters and Setters
+
+	public void SetShaderBlend(float factor) => props.SetBlendFactor(factor);
+	public void SetShaderRadius(float radius) => props.SetFOVRadius(radius);
+	public void SetShaderPosition(Vector3 pos) => props.SetObjectPos(pos);
+
+	public MazeCell GetPlayerPos()
+	{
+		// consumes the position
+		var cell = lastKnownPlayerPos;
+		lastKnownPlayerPos = null;
+		return cell;
+	}
+
+	public List<T> GetVisible<T>(BehaviorType behaviorType, bool exactMatch = false) where T : AI
+	{
+		lock (visibleTargets)
+		{
+			var list = new List<T>();
+
+			foreach (var target in visibleTargets)
+			{
+				//if (target.TryGetComponent(out T tryVisible) && exactMatch ? tryVisible.CurrentBehaviorType == behaviorType : tryVisible.CurrentBehaviorType > behaviorType)
+				//    list.Add(tryVisible);
+
+				if (target.TryGetComponent(out T tryVisible))
+				{
+					if (exactMatch ? tryVisible.CurrentBehaviorType == behaviorType : tryVisible.CurrentBehaviorType > behaviorType)
+						list.Add(tryVisible);
+				}
+			}
+
+			return list;
+		}
+	}
+
+	public float GetDistanceScalar(Vector3 pos) => 1 + (1 - ((pos - transform.position).magnitude / viewRadius));
+
     #endregion
+
+    #region Utility
 
     private async UniTaskVoid CheckForPlayer(CancellationToken token)
     {
@@ -166,6 +192,8 @@ public class FieldOfView : MonoBehaviour
 
 	public void SetMaxExposureTime() => ContinuousExposureTime = ExposureLimit;
 
+    #endregion
+
     #region Visibility
 
     private void FindVisibleTargets()
@@ -209,30 +237,6 @@ public class FieldOfView : MonoBehaviour
 			return false;
         }
 	}
-
-    public List<T> GetVisible<T>(BehaviorType behaviorType, bool exactMatch = false) where T : AI
-	{
-		lock (visibleTargets)
-        {
-			var list = new List<T>();
-
-			foreach (var target in visibleTargets)
-            {
-                //if (target.TryGetComponent(out T tryVisible) && exactMatch ? tryVisible.CurrentBehaviorType == behaviorType : tryVisible.CurrentBehaviorType > behaviorType)
-                //    list.Add(tryVisible);
-
-                if (target.TryGetComponent(out T tryVisible))
-                {
-					if (exactMatch ? tryVisible.CurrentBehaviorType == behaviorType : tryVisible.CurrentBehaviorType > behaviorType)
-						list.Add(tryVisible);
-                }
-            }
-
-			return list;
-        }
-	}
-
-	public float GetDistanceScalar(Vector3 pos) => 1 + (1 - ((pos - transform.position).magnitude / viewRadius));
 
     #endregion
 
@@ -393,7 +397,11 @@ public class FieldOfView : MonoBehaviour
 		return new Vector2(Mathf.Sin(angleInDegrees * Mathf.Deg2Rad), Mathf.Cos(angleInDegrees * Mathf.Deg2Rad));
 	}
 
-	public struct ViewCastInfo
+    #endregion
+
+    #region Local data types
+
+    public struct ViewCastInfo
 	{
 		public bool hit;
 		public Vector2 point;

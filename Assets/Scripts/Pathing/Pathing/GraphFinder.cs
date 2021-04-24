@@ -13,49 +13,81 @@ public enum IndexPriority
 
 public class GraphFinder : MonoBehaviour
 {
+    #region Data
+
+    // STATIC
+
+    // PUBLIC
+    public static Dictionary<int, (List<MazeCell> all, List<MazeCell> ends)> GraphAreas;
+    public static List<int> FinalGraphIndices;
+    public static Dictionary<int, MazeCell> indexedJunctions = new Dictionary<int, MazeCell>();
+    public static List<(int[] nodes, int[] edges)> cycles = new List<(int[] nodes, int[] edges)>();
+    public static Dictionary<int, (List<MazeCell> placement, float score)> indexedPlacement;
+
+    // PRIVATE
+    static EdgeData[] LabelledGraphConnections;
+    static int maxLoopSearchDepth;
+    static int maxRecursionDepth;
+
+    // INSTANCE
+
+    // PUBLIC
     public Maze maze;
     public Spotfinder spotfinder;
+    public List<KeyValuePair<HashSet<int>, float>> weightedIsolatedAreas;
+    public List<KeyValuePair<int, float>> weightedGraphAreas;
+    public List<KeyValuePair<int, float>> weightedDeadEnds;
 
+    // SERIALIZED
+    [SerializeField, Tooltip("Min max percent thresholds for isolated areas")]
+    MinMaxData areaSizeThreshold;
+    [SerializeField]
+    int loopSearchLimit = 50, recursionLimit = 20;
+    [SerializeField]
+    bool showDebugDisplay = false;
+
+    // PRIVATE
     int index;
     Queue<MazeCell> frontier = new Queue<MazeCell>();
     List<MazeCell> currentArea = new List<MazeCell>();
     List<MazeCell> ends = new List<MazeCell>();
     bool[,] visited;
-    public static Dictionary<int, (List<MazeCell> all, List<MazeCell> ends)> GraphAreas;
-    public static List<int> FinalGraphIndices;
-    public static Dictionary<int, MazeCell> indexedJunctions = new Dictionary<int, MazeCell>();
-    public static List<(int[] nodes, int[] edges)> cycles = new List<(int[] nodes, int[] edges)>();
-    static EdgeData[] LabelledGraphConnections;
-
-    public static Dictionary<int, (List<MazeCell> placement, float score)> indexedPlacement;
-
-    [SerializeField, Tooltip("Min max percent thresholds for isolated areas")]
-    MinMaxData areaSizeThreshold;
     List<HashSet<int>> isolatedAreas = new List<HashSet<int>>();
-    public List<KeyValuePair<HashSet<int>, float>> weightedIsolatedAreas;
-    public List<KeyValuePair<int, float>> weightedGraphAreas;
-    public List<KeyValuePair<int, float>> weightedDeadEnds;
-
-    [SerializeField]
-    int loopSearchLimit = 50, recursionLimit = 20;
-    static int maxLoopSearchDepth;
-    static int maxRecursionDepth;
-
-    public bool HasCycles => cycles.Count > 0;
-
-    [SerializeField]
-    bool showDebugDisplay = false;
-
+    ChartedPath chartedPath;
     // bidirectional BFS search collections
     bool[] fromVisited;
     bool[] toVisited;
     (int node, int graphEdge)[] fromParent;
     (int node, int graphEdge)[] toParent;
+    Dictionary<int, IndexPriority> priorityIndices = new Dictionary<int, IndexPriority>();
 
-    ChartedPath chartedPath;
+    #endregion
+
+    #region MonoBehaviour
+
+    private void Awake()
+    {
+        maxLoopSearchDepth = loopSearchLimit;
+        maxRecursionDepth = recursionLimit;
+
+        //GameManager.MazeGenFinished += Initialize;
+        GameManager.MazeGenFinished += CalculateAllVantageScores;
+    }
+
+    private void OnDisable()
+    {
+        //GameManager.MazeGenFinished -= Initialize;
+        GameManager.MazeGenFinished -= CalculateAllVantageScores;
+    }
+
+    #endregion
+
+    #region Getters and Setters
+
+    public bool HasCycles => cycles.Count > 0;
+
     public ChartedPath ChartedPath => chartedPath;
 
-    Dictionary<int, IndexPriority> priorityIndices = new Dictionary<int, IndexPriority>();
     public void RegisterPriorityIndex(int index, IndexPriority priority)
     {
         if (!priorityIndices.ContainsKey(index))
@@ -74,22 +106,646 @@ public class GraphFinder : MonoBehaviour
         return indices;
     }
 
+    public void CalculateAllVantageScores()
+    {
+        foreach (var cell in AreaFinder.walkableArea)
+            cell.CalculateVantageScore();
+    }
+
+    HashSet<int> GetUnchartedConnections(int index)
+    {
+        var indices = new HashSet<int>();
+
+        for (int i = 0; i < LabelledGraphConnections.Length; i++)
+        {
+            for (int j = 0; j < 2; j++)
+            {
+                if (LabelledGraphConnections[i][j] == index)
+                    indices.Add(LabelledGraphConnections[i][(j + 1) % 2]);
+            }
+        }
+
+        return indices;
+    }
+
+    List<(int node, int edge)> GetChartedConnections(int index)
+    {
+        var connections = new List<(int node, int edge)>();
+
+        for (int i = 0; i < LabelledGraphConnections.Length; i++)
+        {
+            for (int j = 0; j < 2; j++)
+            {
+                if (LabelledGraphConnections[i][j] == index)
+                    connections.Add((LabelledGraphConnections[i][(j + 1) % 2], LabelledGraphConnections[i][2]));
+            }
+        }
+
+        return connections;
+    }
+
+    public int GetJunctionCellCount(int from, int to)
+    {
+        return GetJunctionCells(from, to).Count;
+    }
+
+    public List<MazeCell> GetJunctionCells(int from, int to)
+    {
+        var junctionCells = new List<MazeCell>();
+
+        foreach (var endFrom in GraphAreas[from].ends)
+        {
+            if (GraphAreas[to].ends.Contains(endFrom) && !junctionCells.Contains(endFrom))
+                junctionCells.Add(endFrom);
+        }
+
+        return junctionCells;
+    }
+
+    public int GetJunctionCellCount(int index)
+    {
+        return GetJunctionCells(index).Count;
+    }
+
+    public List<MazeCell> GetJunctionCells(int index)
+    {
+        var junctionCells = new List<MazeCell>();
+
+        foreach (var end in GraphAreas[index].ends)
+            if (end.GraphAreaIndices.Count > 1)
+                junctionCells.Add(end);
+
+        return junctionCells;
+    }
+
+    public int GetConnectedIndexCount(int index)
+    {
+        return GetConnectedIndices(index).Count;
+    }
+
+    public List<int> GetConnectedIndices(int index)
+    {
+        List<int> indices = new List<int>();
+
+        foreach (var cell in GraphAreas[index].ends)
+        {
+            //UnityEngine.Debug.Log($"Searching {cell.gameObject.name} for indices connected except {index}");
+
+            foreach (var key in cell.GraphAreaIndices)
+            {
+                if (key != index && !indices.Contains(key))
+                    indices.Add(key);
+            }
+        }
+
+        return indices;
+    }
+
+    public void AddToGraphArea(int index, List<MazeCell> area, List<MazeCell> ends = null)
+    {
+        if (!GraphAreas.ContainsKey(index))
+        {
+            UnityEngine.Debug.Log($"{gameObject.name} does not have a graph key for {index}");
+            return;
+        }
+
+        var cellsToAdd = new List<MazeCell>();
+        foreach (var cell in area)
+        {
+            if (!GraphAreas[index].all.Contains(cell))
+                cellsToAdd.Add(cell);
+        }
+
+        GraphAreas[index].all.AddRange(cellsToAdd);
+
+
+        if (ends != null)
+        {
+            var endsToAdd = new List<MazeCell>();
+
+            foreach (var cell in ends)
+            {
+                if (!GraphAreas[index].ends.Contains(cell))
+                    endsToAdd.Add(cell);
+            }
+
+            GraphAreas[index].ends.AddRange(endsToAdd);
+        }
+    }
+
+    public int GetSmallestAreaIndex(MazeCell cell, int indexToIgnore = -1)
+    {
+        int lowestIndex = -1;
+
+        // exaggerating value for min check
+        int areaCount = 1000;
+
+        foreach (var key in cell.GraphAreaIndices)
+        {
+            var part = GraphAreas[key];
+
+            if (indexToIgnore > -1 && key == indexToIgnore)
+                continue;
+
+            if (part.all.Count < areaCount)
+            {
+                areaCount = part.all.Count;
+                lowestIndex = key;
+            }
+        }
+
+        if (lowestIndex < 0)
+        {
+            UnityEngine.Debug.Log($"Smallest area index not found for {gameObject.name}");
+            return -1;
+        }
+
+        return lowestIndex;
+    }
+
+    public int GetLargestAreaIndex(MazeCell cell, int indexToIgnore = -1)
+    {
+        int highestIndex = -1;
+
+        // exaggerating value for min check
+        int areaCount = 0;
+
+        foreach (var key in cell.GraphAreaIndices)
+        {
+            var part = GraphAreas[key];
+
+            if (indexToIgnore > -1 && key == indexToIgnore)
+                continue;
+
+            if (part.all.Count > areaCount)
+            {
+                areaCount = part.all.Count;
+                highestIndex = key;
+            }
+        }
+
+        if (highestIndex < 0)
+        {
+            UnityEngine.Debug.Log($"Largest area index not found for {gameObject.name}");
+            return -1;
+        }
+
+        return highestIndex;
+    }
+
+    public int GetRandomAreaIndex(MazeCell cell)
+    {
+        var indices = cell.GetGraphAreaIndices();
+        return indices[GameManager.rngFree.Range(0, indices.Count)];
+    }
+
+    public List<MazeCell> GetConnections(MazeCell cell, bool includeSelf = false)
+    {
+        if (!cell.IsGraphConnection)
+            return new List<MazeCell>(GraphAreas[cell.GetGraphAreaIndices()[0]].ends);
+        else
+        {
+            var connections = new List<MazeCell>();
+
+            foreach (var key in cell.GraphAreaIndices)
+            {
+                foreach (var item in GraphAreas[key].ends)
+                {
+                    if (!includeSelf && item == cell)
+                        continue;
+
+                    connections.Add(item);
+                }
+            }
+
+            return connections;
+        }
+    }
+
+    public List<(MazeCell cell, int graphIndex)> GetLabelledConnections(MazeCell cell, bool includeDeadEnds = true)
+    {
+        if (!cell.IsGraphConnection)
+        {
+            UnityEngine.Debug.Log($"{cell.gameObject.name} is not a graph connection, returning null");
+            return null;
+        }
+
+        var connections = new List<(MazeCell cell, int graphIndex)>();
+
+        foreach (var key in cell.GraphAreaIndices)
+        {
+            foreach (var item in GraphAreas[key].ends)
+            {
+                if (item == cell || (!includeDeadEnds && !item.IsLockedConnection))
+                    continue;
+
+                connections.Add((item, key));
+            }
+        }
+
+        return connections;
+    }
+
+    public List<MazeCell> GetConnections(MazeCell cell, int index, bool includeSelf = false)
+    {
+        if (!cell.IsGraphConnection)
+        {
+            var existingIndex = cell.GetGraphAreaIndices()[0];
+
+            if (index != existingIndex)
+                UnityEngine.Debug.Log($"{gameObject.name} does not belong to {index} returning only available index at {existingIndex}");
+
+            return new List<MazeCell>(GraphAreas[existingIndex].ends);
+        }
+        else
+        {
+            var connections = new List<MazeCell>();
+
+            foreach (var item in GraphAreas[index].ends)
+            {
+                if (!includeSelf && item == cell)
+                    continue;
+
+                connections.Add(item);
+            }
+
+            return connections;
+        }
+    }
+
+    public int GetOtherConnectionCount(MazeCell cell, int index) => GetOtherConnections(cell, index).Count;
+
+    public List<(MazeCell cell, int index)> GetOtherConnections(MazeCell cell, int index, bool getDeadEnds = true)
+    {
+        if (!cell.IsGraphConnection)
+        {
+            int selected = cell.GetGraphAreaIndices()[0];
+            var list = new List<(MazeCell cell, int index)>();
+            foreach (var end in GraphAreas[selected].ends)
+                list.Add((end, selected));
+
+            return list;
+        }
+        else
+        {
+            var connections = new List<(MazeCell cell, int index)>();
+
+            foreach (var key in cell.GraphAreaIndices)
+            {
+                if (index == key)
+                    continue;
+
+
+                foreach (var item in GraphAreas[key].ends)
+                {
+                    if (item == cell || (!getDeadEnds && !item.IsLockedConnection))
+                        continue;
+
+                    connections.Add((item, key));
+                }
+            }
+
+            return connections;
+        }
+    }
+
+    public static int GetAreaCellCount(int index) => GraphAreas[index].all.Count;
+    public static int GetAreaCellCount(List<int> indices)
+    {
+        int total = 0;
+
+        foreach (var area in GraphAreas)
+            if (indices.Contains(area.Key))
+                total += area.Value.all.Count;
+
+        return total;
+    }
+
+    public int GetAreaCellCount(MazeCell cell, int index = -1) => GetAreaCells(cell, index).Count;
+
+    public List<MazeCell> GetAreaCells(MazeCell cell, int index = -1)
+    {
+        if (index == -1)
+        {
+            if (cell.IsJunction)
+                return null;
+
+            return new List<MazeCell>(GraphAreas[cell.GetGraphAreaIndices()[0]].all);
+        }
+        else
+        {
+            if (!cell.GraphAreaIndices.Contains(index))
+                return null;
+
+            return new List<MazeCell>(GraphAreas[index].all);
+        }
+
+    }
+
+    public ChartedPath GetLoop(int index = -1)
+    {
+        int indexToUse = index >= 0 ? index : GameManager.rngFree.Range(0, cycles.Count);
+
+        var cycle = cycles[indexToUse];
+        var waypoints = new MazeCell[cycle.nodes.Length];
+        var graphIndices = new int[cycle.edges.Length];
+
+        for (int i = 0; i < cycle.nodes.Length; i++)
+        {
+            waypoints[i] = indexedJunctions[cycle.nodes[cycle.nodes.Length - 1 - i]];
+            graphIndices[i] = cycle.edges[cycle.edges.Length - 1 - i];
+        }
+
+        return new ChartedPath(waypoints, graphIndices);
+    }
+
+    public ChartedPath GetLoop((int[] nodes, int[] edges) cycle)
+    {
+        var waypoints = new MazeCell[cycle.nodes.Length];
+        var graphIndices = new int[cycle.edges.Length];
+
+        for (int i = 0; i < cycle.nodes.Length; i++)
+        {
+            waypoints[i] = indexedJunctions[cycle.nodes[cycle.nodes.Length - 1 - i]];
+            graphIndices[i] = cycle.edges[cycle.edges.Length - 1 - i];
+        }
+
+        return new ChartedPath(waypoints, graphIndices);
+    }
+
+    public static bool IsDeadEnd(int index)
+    {
+        bool deadEnd = false;
+
+        foreach (var end in GraphAreas[index].ends)
+            if (end.IsDeadEnd)
+            {
+                deadEnd = true;
+                break;
+            }
+
+        return deadEnd;
+    }
+
+    static int GetSharedIndexCount(MazeCell from, MazeCell to) => GetSharedIndices(from, to).Count;
+
+    static List<int> GetSharedIndices(MazeCell from, MazeCell to)
+    {
+        var indices = new List<int>();
+
+        foreach (var index in from.GetGraphAreaIndices())
+            foreach (var otherIndex in to.GetGraphAreaIndices())
+                if (index == otherIndex)
+                    indices.Add(index);
+
+        return indices;
+    }
+
+    public int GetClosestSharedIndex(MazeCell from, MazeCell to)
+    {
+        var indices = new List<int>();
+
+        foreach (var index in from.GetGraphAreaIndices())
+            foreach (var otherIndex in to.GetGraphAreaIndices())
+                if (index == otherIndex)
+                    indices.Add(index);
+
+        if (indices.Count == 0)
+            return -1;
+        else if (indices.Count == 1)
+            return indices[0];
+        else
+        {
+            int closestIndex = -1;
+            int shortestPathCount = 10000;
+
+            foreach (var index in indices)
+            {
+                var path = PathRequestManager.RequestPathImmediate(from, to, index);
+
+                if (path.Count < shortestPathCount || closestIndex == -1)
+                {
+                    closestIndex = index;
+                    shortestPathCount = path.Count;
+                }
+            }
+
+            return closestIndex;
+        }
+    }
+
+    public MazeCell GetSharedJunction(int from, int to)
+    {
+        foreach (var end in GraphAreas[from].ends)
+            foreach (var other in GraphAreas[to].ends)
+                if (end == other)
+                    return end;
+
+        return null;
+    }
+
+    public bool ShareIndex(MazeCell from, MazeCell to)
+    {
+        foreach (var index in from.GraphAreaIndices)
+            foreach (var otherIndex in to.GraphAreaIndices)
+                if (index == otherIndex)
+                    return true;
+
+        return false;
+    }
+
+    public static MazeCell GetRandomCellFromGraphArea(int index)
+    {
+        var cells = GraphAreas[index].all;
+        return cells[GameManager.rngFree.Range(0, cells.Count - 1)];
+    }
+
+    public static MazeCell GetRandomCellFromGraphArea(List<int> indices)
+    {
+        var index = indices[GameManager.rngFree.Range(0, indices.Count)];
+        var cells = GraphAreas[index].all;
+        return cells[GameManager.rngFree.Range(0, cells.Count)];
+    }
+
+    public HashSet<int> GetIsolatedArea() => new HashSet<int>(isolatedAreas[GameManager.rngFree.Range(0, isolatedAreas.Count)]);
+
+    public HashSet<int> GetIsolatedArea(HashSet<int> exclude)
+    {
+        var temp = new List<HashSet<int>>(isolatedAreas);
+        var mark = new HashSet<int>();
+
+        foreach (var t in temp)
+            if (t.Overlaps(exclude))
+            {
+                mark = t;
+                break;
+            }
+
+        temp.Remove(mark);
+
+        return new HashSet<int>(temp[GameManager.rngFree.Range(0, temp.Count)]);
+    }
+
+    public HashSet<int> GetIsolatedArea(List<HashSet<int>> excludes)
+    {
+        var temp = new List<HashSet<int>>(isolatedAreas);
+        var marks = new List<HashSet<int>>();
+
+        foreach (var t in temp)
+        {
+            foreach (var e in excludes)
+            {
+                if (t.Overlaps(e))
+                {
+                    marks.Add(t);
+                    break;
+                }
+            }
+        }
+
+        foreach (var mark in marks)
+            temp.Remove(mark);
+
+        if (temp.Count == 0)
+            return null;
+        else
+            return new HashSet<int>(temp[GameManager.rngFree.Range(0, temp.Count)]);
+    }
+
+    public static float GetGraphAreaWeight(int index) => GraphAreas[index].all.Count / (float)AreaFinder.WalkableCellCount;
+    public static float GetGraphAreaWeight(List<int> indices)
+    {
+        var finalCells = new List<MazeCell>();
+
+        foreach (var index in indices)
+        {
+            foreach (var cell in GraphAreas[index].all)
+                if (!finalCells.Contains(cell))
+                    finalCells.Add(cell);
+        }
+
+        return finalCells.Count / (float)AreaFinder.WalkableCellCount;
+    }
+
+    public List<(HashSet<int> area, int count)> GetMatchingIsolatedAreas(List<int> indicesToMatch)
+    {
+        var areas = new List<(HashSet<int> area, int count)>();
+
+        foreach (var area in isolatedAreas)
+        {
+            int count = 0;
+            bool includes = false;
+
+            foreach (var index in indicesToMatch)
+            {
+                if (area.Contains(index))
+                {
+                    includes = true;
+                    count++;
+                }
+            }
+
+            if (includes)
+                areas.Add((area, count));
+        }
+
+        areas.OrderBy(x => x.count);
+
+        return areas;
+    }
+
+    public List<(ChartedPath loop, int count)> GetMatchingLoops(List<int> indicesToMatch)
+    {
+        var loops = new List<(ChartedPath loop, int count)>();
+
+        foreach (var cycle in cycles)
+        {
+            int count = 0;
+            bool includes = false;
+
+            foreach (var index in indicesToMatch)
+            {
+                if (cycle.edges.Contains(index))
+                {
+                    includes = true;
+                    count++;
+                }
+            }
+
+            if (includes)
+                loops.Add((GetLoop(cycle), count));
+        }
+
+        loops.OrderBy(x => x.count);
+
+        return loops;
+    }
+
+    public int GetIsolatedEdgeIndex(HashSet<int> area)
+    {
+        int edgeIndex = -1;
+
+        foreach (var index in area)
+        {
+
+        }
+
+        return edgeIndex;
+    }
+
+    public HashSet<int> GetFloodCoverage(int startIndex, float coverageLimit)
+    {
+        var final = new HashSet<int> { startIndex };
+
+        Queue<int> candidates = new Queue<int>();
+        var visited = new List<int>();
+
+        var neighbors = GetConnectedIndices(startIndex);
+        neighbors.Shuffle();
+
+        float currentCoverage = GetGraphAreaWeight(startIndex);
+
+        foreach (var neighbor in neighbors)
+            candidates.Enqueue(neighbor);
+
+
+        while (currentCoverage < coverageLimit)
+        {
+            var next = candidates.Dequeue();
+            var nextWeight = GetGraphAreaWeight(next);
+
+            visited.Add(next);
+
+            if (currentCoverage + nextWeight < coverageLimit)
+            {
+                final.Add(next);
+                currentCoverage += nextWeight;
+
+                var others = GetConnectedIndices(next);
+
+                foreach (var other in others)
+                    if (!visited.Contains(other))
+                        candidates.Enqueue(other);
+            }
+            else
+                break;
+        }
+
+        return final;
+    }
+
+    public KeyValuePair<int, float> GetWeightedArea(int index)
+    {
+        foreach (var pair in weightedGraphAreas)
+            if (pair.Key == index)
+                return pair;
+
+        return new KeyValuePair<int, float>(-1, 0);
+    }
+
+    #endregion
+
     #region Graph Search
-
-    private void Awake()
-    {
-        maxLoopSearchDepth = loopSearchLimit;
-        maxRecursionDepth = recursionLimit;
-
-        //GameManager.MazeGenFinished += Initialize;
-        GameManager.MazeGenFinished += CalculateAllVantageScores;
-    }
-
-    private void OnDisable()
-    {
-        //GameManager.MazeGenFinished -= Initialize;
-        GameManager.MazeGenFinished -= CalculateAllVantageScores;
-    }
 
     public void Initialize()
     {
@@ -1008,12 +1664,6 @@ public class GraphFinder : MonoBehaviour
         }
     }
 
-    public void CalculateAllVantageScores()
-    {
-        foreach (var cell in AreaFinder.walkableArea)
-            cell.CalculateVantageScore();
-    }
-
     float CalculateIndexScore(int index, int placedCount)
     {
         //float placed = (float)placedCount / spotfinder.PlacedSpots.Count;
@@ -1216,641 +1866,6 @@ public class GraphFinder : MonoBehaviour
         UnityEngine.Debug.Log(test);
 
         return new ChartedPath(cells.ToArray(), indices.ToArray());
-    }
-
-    HashSet<int> GetUnchartedConnections(int index)
-    {
-        var indices = new HashSet<int>();
-
-        for (int i = 0; i < LabelledGraphConnections.Length; i++)
-        {
-            for (int j = 0; j < 2; j++)
-            {
-                if (LabelledGraphConnections[i][j] == index)
-                    indices.Add(LabelledGraphConnections[i][(j + 1) % 2]);
-            }
-        }
-
-        return indices;
-    }
-
-    List<(int node, int edge)> GetChartedConnections(int index)
-    {
-        var connections = new List<(int node, int edge)>();
-
-        for (int i = 0; i < LabelledGraphConnections.Length; i++)
-        {
-            for (int j = 0; j < 2; j++)
-            {
-                if (LabelledGraphConnections[i][j] == index)
-                    connections.Add((LabelledGraphConnections[i][(j + 1) % 2], LabelledGraphConnections[i][2]));
-            }
-        }
-
-        return connections;
-    }
-
-    #endregion
-
-    #region Getters
-
-    public int GetJunctionCellCount(int from, int to)
-    {
-        return GetJunctionCells(from, to).Count;
-    }
-
-    public List<MazeCell> GetJunctionCells(int from, int to)
-    {
-        var junctionCells = new List<MazeCell>();
-
-        foreach(var endFrom in GraphAreas[from].ends)
-        {
-            if(GraphAreas[to].ends.Contains(endFrom) && !junctionCells.Contains(endFrom))
-                junctionCells.Add(endFrom);
-        }
-
-        return junctionCells;
-    }
-
-    public int GetJunctionCellCount(int index)
-    {
-        return GetJunctionCells(index).Count;
-    }
-
-    public List<MazeCell> GetJunctionCells(int index)
-    {
-        var junctionCells = new List<MazeCell>();
-
-        foreach (var end in GraphAreas[index].ends)
-            if (end.GraphAreaIndices.Count > 1)
-                junctionCells.Add(end);
-
-        return junctionCells;
-    }
-
-    public int GetConnectedIndexCount(int index)
-    {
-        return GetConnectedIndices(index).Count;
-    }
-
-    public List<int> GetConnectedIndices(int index)
-    {
-        List<int> indices = new List<int>();
-
-        foreach(var cell in GraphAreas[index].ends)
-        {
-            //UnityEngine.Debug.Log($"Searching {cell.gameObject.name} for indices connected except {index}");
-
-            foreach (var key in cell.GraphAreaIndices)
-            {
-                if (key != index && !indices.Contains(key))
-                    indices.Add(key);
-            }
-        }
-
-        return indices;
-    }
-
-    public void AddToGraphArea(int index, List<MazeCell> area, List<MazeCell> ends = null)
-    {
-        if (!GraphAreas.ContainsKey(index))
-        {
-            UnityEngine.Debug.Log($"{gameObject.name} does not have a graph key for {index}");
-            return;
-        }
-
-        var cellsToAdd = new List<MazeCell>();
-        foreach (var cell in area)
-        {
-            if (!GraphAreas[index].all.Contains(cell))
-                cellsToAdd.Add(cell);
-        }
-
-        GraphAreas[index].all.AddRange(cellsToAdd);
-
-
-        if (ends != null)
-        {
-            var endsToAdd = new List<MazeCell>();
-
-            foreach (var cell in ends)
-            {
-                if (!GraphAreas[index].ends.Contains(cell))
-                    endsToAdd.Add(cell);
-            }
-
-            GraphAreas[index].ends.AddRange(endsToAdd);
-        }
-    }
-
-    public int GetSmallestAreaIndex(MazeCell cell, int indexToIgnore = -1)
-    {
-        int lowestIndex = -1;
-
-        // exaggerating value for min check
-        int areaCount = 1000;
-
-        foreach (var key in cell.GraphAreaIndices)
-        {
-            var part = GraphAreas[key];
-
-            if (indexToIgnore > -1 && key == indexToIgnore)
-                continue;
-
-            if (part.all.Count < areaCount)
-            {
-                areaCount = part.all.Count;
-                lowestIndex = key;
-            }
-        }
-
-        if (lowestIndex < 0)
-        {
-            UnityEngine.Debug.Log($"Smallest area index not found for {gameObject.name}");
-            return -1;
-        }
-
-        return lowestIndex;
-    }
-
-    public int GetLargestAreaIndex(MazeCell cell, int indexToIgnore = -1)
-    {
-        int highestIndex = -1;
-
-        // exaggerating value for min check
-        int areaCount = 0;
-
-        foreach (var key in cell.GraphAreaIndices)
-        {
-            var part = GraphAreas[key];
-
-            if (indexToIgnore > -1 && key == indexToIgnore)
-                continue;
-
-            if (part.all.Count > areaCount)
-            {
-                areaCount = part.all.Count;
-                highestIndex = key;
-            }
-        }
-
-        if (highestIndex < 0)
-        {
-            UnityEngine.Debug.Log($"Largest area index not found for {gameObject.name}");
-            return -1;
-        }
-
-        return highestIndex;
-    }
-
-    public int GetRandomAreaIndex(MazeCell cell)
-    {
-        var indices = cell.GetGraphAreaIndices();
-        return indices[GameManager.rngFree.Range(0, indices.Count)];
-    }
-
-    public List<MazeCell> GetConnections(MazeCell cell, bool includeSelf = false)
-    {
-        if (!cell.IsGraphConnection)
-            return new List<MazeCell>(GraphAreas[cell.GetGraphAreaIndices()[0]].ends);
-        else
-        {
-            var connections = new List<MazeCell>();
-
-            foreach (var key in cell.GraphAreaIndices)
-            {
-                foreach(var item in GraphAreas[key].ends)
-                {
-                    if (!includeSelf && item == cell)
-                        continue;
-
-                    connections.Add(item);
-                }
-            }
-
-            return connections;
-        }
-    }
-
-    public List<(MazeCell cell, int graphIndex)> GetLabelledConnections(MazeCell cell, bool includeDeadEnds = true)
-    {
-        if (!cell.IsGraphConnection)
-        {
-            UnityEngine.Debug.Log($"{cell.gameObject.name} is not a graph connection, returning null");
-            return null;
-        }
-
-        var connections = new List<(MazeCell cell, int graphIndex)>();
-
-        foreach(var key in cell.GraphAreaIndices)
-        {
-            foreach(var item in GraphAreas[key].ends)
-            {
-                if (item == cell || (!includeDeadEnds && !item.IsLockedConnection))
-                    continue;
-
-                connections.Add((item, key));
-            }
-        }
-
-        return connections;
-    }
-
-    public List<MazeCell> GetConnections(MazeCell cell, int index, bool includeSelf = false)
-    {
-        if (!cell.IsGraphConnection)
-        {
-            var existingIndex = cell.GetGraphAreaIndices()[0];
-
-            if (index != existingIndex)
-                UnityEngine.Debug.Log($"{gameObject.name} does not belong to {index} returning only available index at {existingIndex}");
-
-            return new List<MazeCell>(GraphAreas[existingIndex].ends);
-        }
-        else
-        {
-            var connections = new List<MazeCell>();
-
-            foreach (var item in GraphAreas[index].ends)
-            {
-                if (!includeSelf && item == cell)
-                    continue;
-
-                connections.Add(item);
-            }
-
-            return connections;
-        }
-    }
-
-    public int GetOtherConnectionCount(MazeCell cell, int index) => GetOtherConnections(cell, index).Count;
-
-    public List<(MazeCell cell, int index)> GetOtherConnections(MazeCell cell, int index, bool getDeadEnds = true)
-    {
-        if (!cell.IsGraphConnection)
-        {
-            int selected = cell.GetGraphAreaIndices()[0];
-            var list = new List<(MazeCell cell, int index)>();
-            foreach (var end in GraphAreas[selected].ends)
-                list.Add((end, selected));
-
-            return list;
-        }
-        else
-        {
-            var connections = new List<(MazeCell cell, int index)>();
-
-            foreach (var key in cell.GraphAreaIndices)
-            {
-                if (index == key)
-                    continue;
-
-
-                foreach (var item in GraphAreas[key].ends)
-                {
-                    if (item == cell || (!getDeadEnds && !item.IsLockedConnection))
-                        continue;
-
-                    connections.Add((item, key));
-                }
-            }
-
-            return connections;
-        }
-    }
-
-    public static int GetAreaCellCount(int index) => GraphAreas[index].all.Count;
-    public static int GetAreaCellCount(List<int> indices)
-    {
-        int total = 0;
-
-        foreach (var area in GraphAreas)
-            if (indices.Contains(area.Key))
-                total += area.Value.all.Count;
-
-        return total;
-    }
-
-    public int GetAreaCellCount(MazeCell cell, int index = -1) => GetAreaCells(cell, index).Count;
-
-    public List<MazeCell> GetAreaCells(MazeCell cell, int index = -1)
-    {
-        if (index == -1)
-        {
-            if (cell.IsJunction)
-                return null;
-
-            return new List<MazeCell>(GraphAreas[cell.GetGraphAreaIndices()[0]].all);
-        }
-        else
-        {
-            if (!cell.GraphAreaIndices.Contains(index))
-                return null;
-
-            return new List<MazeCell>(GraphAreas[index].all);
-        }
-
-    }
-
-    public ChartedPath GetLoop(int index = -1)
-    {
-        int indexToUse = index >= 0 ? index : GameManager.rngFree.Range(0, cycles.Count);
-
-        var cycle = cycles[indexToUse];
-        var waypoints = new MazeCell[cycle.nodes.Length];
-        var graphIndices = new int[cycle.edges.Length];
-
-        for(int i = 0; i < cycle.nodes.Length; i++)
-        {
-            waypoints[i] = indexedJunctions[cycle.nodes[cycle.nodes.Length - 1 - i]];
-            graphIndices[i] = cycle.edges[cycle.edges.Length - 1 - i];
-        }
-
-        return new ChartedPath(waypoints, graphIndices);
-    }
-
-    public ChartedPath GetLoop((int[] nodes, int[] edges) cycle)
-    {
-        var waypoints = new MazeCell[cycle.nodes.Length];
-        var graphIndices = new int[cycle.edges.Length];
-
-        for (int i = 0; i < cycle.nodes.Length; i++)
-        {
-            waypoints[i] = indexedJunctions[cycle.nodes[cycle.nodes.Length - 1 - i]];
-            graphIndices[i] = cycle.edges[cycle.edges.Length - 1 - i];
-        }
-
-        return new ChartedPath(waypoints, graphIndices);
-    }
-
-    public static bool IsDeadEnd(int index)
-    {
-        bool deadEnd = false;
-
-        foreach (var end in GraphAreas[index].ends)
-            if (end.IsDeadEnd)
-            {
-                deadEnd = true;
-                break;
-            }
-
-        return deadEnd;
-    }
-
-    static int GetSharedIndexCount(MazeCell from, MazeCell to) => GetSharedIndices(from, to).Count;
-
-    static List<int> GetSharedIndices(MazeCell from, MazeCell to)
-    {
-        var indices = new List<int>();
-
-        foreach (var index in from.GetGraphAreaIndices())
-            foreach (var otherIndex in to.GetGraphAreaIndices())
-                if (index == otherIndex)
-                    indices.Add(index);
-
-        return indices;
-    }
-
-    public int GetClosestSharedIndex(MazeCell from, MazeCell to)
-    {
-        var indices = new List<int>();
-
-        foreach (var index in from.GetGraphAreaIndices())
-            foreach (var otherIndex in to.GetGraphAreaIndices())
-                if (index == otherIndex)
-                    indices.Add(index);
-
-        if (indices.Count == 0)
-            return -1;
-        else if (indices.Count == 1)
-            return indices[0];
-        else
-        {
-            int closestIndex = -1;
-            int shortestPathCount = 10000;
-
-            foreach (var index in indices)
-            {
-                var path = PathRequestManager.RequestPathImmediate(from, to, index);
-
-                if (path.Count < shortestPathCount || closestIndex == -1)
-                {
-                    closestIndex = index;
-                    shortestPathCount = path.Count;
-                }
-            }
-
-            return closestIndex;
-        }
-    }
-
-    public MazeCell GetSharedJunction(int from, int to)
-    {
-        foreach (var end in GraphAreas[from].ends)
-            foreach (var other in GraphAreas[to].ends)
-                if (end == other)
-                    return end;
-
-        return null;
-    }
-
-    public bool ShareIndex(MazeCell from, MazeCell to)
-    {
-        foreach (var index in from.GraphAreaIndices)
-            foreach (var otherIndex in to.GraphAreaIndices)
-                if (index == otherIndex)
-                    return true;
-
-        return false;
-    }
-
-    public static MazeCell GetRandomCellFromGraphArea(int index)
-    {
-        var cells = GraphAreas[index].all;
-        return cells[GameManager.rngFree.Range(0, cells.Count - 1)];
-    }
-
-    public static MazeCell GetRandomCellFromGraphArea(List<int> indices)
-    {
-        var index = indices[GameManager.rngFree.Range(0, indices.Count)];
-        var cells = GraphAreas[index].all;
-        return cells[GameManager.rngFree.Range(0, cells.Count)];
-    }
-
-    public HashSet<int> GetIsolatedArea() => new HashSet<int>(isolatedAreas[GameManager.rngFree.Range(0, isolatedAreas.Count)]);
-
-    public HashSet<int> GetIsolatedArea(HashSet<int> exclude)
-    {
-        var temp = new List<HashSet<int>>(isolatedAreas);
-        var mark = new HashSet<int>();
-
-        foreach(var t in temp)
-            if (t.Overlaps(exclude))
-            {
-                mark = t;
-                break;
-            }
-
-        temp.Remove(mark);
-
-        return new HashSet<int>(temp[GameManager.rngFree.Range(0, temp.Count)]);
-    }
-
-    public HashSet<int> GetIsolatedArea(List<HashSet<int>> excludes)
-    {
-        var temp = new List<HashSet<int>>(isolatedAreas);
-        var marks = new List<HashSet<int>>();
-
-        foreach (var t in temp)
-        {
-            foreach(var e in excludes)
-            {
-                if (t.Overlaps(e))
-                {
-                    marks.Add(t);
-                    break;
-                }
-            }
-        }
-
-        foreach(var mark in marks)
-            temp.Remove(mark);
-
-        if (temp.Count == 0)
-            return null;
-        else
-            return new HashSet<int>(temp[GameManager.rngFree.Range(0, temp.Count)]);
-    }
-
-    public static float GetGraphAreaWeight(int index) => GraphAreas[index].all.Count / (float)AreaFinder.WalkableCellCount;
-    public static float GetGraphAreaWeight(List<int> indices)
-    {
-        var finalCells = new List<MazeCell>();
-
-        foreach(var index in indices)
-        {
-            foreach (var cell in GraphAreas[index].all)
-                if (!finalCells.Contains(cell))
-                    finalCells.Add(cell);
-        }
-
-        return finalCells.Count / (float)AreaFinder.WalkableCellCount;
-    }
-
-    public List<(HashSet<int> area, int count)> GetMatchingIsolatedAreas(List<int> indicesToMatch)
-    {
-        var areas = new List<(HashSet<int> area, int count)>();
-
-        foreach(var area in isolatedAreas)
-        {
-            int count = 0;
-            bool includes = false;
-
-            foreach(var index in indicesToMatch)
-            {
-                if (area.Contains(index))
-                {
-                    includes = true;
-                    count++;
-                }
-            }
-
-            if (includes)
-                areas.Add((area, count));
-        }
-
-        areas.OrderBy(x => x.count);
-
-        return areas;
-    }
-
-    public List<(ChartedPath loop, int count)> GetMatchingLoops(List<int> indicesToMatch)
-    {
-        var loops = new List<(ChartedPath loop, int count)>();
-
-        foreach (var cycle in cycles)
-        {
-            int count = 0;
-            bool includes = false;
-
-            foreach (var index in indicesToMatch)
-            {
-                if (cycle.edges.Contains(index))
-                {
-                    includes = true;
-                    count++;
-                }
-            }
-
-            if(includes)
-                loops.Add((GetLoop(cycle), count));
-        }
-
-        loops.OrderBy(x => x.count);
-
-        return loops;
-    }
-
-    public int GetIsolatedEdgeIndex(HashSet<int> area)
-    {
-        int edgeIndex = -1;
-
-        foreach(var index in area)
-        {
-
-        }
-
-        return edgeIndex;
-    }
-
-    public HashSet<int> GetFloodCoverage(int startIndex, float coverageLimit)
-    {
-        var final = new HashSet<int> { startIndex };
-
-        Queue<int> candidates = new Queue<int>();
-        var visited = new List<int>();
-
-        var neighbors = GetConnectedIndices(startIndex);
-        neighbors.Shuffle();
-
-        float currentCoverage = GetGraphAreaWeight(startIndex);
-
-        foreach (var neighbor in neighbors)   
-            candidates.Enqueue(neighbor);
-        
-
-        while(currentCoverage < coverageLimit)
-        {
-            var next = candidates.Dequeue();
-            var nextWeight = GetGraphAreaWeight(next);
-
-            visited.Add(next);
-
-            if (currentCoverage + nextWeight < coverageLimit)
-            {
-                final.Add(next);
-                currentCoverage += nextWeight;
-
-                var others = GetConnectedIndices(next);
-
-                foreach (var other in others)
-                    if (!visited.Contains(other))
-                        candidates.Enqueue(other);
-            }
-            else
-                break;
-        }
-
-        return final;
-    }
-
-    public KeyValuePair<int, float> GetWeightedArea(int index)
-    {
-        foreach (var pair in weightedGraphAreas)
-            if (pair.Key == index)
-                return pair;
-
-        return new KeyValuePair<int, float>(-1, 0);
     }
 
     #endregion
@@ -2090,6 +2105,10 @@ public class GraphFinder : MonoBehaviour
 
     #endregion
 
+    #region Editor
+
+#if UNITY_EDITOR
+
     void TestAreas()
     {
         //foreach(var area in GraphAreas)
@@ -2242,8 +2261,8 @@ public class GraphFinder : MonoBehaviour
         if (GUI.Button(new Rect(10, 10, 80, 60), "Test Search"))
             TestAreas();
 
-        if (GUI.Button(new Rect(10, 70, 80, 60), "Vantage"))
-            CalculateAllVantageScores();
+        //if (GUI.Button(new Rect(10, 70, 80, 60), "Vantage"))
+        //    CalculateAllVantageScores();
 
         //fromIndex = GUI.TextField(new Rect(90, 70, 20, 60), fromIndex);
         //toIndex = GUI.TextField(new Rect(110, 70, 20, 60), toIndex);
@@ -2257,4 +2276,8 @@ public class GraphFinder : MonoBehaviour
         //    BiDirSearch(a, b);
         //}
     }
+
+#endif
+
+    #endregion
 }

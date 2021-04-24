@@ -7,40 +7,49 @@ using System.Threading;
 
 public abstract class Character : MonoBehaviour
 {
-    [Header("Character Parameters")]
+    #region Data
 
-    protected MazeCell currentCell, lastCell;
+    // STATIC
+
+    // PRIVATE
+    readonly static int cellLayerMask = 1 << 10;
+
+    // INSTANCE
+
+    // PUBLIC
     public MazeCell CurrentCell { get => currentCell; private set => currentCell = value; }
     public MazeCell LastCell { get => lastCell; private set => lastCell = value; }
-    readonly static int cellLayerMask = 1 << 10;
+    public bool ShouldRun { get; set; }
+    public List<MazeCell> CurrentPath => currentPath;
+    public int maxTravelDistance, distanceTravelled;
+    [HideInInspector] public Transform aim; // used if Character has aim for LookAt
+    [HideInInspector] public bool AimOverride { get; set; } = false;
+    [HideInInspector] public Transform aimOverrideTarget;
+    public Action PositionChange;
+    public CancellationToken lifetimeToken;
+
+    // PROTECTED
+    protected MazeCell currentCell, lastCell;
     protected Collider2D[] posHits;
     protected Collider2D previousHit;
+    protected float currentSpeed;
+    protected Quaternion derivative;
+    protected float currentTurnSpeed;
+    protected bool isMoving = false;
+    protected MazeCell currentTargetCell, nextTargetCell;
+    protected List<MazeCell> currentPath;
+    protected CancellationTokenSource moveTokenSource = new CancellationTokenSource();
+
+    // SERIALIZED
+    [Header("Character Parameters")]
     [SerializeField] protected bool isOnGrid = true;
     [Range(0f, 1f), SerializeField] protected float pathDriftMultiplier = 0.2f;
     [SerializeField] protected MinMaxData lagPercent;
     [SerializeField] protected float cutCornerPercent = 0.15f;
     [SerializeField] protected MinMaxData speed;
-    protected float currentSpeed;
-    protected Quaternion derivative;
     [SerializeField] protected MinMaxData turnSpeed;
-    protected float currentTurnSpeed;
-    public bool ShouldRun { get; set; }
-    protected bool isMoving = false;
-    protected MazeCell currentTargetCell, nextTargetCell;
-    protected List<MazeCell> currentPath;
-    public List<MazeCell> CurrentPath => currentPath;
 
-    public int maxTravelDistance, distanceTravelled;
-
-    [HideInInspector] public Transform aim; // used if Character has aim for LookAt
-    [HideInInspector] public bool AimOverride { get; set; } = false;
-    [HideInInspector] public Transform aimOverrideTarget;
-
-    public Action PositionChange;
-
-    //UniTask Async
-    public CancellationToken lifetimeToken;
-    protected CancellationTokenSource moveTokenSource = new CancellationTokenSource();
+    #endregion
 
     #region MonoBehaviour
 
@@ -71,6 +80,8 @@ public abstract class Character : MonoBehaviour
     }
 
     #endregion
+
+    #region Track and Notify
 
     bool TrackPosition()
     {
@@ -115,6 +126,8 @@ public abstract class Character : MonoBehaviour
     }
 
     protected abstract void HandleNotification(MazeCell cell, CellNotificationData data);
+
+    #endregion
 
     #region Movement
 

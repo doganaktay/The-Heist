@@ -8,35 +8,32 @@ using Cysharp.Threading.Tasks;
 
 public class GameManager : MonoBehaviour
 {
-	//[Header("Grid Setup")]
+    #region Data
 
-	[SerializeField] int gridSizeX;
-	[SerializeField] int gridSizeY;
-	[SerializeField] float cellSizeX;
-	[SerializeField] float cellSizeY;
+	// STATIC
+
+	// PUBLIC
 	public static float CellDiagonal;
 	public static int CellCount;
-
-	//[Header("Parameter scaling")]
-
-	[SerializeField] float parameterDeviation;
 	public static float ParameterDeviation { get; private set; }
-	[SerializeField] MinMaxData biasMultipliers;
 	public static MinMaxData BiasMultipliers { get; private set; }
-
-	// RNG
-	//[Header("RNG")]
-
-	public bool reuseSeed = true;
-	public bool seedFromSave = false;
-	List<uint> savedSeeds;
-
-	public uint seed = 1;
 	public static RNG rngFree;
 	public static RNG rngSeeded;
+	public static Player player;
+	public static MazeCell StartCell => startCell;
+	public static MazeCell EndCell => endCell;
+	public static Action MazeGenFinished;
 
-	//[Header("References")]
+	// PRIVATE
+	private static MazeCell startCell, endCell;
 
+	// INSTANCE
+
+	// PUBLIC
+	public bool reuseSeed = true;
+	public bool seedFromSave = false;
+	public uint seed = 1;
+	// references
 	public DControl touchControl;
 	public Trajectory trajectory;
 	public PhysicsSim physicsSim;
@@ -51,16 +48,24 @@ public class GameManager : MonoBehaviour
 	public CCTV cctv;
 	public TextOverlay textOverlay;
 	public Player playerPrefab;
-	public static Player player;
 	public Maze mazePrefab;
-	private Maze mazeInstance;
 	public GameObject layout, spawnedObjects, cctvHolder;
 
-	private static MazeCell startCell, endCell;
-	public static MazeCell StartCell => startCell;
-	public static MazeCell EndCell => endCell;
+	// SERIALIZED
+    [SerializeField] int gridSizeX;
+	[SerializeField] int gridSizeY;
+	[SerializeField] float cellSizeX;
+	[SerializeField] float cellSizeY;
+	[SerializeField] float parameterDeviation;
+	[SerializeField] MinMaxData biasMultipliers;
 
-	public static Action MazeGenFinished;
+	// PRIVATE
+	List<uint> savedSeeds;
+	private Maze mazeInstance;
+
+    #endregion
+
+    #region MonoBehaviour
 
     private void Awake()
     {
@@ -80,8 +85,11 @@ public class GameManager : MonoBehaviour
 		}
 	}
 
+    #endregion
 
-	private async UniTaskVoid BeginGame()
+    #region Build Level
+
+    private async UniTaskVoid BeginGame()
 	{
 		// generate maze
 		mazeInstance = Instantiate(mazePrefab);
@@ -251,9 +259,11 @@ public class GameManager : MonoBehaviour
 		BeginGame().Forget();
 	}
 
-	#region RNG
+    #endregion
 
-	void InitRNG()
+    #region RNG
+
+    void InitRNG()
     {
         rngFree = new RNG((uint)DateTime.Now.Ticks);
 

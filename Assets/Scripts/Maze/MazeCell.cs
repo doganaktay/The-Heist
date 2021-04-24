@@ -7,20 +7,33 @@ using System.Linq;
 
 public class MazeCell : FastPriorityQueueNode
 {
-	public IntVector2 pos;
+    #region Data
+
+	// INSTANCE
+
+	// PUBLIC
+    public IntVector2 pos;
 	public int areaIndex;
 	public int state = 0;
 	public int row, col;
-
 	public TextMeshPro cellText;
 	public Material mat;
-	Color initialColor;
-
 	public bool[] visited;
 	public bool searched = false;
+	public bool Occupied { get; set; } = false;
+	public float VantageScore { get; private set; }
+    public MazeCell[] exploredFrom;
+	public int[] distanceFromStart;
+	public int searchSize = 10; // should be same as search size in pathfinder script
+	public bool isPlaceable = false; // used by spotfinder to find available placement spots
+	public int placeableNeighbourCount = 0;
+	public int travelCost; // for A*
+	[HideInInspector] public bool HasCCTVCoverage { get; set; } = false;
 
-	[SerializeField]
-	PerObjectMaterialProperties props;
+	// used for bit ops for spot placement and propagation
+	public int cardinalBits = 0;
+	public int diagonalBits = 0;
+	public int allNeighbourBits = 0;
 
 	// actually connected cells
 	public HashSet<MazeCell> connectedCells = new HashSet<MazeCell>();
@@ -29,37 +42,35 @@ public class MazeCell : FastPriorityQueueNode
 	// cells only connected through special connections through walls (like grates)
 	public HashSet<MazeCell> specialConnectedCells = new HashSet<MazeCell>();
 
-	public bool Occupied { get; set; } = false;
-
-	public float VantageScore { get; private set; }
-
-    #region MonoBehaviour
-
-    public MazeCell[] exploredFrom;
-	public int[] distanceFromStart;
-
-	public int searchSize = 10; // should be same as search size in pathfinder script
-
-	public bool isPlaceable = false; // used by spotfinder to find available placement spots
-	public int placeableNeighbourCount = 0;
-
-	// used for bit ops for spot placement and propagation
-	public int cardinalBits = 0;
-	public int diagonalBits = 0;
-	public int allNeighbourBits = 0;
-
-	List<Color> requestedIndicatorColors = new List<Color>();
-
-	[HideInInspector]
-	public bool HasCCTVCoverage { get; set; } = false;
-
 	// for keeping track of items placed on cell
 	public Dictionary<PlaceableItemType, PlaceableItem> placedItems = new Dictionary<PlaceableItemType, PlaceableItem>();
 
-	// for A*
-	public int travelCost;
+	// Graph data
+	public bool IsGraphConnection { get; set; }
+	public bool IsLockedConnection { get; set; } = false;
+	public bool IsDeadEnd => connectedCells.Count == 1;
+	public List<int> GraphAreaIndices = new List<int>();
+	public List<int> GetGraphAreaIndices() => GraphAreaIndices;
+	public int GraphAreaCount => GraphAreaIndices.Count;
+	public bool IsJunction => IsGraphConnection && GraphAreaIndices.Count > 1;
+	public int EndIndex { get; set; } = -1;
+	public int DeadConnectionCount { get; set; } = 0;
+	public bool IsUnloopable { get; set; } = false;
+	public int LastIndexAddedToQueue { get; set; } = -1;
+	public List<KeyValuePair<MazeCell, int>> MeasuredEnds = new List<KeyValuePair<MazeCell, int>>();
 
+	// SERIALIZED
+	[SerializeField] PerObjectMaterialProperties props;
+
+	// PRIVATE
+	Color initialColor;
+	List<Color> requestedIndicatorColors = new List<Color>();
 	private MazeCellEdge[] edges = new MazeCellEdge[MazeDirections.Count];
+	int unexploredDirectionCount = -1;
+
+    #endregion
+
+    #region MonoBehaviour
 
     void Awake()
     {
@@ -72,22 +83,6 @@ public class MazeCell : FastPriorityQueueNode
 
 	#region Graph
 
-	// for use in identifying corridors and islands
-	public bool IsGraphConnection { get; set; }
-	public bool IsLockedConnection { get; set; } = false;
-	public bool IsDeadEnd => connectedCells.Count == 1;
-	public List<int> GraphAreaIndices = new List<int>();
-	public List<int> GetGraphAreaIndices() => GraphAreaIndices;
-	public int GraphAreaCount => GraphAreaIndices.Count;
-	public bool IsJunction => IsGraphConnection && GraphAreaIndices.Count > 1;
-	public int EndIndex { get; set; } = -1;
-	public int DeadConnectionCount { get; set; } = 0;
-	public bool IsUnloopable { get; set; } = false;
-
-	public List<KeyValuePair<MazeCell, int>> MeasuredEnds = new List<KeyValuePair<MazeCell, int>>();
-
-	public int LastIndexAddedToQueue { get; set; } = -1;
-	int unexploredDirectionCount = -1;
 	public int UnexploredDirectionCount
 	{
 		get
