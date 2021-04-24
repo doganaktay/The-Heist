@@ -126,13 +126,18 @@ public static class Extensions
     public static float GetLookAngle(this Vector3 direction)
     {
         var dirNormalized = direction.normalized;
-        return Mathf.Atan2(dirNormalized.x, dirNormalized.y) * Mathf.Rad2Deg;
+        return Mathf.Atan2(dirNormalized.y, dirNormalized.x) * Mathf.Rad2Deg;
     }
 
     public static float GetLookAngle(this Vector2 direction)
     {
         var dirNormalized = direction.normalized;
-        return Mathf.Atan2(dirNormalized.x, dirNormalized.y) * Mathf.Rad2Deg;
+        return Mathf.Atan2(dirNormalized.y, dirNormalized.x) * Mathf.Rad2Deg;
+    }
+
+    public static Vector2 DirectionFromAngle(this float globalAngleInDegrees)
+    {
+        return new Vector2(Mathf.Sin(globalAngleInDegrees* Mathf.Deg2Rad), Mathf.Cos(globalAngleInDegrees * Mathf.Deg2Rad));
     }
 
     public static Color WithAlpha(this Color color, float alpha)

@@ -29,7 +29,12 @@ public struct IntVector2
 		return new Vector2(vec.x, vec.y);
     }
 
-    public override bool Equals(object obj) => obj is IntVector2 i && this == i;
+	public static implicit operator IntVector2(Vector2 vec)
+	{
+		return new IntVector2((int)vec.x, (int)vec.y);
+	}
+
+	public override bool Equals(object obj) => obj is IntVector2 i && this == i;
 	public override int GetHashCode() => x.GetHashCode() ^ y.GetHashCode();
     public static bool operator ==(IntVector2 a, IntVector2 b) => a.x == b.x && a.y == b.y;
 	public static bool operator !=(IntVector2 a, IntVector2 b) => a.x != b.x || a.y != b.y;

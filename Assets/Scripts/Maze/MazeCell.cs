@@ -29,7 +29,46 @@ public class MazeCell : FastPriorityQueueNode
 	// cells only connected through special connections through walls (like grates)
 	public HashSet<MazeCell> specialConnectedCells = new HashSet<MazeCell>();
 
-	public List<IntVector2> postDirections;
+	public bool Occupied { get; set; } = false;
+
+	public float VantageScore { get; private set; }
+
+    #region MonoBehaviour
+
+    public MazeCell[] exploredFrom;
+	public int[] distanceFromStart;
+
+	public int searchSize = 10; // should be same as search size in pathfinder script
+
+	public bool isPlaceable = false; // used by spotfinder to find available placement spots
+	public int placeableNeighbourCount = 0;
+
+	// used for bit ops for spot placement and propagation
+	public int cardinalBits = 0;
+	public int diagonalBits = 0;
+	public int allNeighbourBits = 0;
+
+	List<Color> requestedIndicatorColors = new List<Color>();
+
+	[HideInInspector]
+	public bool HasCCTVCoverage { get; set; } = false;
+
+	// for keeping track of items placed on cell
+	public Dictionary<PlaceableItemType, PlaceableItem> placedItems = new Dictionary<PlaceableItemType, PlaceableItem>();
+
+	// for A*
+	public int travelCost;
+
+	private MazeCellEdge[] edges = new MazeCellEdge[MazeDirections.Count];
+
+    void Awake()
+    {
+        visited = new bool[searchSize];
+		exploredFrom = new MazeCell[searchSize];
+		distanceFromStart = new int[searchSize];
+    }
+
+	#endregion
 
 	#region Graph
 
@@ -92,21 +131,21 @@ public class MazeCell : FastPriorityQueueNode
 
 	public void SetGraphArea(int index)
 	{
-		if(!GraphAreaIndices.Contains(index))
+		if (!GraphAreaIndices.Contains(index))
 			GraphAreaIndices.Add(index);
 	}
-	
+
 
 	public void RemoveGraphArea(int index)
-    {
+	{
 		if (GraphAreaIndices.Contains(index))
 			GraphAreaIndices.Remove(index);
-    }
+	}
 
 	public void SetDistanceToJunctions(List<MazeCell> ends)
-    {
-		foreach(var end in ends)
-        {
+	{
+		foreach (var end in ends)
+		{
 			if (end == this)
 				continue;
 
@@ -117,19 +156,19 @@ public class MazeCell : FastPriorityQueueNode
 		}
 
 		MeasuredEnds = MeasuredEnds.OrderBy(x => x.Value).ToList();
-    }
+	}
 
 	public MazeCell GetClosestJunction() => MeasuredEnds[0].Key;
 	public MazeCell GetClosestJunction(MazeCell junctionToAvoid)
-    {
-		for(int i = 0; i < MeasuredEnds.Count; i++)
-        {
+	{
+		for (int i = 0; i < MeasuredEnds.Count; i++)
+		{
 			if (MeasuredEnds[i].Key != junctionToAvoid)
 				return MeasuredEnds[i].Key;
 		}
 
 		return null;
-    }
+	}
 	public MazeCell GetFarthestJunction() => MeasuredEnds[MeasuredEnds.Count - 1].Key;
 	public MazeCell GetFarthestJunction(MazeCell junctionToAvoid)
 	{
@@ -143,73 +182,67 @@ public class MazeCell : FastPriorityQueueNode
 	}
 
 	public bool HasGraphIndex(int index)
-    {
-		foreach(var graphIndex in GetGraphAreaIndices())
-        {
+	{
+		foreach (var graphIndex in GetGraphAreaIndices())
+		{
 			if (graphIndex == index)
 				return true;
-        }
+		}
 
 		return false;
-    }
+	}
 
 	public int GetJunctionDistance(MazeCell other)
-    {
-		for(int i = 0; i < MeasuredEnds.Count; i++)
-        {
+	{
+		for (int i = 0; i < MeasuredEnds.Count; i++)
+		{
 			if (MeasuredEnds[i].Key == other)
 				return MeasuredEnds[i].Value;
 		}
 
 		return -1;
-    }
+	}
 
 	public float GetJunctionDistanceAverage()
-    {
+	{
 		int total = 0;
 
 		for (int i = 0; i < MeasuredEnds.Count; i++)
 			total += MeasuredEnds[i].Value;
 
 		return (float)total / MeasuredEnds.Count;
-    }
+	}
 
-    #endregion
-
-    public MazeCell[] exploredFrom;
-	public int[] distanceFromStart;
-
-	public int searchSize = 10; // should be same as search size in pathfinder script
-
-	public bool isPlaceable = false; // used by spotfinder to find available placement spots
-	public int placeableNeighbourCount = 0;
-
-	// used for bit ops for spot placement and propagation
-	public int cardinalBits = 0;
-	public int diagonalBits = 0;
-	public int allNeighbourBits = 0;
-
-	List<Color> requestedIndicatorColors = new List<Color>();
-
-	[HideInInspector]
-	public bool HasCCTVCoverage { get; set; } = false;
-
-	// for keeping track of items placed on cell
-	public Dictionary<PlaceableItemType, PlaceableItem> placedItems = new Dictionary<PlaceableItemType, PlaceableItem>();
-
-	// for A*
-	public int travelCost;
-
-	private MazeCellEdge[] edges = new MazeCellEdge[MazeDirections.Count];
-
-    void Awake()
+	public void CalculateVantageScore()
     {
-        visited = new bool[searchSize];
-		exploredFrom = new MazeCell[searchSize];
-		distanceFromStart = new int[searchSize];
+		// hardcoded obstacle layermask is ugly
+		// but didn't want to promote to class variable
+		// on MazeCell
+		int layerMask = 1 << 9 | 1 << 13;
+
+		int stepCount = 8;
+		float iterationAngle = 360f / stepCount;
+		float currentAngle = 0f;
+
+		float accumulatedVisibilityDistance = 0;
+
+		for(int i = 0; i < stepCount; i++, currentAngle += iterationAngle)
+        {
+			var dir = currentAngle.DirectionFromAngle();
+			var hit = Physics2D.Raycast(transform.position, dir, Mathf.Infinity, layerMask);
+
+			if(hit.collider != null)
+            {
+				accumulatedVisibilityDistance += (hit.point - (Vector2)transform.position).magnitude;
+            }
+        }
+
+		VantageScore = accumulatedVisibilityDistance / stepCount;
     }
 
-    public MazeCellEdge GetEdge(MazeDirection direction)
+	#endregion
+
+	public MazeCellEdge GetEdge(MazeDirection direction)
 	{
 		return edges[(int)direction];
 	}
@@ -247,33 +280,38 @@ public class MazeCell : FastPriorityQueueNode
 
 	public float GetLookRotationAngle()
     {
-		var possible = new List<float>();
+		var result = new List<float>();
 		var cardinalAngleStep = -90f;
 		for(int i = 0; i < MazeDirections.cardinalVectors.Length; i++)
-        {
+		{
 			if ((cardinalBits & 1 << i) != 0)
-				possible.Add((i * cardinalAngleStep + 360f) % 360f);
+				result.Add((i * cardinalAngleStep + 360f) % 360f);
 
 			if ((diagonalBits & 1 << i) != 0)
-				possible.Add((i * cardinalAngleStep - 45f + 360f) % 360f);
+				result.Add((i * cardinalAngleStep - 45f + 360f) % 360f);
 		}
 
-        return possible[GameManager.rngFree.Range(0, possible.Count)];
+        return result[GameManager.rngFree.Range(0, result.Count)];
     }
 
-	public List<IntVector2> GetPostDirections()
+	public List<IntVector2> GetPostDirections() => MazeDirections.ConstructPostDirections(cardinalBits);
+
+	public HashSet<MazeCell> GetNeighbours() => connectedCells;
+
+	public MazeCell GetNeighbour(IntVector2 direction)
     {
-		if (postDirections == null || postDirections.Count == 0)
+		foreach(var cell  in connectedCells)
         {
-			postDirections = MazeDirections.ConstructPostDirections(cardinalBits);
+			if (cell.pos.x == pos.x + direction.x && cell.pos.y == pos.y + direction.y)
+				return cell;
         }
 
-		return new List<IntVector2>(postDirections);
+		return null;
     }
 
-    public HashSet<MazeCell> GetNeighbours() => connectedCells;
+    #region Item Placemment
 
-	public void PlaceItem(PlaceableItemType type, PlaceableItem item)
+    public void PlaceItem(PlaceableItemType type, PlaceableItem item)
     {
 		if (!placedItems.ContainsKey(type))
 			placedItems.Add(type, item);
@@ -306,7 +344,9 @@ public class MazeCell : FastPriorityQueueNode
 		return false;
 	}
 
-	public void DisplayText(string text)
+    #endregion
+
+    public void DisplayText(string text)
     {
 		cellText.text = text;
     }

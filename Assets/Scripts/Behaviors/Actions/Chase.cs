@@ -24,10 +24,10 @@ public class Chase : ActionNode
 
         while (owner.IsMoving && !token.IsCancellationRequested)
         {
-            //if (!owner.CurrentPath.Contains(GameManager.player.CurrentCell))
             if (currentTargetCell != GameManager.player.CurrentCell)
             {
                 currentTargetCell = GameManager.player.CurrentCell;
+
                 owner.Move(currentTargetCell);
                 owner.SetPursuit(currentTargetCell);
             }

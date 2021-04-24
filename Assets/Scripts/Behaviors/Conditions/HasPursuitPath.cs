@@ -22,6 +22,7 @@ public class HasPursuitPath : Condition
             owner.ReadyForPursuit = false;
 
             searchStart = owner.PlayerObservationPoint;
+
             owner.pursuit = PathDesigner.Instance.GetPursuitPath(owner, owner.CurrentCell, searchStart);
 
             return NodeStatus.Success;

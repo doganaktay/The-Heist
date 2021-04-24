@@ -103,7 +103,7 @@ public abstract class Character : MonoBehaviour
         return false;
     }
 
-    public MazeCell PeekPath() => (!isMoving || currentPath.Count < 2) ? null : currentPath[1];
+    public MazeCell PeekPath(int peekIndex = 1) => (!isMoving || currentPath.Count < 2) ? null : currentPath[peekIndex];
     public MazeCell PeekPath(float depthPercent)
     {
         if (!isMoving || depthPercent < 0)

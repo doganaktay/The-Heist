@@ -25,7 +25,7 @@ public class AreaFinder : MonoBehaviour
     Dictionary<int, List<MazeCell>> highCellConnected = new Dictionary<int, List<MazeCell>>();
 
     Dictionary<int, List<MazeCell>> placedAreas = new Dictionary<int, List<MazeCell>>();
-    static List<MazeCell> walkableArea = new List<MazeCell>();
+    public static List<MazeCell> walkableArea = new List<MazeCell>();
     public static int WalkableCellCount => walkableArea.Count;
 
     public List<MazeCell> GetLowCellArea (int areaIndex) { return lowCellAreas[areaIndex]; }

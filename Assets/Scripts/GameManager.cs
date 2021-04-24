@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Archi.Touch;
 using Archi.IO;
+using Cysharp.Threading.Tasks;
 
 public class GameManager : MonoBehaviour
 {
@@ -68,7 +69,7 @@ public class GameManager : MonoBehaviour
 
     private void Start()
 	{
-		BeginGame();
+		BeginGame().Forget();
 	}
 
     private void Update()
@@ -80,7 +81,7 @@ public class GameManager : MonoBehaviour
 	}
 
 
-	private void BeginGame()
+	private async UniTaskVoid BeginGame()
 	{
 		// generate maze
 		mazeInstance = Instantiate(mazePrefab);
@@ -209,6 +210,8 @@ public class GameManager : MonoBehaviour
 		// directional light reset
 		lights.StartRotation();
 
+		await UniTask.NextFrame();
+
 		// call event
 		MazeGenFinished();
     }
@@ -245,7 +248,7 @@ public class GameManager : MonoBehaviour
 		cctvHolder.ClearChildren(1);
 
 		InitRNG();
-		BeginGame();
+		BeginGame().Forget();
 	}
 
 	#region RNG

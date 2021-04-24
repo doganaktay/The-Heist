@@ -67,7 +67,7 @@ MonoBehaviour:
   body: {fileID: 5833953138234766926}
   manager: {fileID: 0}
   pathDesigner: {fileID: 0}
-  fitness: 0.2
+  fitness: 0.5
   foresight: 0.5
   initiative: 0
   memory: 0
@@ -84,7 +84,6 @@ MonoBehaviour:
   defaultPostTime:
     min: 20
     max: 45
-  postTime: 0
   followTarget: {fileID: 0}
   socialTargets: []
   socialRepeatTime:

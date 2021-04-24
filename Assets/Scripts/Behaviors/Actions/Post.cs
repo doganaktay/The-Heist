@@ -12,15 +12,13 @@ public class Post : ActionNode
 
     protected async override UniTask Action(CancellationToken token)
     {
-        Debug.Log($"{owner.gameObject.name} is posting");
-
         owner.IsActive = true;
 
         owner.SetBehaviorParams(BehaviorType.Casual, FOVType.Post, false);
 
         var timeLimit = owner.GetPostTime();
 
-        Debug.Log($"Posting at: {owner.CurrentCell.gameObject.name}");
+        Debug.Log($"{owner.gameObject.name} posting at: {owner.CurrentCell.gameObject.name}");
         var directions = owner.CurrentCell.GetPostDirections();
         var selected = directions[GameManager.rngFree.Range(0, directions.Count)];
 
@@ -29,12 +27,14 @@ public class Post : ActionNode
 
         try
         {
+            owner.CurrentCell.Occupied = true;
             await owner.LookAround(token, timeLimit);
         }
         finally
         {
             if (!owner.lifetimeToken.IsCancellationRequested)
             {
+                owner.CurrentCell.Occupied = false;
                 owner.IsPosting = false;
             }
         }

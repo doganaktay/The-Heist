@@ -82,11 +82,13 @@ public class GraphFinder : MonoBehaviour
         maxRecursionDepth = recursionLimit;
 
         //GameManager.MazeGenFinished += Initialize;
+        GameManager.MazeGenFinished += CalculateAllVantageScores;
     }
 
     private void OnDisable()
     {
         //GameManager.MazeGenFinished -= Initialize;
+        GameManager.MazeGenFinished -= CalculateAllVantageScores;
     }
 
     public void Initialize()
@@ -1004,6 +1006,12 @@ public class GraphFinder : MonoBehaviour
         {
             indexedPlacement.Add(t.Key, (t.Value, CalculateIndexScore(t.Key, t.Value.Count)));
         }
+    }
+
+    public void CalculateAllVantageScores()
+    {
+        foreach (var cell in AreaFinder.walkableArea)
+            cell.CalculateVantageScore();
     }
 
     float CalculateIndexScore(int index, int placedCount)
@@ -2233,6 +2241,9 @@ public class GraphFinder : MonoBehaviour
     {
         if (GUI.Button(new Rect(10, 10, 80, 60), "Test Search"))
             TestAreas();
+
+        if (GUI.Button(new Rect(10, 70, 80, 60), "Vantage"))
+            CalculateAllVantageScores();
 
         //fromIndex = GUI.TextField(new Rect(90, 70, 20, 60), fromIndex);
         //toIndex = GUI.TextField(new Rect(110, 70, 20, 60), toIndex);
