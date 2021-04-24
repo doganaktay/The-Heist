@@ -132,13 +132,14 @@ public static class MazeDirections
     {
 		var directions = new List<IntVector2>();
 
-		bitfield = ~bitfield;
-
-		if(bitfield == 0)
+		if(bitfield == 15)
         {
 			directions.Add(new IntVector2(0, 0));
 			return directions;
         }
+
+		// inverting bits to check because post direction bits to check against are reversed
+		bitfield = ~bitfield;
 
 		foreach (var dir in postDirections)
 			if ((dir.Key & bitfield) == dir.Key)

@@ -142,7 +142,7 @@ public class GameManagerEditor : Editor
             }
         }
 
-        GUILayout.Label("Used to scale any game parameter. Takes single input and returns range [Input+- (Sigma * +-Bias)]", EditorStyles.helpBox);
+        GUILayout.Label("Used to scale any game parameter. Takes single input and returns range [Input-+ (Sigma * -+Bias)]", EditorStyles.helpBox);
 
         GUILayout.Space(2);
         EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
