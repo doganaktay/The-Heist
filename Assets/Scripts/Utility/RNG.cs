@@ -24,8 +24,25 @@ public class RNG
 
     #region Roll
 
+    /// <summary>
+    /// Roll random over [0f, 1f]
+    /// </summary>
+    /// <returns></returns>
     public float Roll() => NextSingleInclusive();
+
+    /// <summary>
+    /// Roll random [0f, 1f] <= successPercent
+    /// </summary>
+    /// <param name="successPercent"></param>
+    /// <returns></returns>
     public bool Roll(float successPercent) => NextSingleInclusive() <= successPercent;
+
+    /// <summary>
+    /// Roll dice with input number of faces
+    /// </summary>
+    /// <param name="faceCount"></param>
+    /// <returns></returns>
+    public int RollDice(int faceCount = 6) => Next(faceCount) + 1;
 
     #endregion
 
@@ -106,16 +123,58 @@ public class RNG
     public float NextSingleExclusive(float min = 0f, float max = 1f) => Lerp(min, max, (float)NextDoubleExclusive());
 
     /// <summary>
-    /// Generates a random double over [0.0, 1.0)
+    /// Generates a random double over [0.0, 1.0]
     /// </summary>
     /// <returns></returns>
     public double NextDoubleInclusive() => REAL_UNIT_INT_INCLUSIVE * (int)(0x7FFFFFFF & NextUint());
 
     /// <summary>
-    /// Generates a random single over [0.0, 1.0)
+    /// Generates a random single over [0.0, 1.0]
     /// </summary>
     /// <returns></returns>
     public float NextSingleInclusive(float min = 0f, float max = 1f) => Lerp(min, max, (float)NextDoubleInclusive());
+
+    /// <summary>
+    /// Fills the provided byte array with a random bytes
+    /// </summary>
+    /// <param name="buffer"></param>
+    /// <returns></returns>
+    public void NextBytes(byte[] buffer)
+    {
+        int i = 0;
+        uint next;
+
+        for(int bound = buffer.Length - 3; i<bound;)
+        {
+            next = NextUint();
+
+            buffer[i++] = (byte)next;
+            buffer[i++] = (byte)(next >> 8);
+            buffer[i++] = (byte)(next >> 16);
+            buffer[i++] = (byte)(next >> 24);
+        }
+
+        if(i < buffer.Length)
+        {
+            next = NextUint();
+            buffer[i++] = (byte)next;
+
+            if(i < buffer.Length)
+            {
+                buffer[i++] = (byte)(next >> 8);
+
+                if(i < buffer.Length)
+                {
+                    buffer[i++] = (byte)(next >> 16);
+
+                    if (i < buffer.Length)
+                    {
+                        buffer[i++] = (byte)(next >> 24);
+                    }
+                }
+            }
+        }
+    }
 
     #endregion
 

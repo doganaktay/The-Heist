@@ -3,10 +3,12 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using Archi.Touch;
+using Archi.IO;
 
 public class GameManager : MonoBehaviour
 {
-	[Header("Grid Setup")]
+	//[Header("Grid Setup")]
+
 	[SerializeField] int gridSizeX;
 	[SerializeField] int gridSizeY;
 	[SerializeField] float cellSizeX;
@@ -14,14 +16,26 @@ public class GameManager : MonoBehaviour
 	public static float CellDiagonal;
 	public static int CellCount;
 
-	[Header("Parameter scaling")]
+	//[Header("Parameter scaling")]
+
 	[SerializeField] float parameterDeviation;
 	public static float ParameterDeviation { get; private set; }
 	[SerializeField] MinMaxData biasMultipliers;
 	public static MinMaxData BiasMultipliers { get; private set; }
 
+	// RNG
+	//[Header("RNG")]
 
-	[Header("References")]
+	public bool reuseSeed = true;
+	public bool seedFromSave = false;
+	List<uint> savedSeeds;
+
+	public uint seed = 1;
+	public static RNG rngFree;
+	public static RNG rngSeeded;
+
+	//[Header("References")]
+
 	public DControl touchControl;
 	public Trajectory trajectory;
 	public PhysicsSim physicsSim;
@@ -47,17 +61,10 @@ public class GameManager : MonoBehaviour
 
 	public static Action MazeGenFinished;
 
-	// RNG
-	[Header("RNG")]
-	public bool reuseSeed = true;
-	public uint seed = 1;
-	public static RNG rngFree;
-	public static RNG rngSeeded;
-
     private void Awake()
     {
 		InitRNG();
-	}
+    }
 
     private void Start()
 	{
@@ -237,9 +244,7 @@ public class GameManager : MonoBehaviour
 		spawnedObjects.ClearChildren();
 		cctvHolder.ClearChildren(1);
 
-		if (reuseSeed)
-			rngSeeded.ResetSeed(seed);
-
+		InitRNG();
 		BeginGame();
 	}
 
@@ -248,7 +253,38 @@ public class GameManager : MonoBehaviour
 	void InitRNG()
     {
         rngFree = new RNG((uint)DateTime.Now.Ticks);
-		rngSeeded = new RNG(seed);
+
+		if(rngSeeded == null)
+        {
+            if (reuseSeed)
+            {
+				rngSeeded = new RNG(seed);
+			}
+			else if (!seedFromSave)
+            {
+				GenerateSeed();
+				rngSeeded = new RNG(seed);
+            }
+            else
+            {
+				LoadSeeds();
+				rngSeeded = new RNG(savedSeeds[rngFree.Next(savedSeeds.Count)]);
+			}
+        }
+		else if (reuseSeed)
+        {
+			rngSeeded.ResetSeed(seed);
+        }
+		else if (seedFromSave)
+        {
+			LoadSeeds();
+			rngSeeded = new RNG(savedSeeds[rngFree.Next(savedSeeds.Count)]);
+        }
+        else
+        {
+			GenerateSeed();
+			rngSeeded = new RNG(seed);
+        }
     }
 
 	#endregion
@@ -262,6 +298,37 @@ public class GameManager : MonoBehaviour
 
 		return canBeNegative ? new MinMaxData(min, max) : new MinMaxData(Mathf.Max(0,min), max);
 	}
+
+	public void GenerateSeed() => seed = new RNG((uint)DateTime.Now.Ticks).NextUint();
+
+	#endregion
+
+	#region Editor Only
+
+#if UNITY_EDITOR
+
+	private const string SEED_SAVE_PATH = "seeds.txt";
+
+	public void SaveSeed(uint seed)
+    {
+		SaveSystem.SaveDirect(SEED_SAVE_PATH, seed.ToString(), true);
+    }
+
+	public void LoadSeeds()
+    {
+		var list = SaveSystem.LoadDirect(SEED_SAVE_PATH);
+		var results = new List<uint>();
+
+		foreach(var s in list)
+        {
+			if(uint.TryParse(s, out uint result))
+				results.Add(result);
+        }
+
+		savedSeeds = results;
+    }
+
+#endif
 
 	#endregion
 }
