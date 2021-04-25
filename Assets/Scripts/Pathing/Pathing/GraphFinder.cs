@@ -34,6 +34,7 @@ public class GraphFinder : MonoBehaviour
     // PUBLIC
     public Maze maze;
     public Spotfinder spotfinder;
+    public List<int> allIsolatedAreas;
     public List<KeyValuePair<HashSet<int>, IsolatedAreaData>> weightedIsolatedAreas;
     public List<KeyValuePair<int, float>> weightedGraphAreas;
     public List<KeyValuePair<int, float>> weightedDeadEnds;
@@ -96,7 +97,7 @@ public class GraphFinder : MonoBehaviour
             {
                 foreach(var connection in end.GetGraphAreaIndices())
                 {
-                    if (!isolatedArea.Contains(connection))
+                    if (!allIsolatedAreas.Contains(connection))
                         return end;
                 }
             }
@@ -1106,6 +1107,9 @@ public class GraphFinder : MonoBehaviour
         // assign area weights
         AssignAreaWeights();
 
+        // assign isolated entry points to cells in isolated areas
+        AssignIsolatedEntryCells();
+
         int edgeCount = 0;
         LabelledGraphConnections = new EdgeData[labelledEdges.Count];
         edgeCount = 0;
@@ -1628,7 +1632,7 @@ public class GraphFinder : MonoBehaviour
 
         foreach (var area in isolatedAreas)
         {
-            //weightedIsolatedAreas.Add(new KeyValuePair<HashSet<int>, float>(area, GetGraphAreaWeight(new List<int>(area))));
+            allIsolatedAreas.AddRange(area);
             weightedIsolatedAreas.Add(new KeyValuePair<HashSet<int>, IsolatedAreaData>
                                      (area, new IsolatedAreaData(GetGraphAreaWeight(new List<int>(area)), GetIsolatedAreaEntryPoint(area))));
         }
@@ -1648,6 +1652,20 @@ public class GraphFinder : MonoBehaviour
         }
 
         weightedDeadEnds.Sort((a, b) => a.Value.CompareTo(b.Value));
+    }
+
+    void AssignIsolatedEntryCells()
+    {
+        foreach(var area in weightedIsolatedAreas)
+        {
+            foreach(var index in area.Key)
+            {
+                foreach(var cell in GraphAreas[index].all)
+                {
+                    cell.IsolatedEntryPoint = area.Value.entryPoint;
+                }
+            }
+        }
     }
 
     void AssignIndexedPlacement()

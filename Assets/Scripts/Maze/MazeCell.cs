@@ -20,15 +20,17 @@ public class MazeCell : FastPriorityQueueNode
 	public Material mat;
 	public bool[] visited;
 	public bool searched = false;
-	public bool Occupied { get; set; } = false;
-	public float VantageScore { get; private set; }
     public MazeCell[] exploredFrom;
 	public int[] distanceFromStart;
 	public int searchSize = 10; // should be same as search size in pathfinder script
 	public bool isPlaceable = false; // used by spotfinder to find available placement spots
 	public int placeableNeighbourCount = 0;
 	public int travelCost; // for A*
-	[HideInInspector] public bool HasCCTVCoverage { get; set; } = false;
+	public bool HasCCTVCoverage { get; set; } = false;
+	public MazeCell IsolatedEntryPoint { get; set; }
+	public float VantageScore { get; private set; }
+	public float PlacementScore { get; set; } = -1;
+	public bool Occupied { get; set; } = false;
 
 	// used for bit ops for spot placement and propagation
 	public int cardinalBits = 0;
@@ -41,7 +43,6 @@ public class MazeCell : FastPriorityQueueNode
 	public HashSet<MazeCell> placedConnectedCells = new HashSet<MazeCell>();
 	// cells only connected through special connections through walls (like grates)
 	public HashSet<MazeCell> specialConnectedCells = new HashSet<MazeCell>();
-
 	// for keeping track of items placed on cell
 	public Dictionary<PlaceableItemType, PlaceableItem> placedItems = new Dictionary<PlaceableItemType, PlaceableItem>();
 
@@ -206,6 +207,33 @@ public class MazeCell : FastPriorityQueueNode
 			total += MeasuredEnds[i].Value;
 
 		return (float)total / MeasuredEnds.Count;
+	}
+
+	public float GetPlacementScore()
+    {
+		if (PlacementScore != -1)
+			return PlacementScore;
+
+		int total = 0;
+		int count = 0;
+
+		foreach(var neighbor in connectedCells)
+        {
+			if (neighbor.IsolatedEntryPoint != null)
+			{
+				total += PathRequestManager.RequestPathImmediate(neighbor, neighbor.IsolatedEntryPoint).Count;
+				count++;
+				continue;
+			}
+
+			for (int i = 0; i < neighbor.MeasuredEnds.Count; i++)
+            {
+				total += neighbor.MeasuredEnds[i].Value;
+				count++;
+			}
+        }
+
+		return PlacementScore = (float)total / count;
 	}
 
 	public void CalculateVantageScore()

@@ -1178,6 +1178,7 @@ MonoBehaviour:
   pathfinder: {fileID: 0}
   areafinder: {fileID: 0}
   layout: {fileID: 0}
+  showDebugDisplay: 1
   placeCount: 50
   activeTileSet:
   - tile: {fileID: 8386142516564089489, guid: d04209405199f426a907890238cd12ef, type: 3}
@@ -3122,14 +3123,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb7e0c9303d164566b81b8e18ca168af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridSizeX: 16
-  gridSizeY: 9
-  cellSizeX: 20
-  cellSizeY: 17.5
-  parameterDeviation: 0.5
-  biasMultipliers:
-    min: 1
-    max: 1
   reuseSeed: 0
   seedFromSave: 0
   seed: 1497105506
@@ -3153,6 +3146,14 @@ MonoBehaviour:
   layout: {fileID: 1561531597}
   spawnedObjects: {fileID: 1431661960}
   cctvHolder: {fileID: 1623977388}
+  gridSizeX: 16
+  gridSizeY: 9
+  cellSizeX: 20
+  cellSizeY: 17.5
+  parameterDeviation: 0.5
+  biasMultipliers:
+    min: 1
+    max: 1
 --- !u!1001 &2062766908
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -5,26 +5,68 @@ using System.Linq;
 
 public class Spotfinder : MonoBehaviour
 {
-    public Maze maze;
-    public PhysicsSim simulation;
-    public Pathfinder pathfinder;
-    public AreaFinder areafinder;
-    public GameObject layout;
+    [HideInInspector] public Maze maze;
+    [HideInInspector] public PhysicsSim simulation;
+    [HideInInspector] public Pathfinder pathfinder;
+    [HideInInspector] public AreaFinder areafinder;
+    [HideInInspector] public GameObject layout;
 
+    [SerializeField] bool showDebugDisplay;
     [SerializeField] int placeCount = 1;
+
     List<MazeCell> availableSpots = new List<MazeCell>();
     List<MazeCell> placedSpots = new List<MazeCell>();
     public List<MazeCell> PlacedSpots => placedSpots;
+
+    public Dictionary<MazeCell, float> scoredPlacedSpots;
 
     public List<Tile> activeTileSet = new List<Tile>();
 
     float spotHeight = 3f; // used to scale height (in z axis) for placed tiles
 
+    #region MonoBehaviour
+
+    private void OnEnable()
+    {
+        GameManager.MazeGenFinished += CollectPlacementScores;
+    }
+
+    private void OnDisable()
+    {
+        GameManager.MazeGenFinished -= CollectPlacementScores;
+    }
+
+    #endregion
+
     public void DeterminePlacement()
     {
         FindAvailableSpots();
         PickSpotsRandom();
+        DetermineNeighbourBits();
         DetermineTilePlacement();
+    }
+
+    public void CollectPlacementScores()
+    {
+        scoredPlacedSpots = new Dictionary<MazeCell, float>();
+
+        foreach(var placed in placedSpots)
+        {
+            scoredPlacedSpots.Add(placed, placed.GetPlacementScore());
+        }
+
+#if UNITY_EDITOR
+        if (showDebugDisplay)
+        {
+            Color junctionColor = new Color(1f, 0f, 0.1f);
+
+            foreach(var spot in scoredPlacedSpots)
+            {
+                spot.Key.DisplayText(spot.Value.ToString("f2"), Color.white);
+            }
+        }
+#endif
+
     }
 
     void FindAvailableSpots()
@@ -198,8 +240,6 @@ public class Spotfinder : MonoBehaviour
 
     private void DetermineTilePlacement()
     {
-        DetermineNeighbourBits();
-
         foreach(var spot in placedSpots)
         {
             Tile tileToPlace = SetTile(spot);
