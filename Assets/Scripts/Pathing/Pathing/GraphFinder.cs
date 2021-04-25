@@ -34,7 +34,7 @@ public class GraphFinder : MonoBehaviour
     // PUBLIC
     public Maze maze;
     public Spotfinder spotfinder;
-    public List<int> allIsolatedAreas;
+    public HashSet<int> allIsolatedAreas;
     public List<KeyValuePair<HashSet<int>, IsolatedAreaData>> weightedIsolatedAreas;
     public List<KeyValuePair<int, float>> weightedGraphAreas;
     public List<KeyValuePair<int, float>> weightedDeadEnds;
@@ -95,15 +95,44 @@ public class GraphFinder : MonoBehaviour
         {
             foreach(var end in GraphAreas[index].ends)
             {
-                foreach(var connection in end.GetGraphAreaIndices())
+                foreach(var connectedIndex in end.GetGraphAreaIndices())
                 {
-                    if (!allIsolatedAreas.Contains(connection))
+                    // need to come up with a solution for isolated areas that are between two other isolated areas
+                    // need to decide which side to pick (maybe both) as the entry point
+                    // possibly best to keep both ends if there are 2
+
+                    //if (!isolatedArea.Contains(connectedIndex) && !allIsolatedAreas.Contains(connectedIndex))
+                    if (!isolatedArea.Contains(connectedIndex))
                         return end;
                 }
             }
         }
 
         return null;
+    }
+
+    public HashSet<MazeCell> GetIsolatedAreaEntryPoints(HashSet<int> isolatedArea)
+    {
+        var points = new HashSet<MazeCell>();
+
+        foreach (var index in isolatedArea)
+        {
+            foreach (var end in GraphAreas[index].ends)
+            {
+                foreach (var connectedIndex in end.GetGraphAreaIndices())
+                {
+                    // need to come up with a solution for isolated areas that are between two other isolated areas
+                    // need to decide which side to pick (maybe both) as the entry point
+                    // possibly best to keep both ends if there are 2
+
+                    //if (!isolatedArea.Contains(connectedIndex) && !allIsolatedAreas.Contains(connectedIndex))
+                    if (!isolatedArea.Contains(connectedIndex))
+                        points.Add(end);
+                }
+            }
+        }
+
+        return points;
     }
 
     public void CalculateAllVantageScores()
@@ -1622,6 +1651,7 @@ public class GraphFinder : MonoBehaviour
         weightedGraphAreas = new List<KeyValuePair<int, float>>();
         weightedIsolatedAreas = new List<KeyValuePair<HashSet<int>, IsolatedAreaData>>();
         weightedDeadEnds = new List<KeyValuePair<int, float>>();
+        allIsolatedAreas = new HashSet<int>();
 
         foreach (var area in GraphAreas)
         {
@@ -1632,9 +1662,10 @@ public class GraphFinder : MonoBehaviour
 
         foreach (var area in isolatedAreas)
         {
-            allIsolatedAreas.AddRange(area);
+            allIsolatedAreas.UnionWith(area);
+
             weightedIsolatedAreas.Add(new KeyValuePair<HashSet<int>, IsolatedAreaData>
-                                     (area, new IsolatedAreaData(GetGraphAreaWeight(new List<int>(area)), GetIsolatedAreaEntryPoint(area))));
+                                     (area, new IsolatedAreaData(GetGraphAreaWeight(new List<int>(area)), GetIsolatedAreaEntryPoints(area))));
         }
 
         weightedIsolatedAreas.Sort((a, b) => a.Value.weight.CompareTo(b.Value.weight));
@@ -1662,7 +1693,7 @@ public class GraphFinder : MonoBehaviour
             {
                 foreach(var cell in GraphAreas[index].all)
                 {
-                    cell.IsolatedEntryPoint = area.Value.entryPoint;
+                    cell.IsolatedEntryPoints = area.Value.entryPoints;
                 }
             }
         }
@@ -2116,12 +2147,12 @@ public class GraphFinder : MonoBehaviour
     public struct IsolatedAreaData
     {
         public float weight;
-        public MazeCell entryPoint;
+        public HashSet<MazeCell> entryPoints;
 
-        public IsolatedAreaData(float weight, MazeCell entryPoint)
+        public IsolatedAreaData(float weight, HashSet<MazeCell> entryPoints)
         {
             this.weight = weight;
-            this.entryPoint = entryPoint;
+            this.entryPoints = entryPoints;
         }
     }
 
@@ -2233,7 +2264,8 @@ public class GraphFinder : MonoBehaviour
 
             test += "weight: " + area.Value.weight;
 
-            test += " entry: " + area.Value.entryPoint.gameObject.name;
+            foreach(var point in area.Value.entryPoints)
+                test += " entry: " + point.gameObject.name;
 
             UnityEngine.Debug.Log(test);
         }

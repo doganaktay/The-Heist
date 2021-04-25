@@ -27,7 +27,7 @@ public class MazeCell : FastPriorityQueueNode
 	public int placeableNeighbourCount = 0;
 	public int travelCost; // for A*
 	public bool HasCCTVCoverage { get; set; } = false;
-	public MazeCell IsolatedEntryPoint { get; set; }
+	public HashSet<MazeCell> IsolatedEntryPoints { get; set; }
 	public float VantageScore { get; private set; }
 	public float PlacementScore { get; set; } = -1;
 	public bool Occupied { get; set; } = false;
@@ -219,10 +219,14 @@ public class MazeCell : FastPriorityQueueNode
 
 		foreach(var neighbor in connectedCells)
         {
-			if (neighbor.IsolatedEntryPoint != null)
+			if (neighbor.IsolatedEntryPoints != null)
 			{
-				total += PathRequestManager.RequestPathImmediate(neighbor, neighbor.IsolatedEntryPoint).Count;
-				count++;
+				foreach(var point in neighbor.IsolatedEntryPoints)
+                {
+					total += PathRequestManager.RequestPathImmediate(neighbor, point).Count;
+					count++;
+                }
+
 				continue;
 			}
 
