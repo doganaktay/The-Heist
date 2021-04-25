@@ -18,6 +18,7 @@ public abstract class AIManager : MonoBehaviour
 
     void Start()
     {
+        GameManager.PreResetLevel += ResetAI;
         GameManager.MazeGenFinished += InitializeAI;
     }
 
@@ -84,12 +85,13 @@ public abstract class AIManager : MonoBehaviour
 
     public void InitializeAI()
     {
-        ResetAI();
+        //ResetAI();
         OnInitializeAI();
     }
 
     void OnDestroy()
     {
+        GameManager.PreResetLevel -= ResetAI;
         GameManager.MazeGenFinished -= InitializeAI;
     }
 

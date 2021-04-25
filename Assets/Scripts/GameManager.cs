@@ -23,6 +23,7 @@ public class GameManager : MonoBehaviour
 	public static MazeCell StartCell => startCell;
 	public static MazeCell EndCell => endCell;
 	public static Action MazeGenFinished;
+	public static Action PreResetLevel;
 
 	// PRIVATE
 	private static MazeCell startCell, endCell;
@@ -247,9 +248,11 @@ public class GameManager : MonoBehaviour
     }
 
 	public void RestartGame()
-	{		
-		Destroy(mazeInstance.gameObject);
+	{
+		PreResetLevel();
+
 		Destroy(player.gameObject);
+		Destroy(mazeInstance.gameObject);
 
 		layout.ClearChildren();
 		spawnedObjects.ClearChildren();
