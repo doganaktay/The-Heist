@@ -336,6 +336,16 @@ public class MazeCell : FastPriorityQueueNode
 		return null;
     }
 
+	public HashSet<int> GetNeighbourIndices()
+    {
+		var indices = new HashSet<int>();
+
+		foreach (var cell in connectedCells)
+			indices.UnionWith(cell.GetGraphAreaIndices());
+
+		return indices;
+    }
+
     #region Item Placemment
 
     public void PlaceItem(PlaceableItemType type, PlaceableItem item)

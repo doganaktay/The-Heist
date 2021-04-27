@@ -221,6 +221,10 @@ public class GameManager : MonoBehaviour
 
 		await UniTask.NextFrame();
 
+		spotfinder.CollectPlacementScores();
+		graphFinder.CalculateAllVantageScores();
+		graphFinder.SetAllAreaParams();
+
 		// call event
 		MazeGenFinished();
     }

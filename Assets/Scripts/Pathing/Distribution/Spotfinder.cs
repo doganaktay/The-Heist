@@ -18,7 +18,7 @@ public class Spotfinder : MonoBehaviour
     List<MazeCell> placedSpots = new List<MazeCell>();
     public List<MazeCell> PlacedSpots => placedSpots;
 
-    public Dictionary<MazeCell, float> scoredPlacedSpots;
+    public Dictionary<MazeCell, (float score, HashSet<int> accessIndices)> scoredPlacedSpots;
 
     public List<Tile> activeTileSet = new List<Tile>();
 
@@ -26,15 +26,15 @@ public class Spotfinder : MonoBehaviour
 
     #region MonoBehaviour
 
-    private void OnEnable()
-    {
-        GameManager.MazeGenFinished += CollectPlacementScores;
-    }
+    //private void OnEnable()
+    //{
+    //    GameManager.MazeGenFinished += CollectPlacementScores;
+    //}
 
-    private void OnDisable()
-    {
-        GameManager.MazeGenFinished -= CollectPlacementScores;
-    }
+    //private void OnDisable()
+    //{
+    //    GameManager.MazeGenFinished -= CollectPlacementScores;
+    //}
 
     #endregion
 
@@ -48,11 +48,12 @@ public class Spotfinder : MonoBehaviour
 
     public void CollectPlacementScores()
     {
-        scoredPlacedSpots = new Dictionary<MazeCell, float>();
+        scoredPlacedSpots = new Dictionary<MazeCell, (float score, HashSet<int> accessIndices)>();
 
-        foreach(var placed in placedSpots)
+        foreach (var placed in placedSpots)
         {
-            scoredPlacedSpots.Add(placed, placed.GetPlacementScore());
+            scoredPlacedSpots.Add(placed, (placed.GetPlacementScore(), placed.GetNeighbourIndices()));
+            
         }
 
 #if UNITY_EDITOR
@@ -62,7 +63,7 @@ public class Spotfinder : MonoBehaviour
 
             foreach(var spot in scoredPlacedSpots)
             {
-                spot.Key.DisplayText(spot.Value.ToString("f2"), Color.white);
+                spot.Key.DisplayText(spot.Value.score.ToString("f2"), Color.white);
             }
         }
 #endif

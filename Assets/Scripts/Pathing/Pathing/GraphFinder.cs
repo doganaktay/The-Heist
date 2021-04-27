@@ -18,7 +18,7 @@ public class GraphFinder : MonoBehaviour
     // STATIC
 
     // PUBLIC
-    public static Dictionary<int, (List<MazeCell> all, List<MazeCell> ends)> GraphAreas;
+    public static Dictionary<int, AreaData> GraphAreas;
     public static List<int> FinalGraphIndices;
     public static Dictionary<int, MazeCell> indexedJunctions = new Dictionary<int, MazeCell>();
     public static List<(int[] nodes, int[] edges)> cycles = new List<(int[] nodes, int[] edges)>();
@@ -32,8 +32,8 @@ public class GraphFinder : MonoBehaviour
     // INSTANCE
 
     // PUBLIC
-    public Maze maze;
-    public Spotfinder spotfinder;
+    [HideInInspector] public Maze maze;
+    [HideInInspector] public Spotfinder spotfinder;
     public HashSet<int> allIsolatedAreas;
     public List<KeyValuePair<HashSet<int>, IsolatedAreaData>> weightedIsolatedAreas;
     public List<KeyValuePair<int, float>> weightedGraphAreas;
@@ -42,10 +42,8 @@ public class GraphFinder : MonoBehaviour
     // SERIALIZED
     [SerializeField, Tooltip("Min max percent thresholds for isolated areas")]
     MinMaxData areaSizeThreshold;
-    [SerializeField]
-    int loopSearchLimit = 50, recursionLimit = 20;
-    [SerializeField]
-    bool showDebugDisplay = false;
+    [SerializeField] int loopSearchLimit = 50, recursionLimit = 20;
+    [SerializeField] bool showDebugDisplay = false;
 
     // PRIVATE
     int index;
@@ -72,18 +70,35 @@ public class GraphFinder : MonoBehaviour
         maxRecursionDepth = recursionLimit;
 
         //GameManager.MazeGenFinished += Initialize;
-        GameManager.MazeGenFinished += CalculateAllVantageScores;
+        //GameManager.MazeGenFinished += CalculateAllVantageScores;
     }
 
     private void OnDisable()
     {
         //GameManager.MazeGenFinished -= Initialize;
-        GameManager.MazeGenFinished -= CalculateAllVantageScores;
+        //GameManager.MazeGenFinished -= CalculateAllVantageScores;
     }
 
     #endregion
 
     #region Getters and Setters
+
+    public void SetAllAreaParams()
+    {
+        foreach(var area in GraphAreas)
+        {
+            area.Value.SetWeight(GetGraphAreaWeight(area.Key));
+
+            var vantagePoints = new List<KeyValuePair<float, MazeCell>>();
+            foreach (var cell in area.Value.all)
+                vantagePoints.Add(new KeyValuePair<float, MazeCell>(cell.VantageScore, cell));
+            vantagePoints.Sort((a, b) => a.Key.CompareTo(b.Key));
+            area.Value.SetVantagePoints(vantagePoints);
+
+            if (area.Value.all.Contains(GameManager.StartCell) || area.Value.all.Contains(GameManager.EndCell))
+                area.Value.SetIsEntranceOrExit(true);
+        }
+    }
 
     public bool HasCycles => cycles.Count > 0;
 
@@ -794,7 +809,7 @@ public class GraphFinder : MonoBehaviour
         var timer = new Stopwatch();
         timer.Start();
 
-        GraphAreas = new Dictionary<int, (List<MazeCell> all, List<MazeCell> ends)>();
+        GraphAreas = new Dictionary<int, AreaData>();
         visited = new bool[maze.size.x, maze.size.y];
         frontier.Enqueue(GameManager.StartCell);
 
@@ -821,7 +836,7 @@ public class GraphFinder : MonoBehaviour
                 cell.SetGraphArea(index);
             }
             
-            GraphAreas.Add(index, (new List<MazeCell>(currentArea), new List<MazeCell>(ends)));
+            GraphAreas.Add(index, new AreaData(new List<MazeCell>(currentArea), new List<MazeCell>(ends)));
 
             index++;
         }
@@ -982,7 +997,7 @@ public class GraphFinder : MonoBehaviour
             
 
             if (!GraphAreas.ContainsKey(index))
-                GraphAreas.Add(index, (new List<MazeCell>(currentArea), new List<MazeCell>(ends)));
+                GraphAreas.Add(index, new AreaData(new List<MazeCell>(currentArea), new List<MazeCell>(ends)));
             
 
             index++;
@@ -1655,7 +1670,8 @@ public class GraphFinder : MonoBehaviour
 
         foreach (var area in GraphAreas)
         {
-            weightedGraphAreas.Add(new KeyValuePair<int, float>(area.Key, GetGraphAreaWeight(area.Key)));
+            var weight = GetGraphAreaWeight(area.Key);
+            weightedGraphAreas.Add(new KeyValuePair<int, float>(area.Key, weight));
         }
 
         weightedGraphAreas.Sort((a, b) => a.Value.CompareTo(b.Value));
@@ -2156,6 +2172,40 @@ public class GraphFinder : MonoBehaviour
         }
     }
 
+    public class AreaData
+    {
+        public List<MazeCell> all;
+        public List<MazeCell> ends;
+        public float weight;
+        public List<KeyValuePair<float, MazeCell>> sortedVantagePoints;
+        public List<Loot> loot;
+        public List<CCTVCamera> cameras;
+        public bool isMapEntranceOrExit = false;
+
+        // possible future additions
+        // security system type
+        // door with key
+
+        public AreaData(List<MazeCell> all, List<MazeCell> ends)
+        {
+            this.all = all;
+            this.ends = ends;
+        }
+
+        public AreaData(List<MazeCell> all, List<MazeCell> ends, float weight)
+        {
+            this.all = all;
+            this.ends = ends;
+            this.weight = weight;
+        }
+
+        public void SetWeight(float weight) => this.weight = weight;
+        public void SetLoot(List<Loot> loot) => this.loot = loot;
+        public void SetVantagePoints(List<KeyValuePair<float, MazeCell>> vantagePoints) => sortedVantagePoints = vantagePoints;
+        public void SetCammeras(List<CCTVCamera> cameras) => this.cameras = cameras;
+        public void SetIsEntranceOrExit(bool isEntranceOrExit) => isMapEntranceOrExit = isEntranceOrExit;
+    }
+
     #endregion
 
     #region Editor
@@ -2164,16 +2214,13 @@ public class GraphFinder : MonoBehaviour
 
     void TestAreas()
     {
-        //foreach(var area in GraphAreas)
-        //{
-        //    UnityEngine.Debug.Log($"GraphFinder index {area.Key}");
+        string test = "";
 
-        //    foreach(var cell in area.Value.ends)
-        //        UnityEngine.Debug.Log($"ends contains: {cell.gameObject.name}");
-
-        //    foreach (var cell in area.Value.all)
-        //        UnityEngine.Debug.Log($"area contains: {cell.gameObject.name}");
-        //}
+        foreach (var area in GraphAreas)
+        {
+            UnityEngine.Debug.Log($"Graph index {area.Key}");
+            UnityEngine.Debug.Log($"Weight:{area.Value.weight} IsEnterOrExit:{area.Value.isMapEntranceOrExit} Top Vantage:{area.Value.sortedVantagePoints[area.Value.sortedVantagePoints.Count-1].Value.gameObject.name}");
+        }
 
         //for (int i = 0; i < maze.size.x; i++)
         //{
@@ -2221,8 +2268,6 @@ public class GraphFinder : MonoBehaviour
 
         //foreach (var cycle in cycles)
         //    PrintCycle(cycle.nodes, cycle.edges);
-
-        string test = "";
 
         //foreach (var area in isolatedAreas)
         //{
