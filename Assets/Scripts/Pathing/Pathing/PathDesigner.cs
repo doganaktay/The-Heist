@@ -23,21 +23,22 @@ public class PathDesigner : MonoBehaviour
     public ChartedPath GetPursuitPath(AI ai, MazeCell current, MazeCell observation)
     {
         var start = GetSearchStart(current, observation);
+
+        if (start.cell == null)
+            return new ChartedPath();
+
         List<MazeCell> cells = new List<MazeCell>();
         List<int> indices = new List<int>();
         Queue<(MazeCell cell, int index)> cellsToExplore = new Queue<(MazeCell cell, int index)>();
 
         int maxTravelDist = Mathf.RoundToInt(GameManager.CellCount * ai.fitness);
         int dist = 0;
+        
+        cellsToExplore.Enqueue((start.cell, start.index));
+        cells.Add(current);
+        indices.Add(GraphFinder.GetClosestSharedIndex(current, start.cell));
 
-        if (start.cell != null)
-        {
-            cellsToExplore.Enqueue((start.cell, start.index));
-            cells.Add(current);
-            indices.Add(graph.GetClosestSharedIndex(current, start.cell));
-
-            dist += PathRequestManager.RequestPathImmediate(current, start.cell).Count - 1;
-        }
+        dist += PathRequestManager.RequestPathImmediate(current, start.cell).Count - 1;
 
         while(cellsToExplore.Count != 0)
         {
@@ -62,7 +63,6 @@ public class PathDesigner : MonoBehaviour
                 dist += next.cell.GetJunctionDistance(selected.cell);
                 if (dist > maxTravelDist)
                     break;
-                
 
                 cellsToExplore.Enqueue(selected);
                 indices.Add(selected.index);
@@ -74,21 +74,21 @@ public class PathDesigner : MonoBehaviour
 
     public ChartedPath ChartPath(MazeCell from, MazeCell to)
     {
-        if (graph.BiDirSearch(from, to))
-            return graph.ChartedPath;
+        if (graph.BiDirSearch(from, to, out ChartedPath foundPath))
+            return foundPath;
         else
             Debug.LogError("Charted path could not be found");
 
-        return new ChartedPath(null, new int[1]);
+        return new ChartedPath();
     }
 
     public (MazeCell cell, int index) GetSearchStart(MazeCell current, MazeCell observation)
     {
-        var shareIndex = graph.GetClosestSharedIndex(current, observation);
+        var shareIndex = GraphFinder.GetClosestSharedIndex(current, observation);
 
         if(shareIndex != -1)
         {
-            var ends = GraphFinder.GraphAreas[shareIndex].ends;
+            var ends = GraphFinder.Areas[shareIndex].ends;
 
             if (ends.Count == 1 && ends[0] == current)
                 return (null, shareIndex);
@@ -131,7 +131,7 @@ public class PathDesigner : MonoBehaviour
             for(int i = path.Count - 1; i >= 0; i--)
             {
                 if (path[i].IsGraphConnection)
-                    return (path[i], graph.GetClosestSharedIndex(path[i], path[i - 1]));
+                    return (path[i], GraphFinder.GetClosestSharedIndex(path[i], path[i - 1]));
             }
         }
 
@@ -139,23 +139,5 @@ public class PathDesigner : MonoBehaviour
     }
 
     public ChartedPath RequestPathLoop() => graph.GetLoop();
-    public bool MapHasCycles => graph.HasCycles;
-
-    //public void PrintPathLoop()
-    //{
-    //    var pathLoop = RequestPathLoop();
-    //    pathLoop.DebugPath();
-    //    pathLoop.ReversePath();
-    //    pathLoop.DebugPath();
-    //}
-
-
-    //private void OnGUI()
-    //{
-    //    if (GUI.Button(new Rect(10, 190, 80, 60), "Get Queue"))
-    //        GetDestinationQueue(GameManager.StartCell);
-
-    //    if (GUI.Button(new Rect(10, 310, 80, 60), "Print Loop"))
-    //        PrintPathLoop();
-    //}
+    public bool MapHasCycles => GraphFinder.HasCycles;
 }

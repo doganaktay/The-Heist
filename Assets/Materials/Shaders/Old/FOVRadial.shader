@@ -76,7 +76,7 @@
                 float4 goCenter = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _ObjectPos);
                 float dist = distance(i.worldPos, goCenter);
 
-                bool seen = blend >= (dist * 0.9 / radius);
+                bool seen = blend >= (dist * 0.99 / radius);
 
                 float4 color = seen ? secondaryColor : baseColor;
 

@@ -25,6 +25,9 @@ public class HasPursuitPath : Condition
 
             owner.pursuit = PathDesigner.Instance.GetPursuitPath(owner, owner.CurrentCell, searchStart);
 
+            //if (owner.pursuit.cells != null && owner.pursuit.cells.Length > 0)
+            //    owner.Report(new ReportData(owner, searchStart, owner.pursuit.FirstJunction));
+
             return NodeStatus.Success;
         }
         else if (owner.pursuit.cells != null && owner.pursuit.cells.Length > 0)

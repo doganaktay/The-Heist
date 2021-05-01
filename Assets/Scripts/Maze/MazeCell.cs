@@ -394,6 +394,8 @@ public class MazeCell : FastPriorityQueueNode
 		cellText.text = text;
     }
 
+	public void SetTexture(Texture texture) => props.SetTexture(texture);
+
 	public void IndicateAOE(Color aoeColor)
     {
 

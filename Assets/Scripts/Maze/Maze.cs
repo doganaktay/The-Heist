@@ -19,8 +19,13 @@ public class Maze : MonoBehaviour
     public List<MazeCellWall> wallsInScene = new List<MazeCellWall>();
     public List<GameObject> placementInScene = new List<GameObject>();
 
+    private Sprite selectedGroundSprite;
+
     public void Generate()
     {
+        var sprites = AddressableManager.Instance.GetGroundSprites();
+        selectedGroundSprite = sprites[GameManager.rngFree.Range(0, sprites.Length)];
+
         cells = new MazeCell[size.x, size.y];
 
         List<MazeCell> activeCells = new List<MazeCell>();
@@ -34,6 +39,9 @@ public class Maze : MonoBehaviour
     MazeCell CreateCell(IntVector2 location)
     {
         MazeCell newCell = Instantiate(cellPrefab);
+
+        newCell.GetComponentInChildren<SpriteRenderer>().sprite = selectedGroundSprite;
+
         cells[location.x, location.y] = newCell;
         newCell.name = "Maze Cell " + location.x + ", " + location.y;
         newCell.pos = location;
@@ -46,6 +54,7 @@ public class Maze : MonoBehaviour
 
         newCell.row = location.x;
         newCell.col = location.y;
+
 
         return newCell;
     }

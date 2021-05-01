@@ -73,9 +73,12 @@ public class GameManager : MonoBehaviour
 		InitRNG();
     }
 
-    private void Start()
+    private async void Start()
 	{
-		BeginGame().Forget();
+        //AddressableManager.Instance.LoadAddressablesAsync();
+        await AddressableManager.Instance.LoadAddressables();
+
+        BeginGame().Forget();
 	}
 
     private void Update()
@@ -207,8 +210,9 @@ public class GameManager : MonoBehaviour
 		// pass data to TouchUI.instance
 		TouchUI.instance.gameManager = this;
 		var mazeHeight = cellSizeY * gridSizeY / (cellSizeX * gridSizeX / 16f * 9f);
-		TouchUI.instance.topMenuHeight = (1 - mazeHeight) * Screen.height;
-		TouchUI.instance.mainMenuHeight = mazeHeight * Screen.height;
+        TouchUI.instance.topMenuHeight = (1 - mazeHeight) * Screen.height;
+        TouchUI.instance.mainMenuHeight = mazeHeight * Screen.height;
+		TouchUI.instance.SetupUIDimensions(mazeHeight);
 
 		// pass references to touchControl
 		touchControl.player = player;
@@ -247,8 +251,6 @@ public class GameManager : MonoBehaviour
 
 		// for testing
 		curator.AssignRandomPriorities();
-
-		//guardManager.InitializeAI();
     }
 
 	public void RestartGame()
@@ -274,7 +276,7 @@ public class GameManager : MonoBehaviour
     {
         rngFree = new RNG((uint)DateTime.Now.Ticks);
 
-		if(rngSeeded == null)
+		if(rngSeeded is null)
         {
             if (reuseSeed)
             {
@@ -321,13 +323,13 @@ public class GameManager : MonoBehaviour
 
 	public void GenerateSeed() => seed = new RNG((uint)DateTime.Now.Ticks).NextUint();
 
-	#endregion
+    #endregion
 
-	#region Editor Only
+    #region Editor Only
 
 #if UNITY_EDITOR
 
-	private const string SEED_SAVE_PATH = "seeds.txt";
+    private const string SEED_SAVE_PATH = "seeds.txt";
 
 	public void SaveSeed(uint seed)
     {

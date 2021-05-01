@@ -18,13 +18,13 @@ public class GraphFinder : MonoBehaviour
     // STATIC
 
     // PUBLIC
-    public static Dictionary<int, AreaData> GraphAreas;
+    public static Dictionary<int, AreaData> Areas;
+    public static List<KeyValuePair<HashSet<int>, IsolatedAreaData>> IsolatedAreas;
     public static List<int> FinalGraphIndices;
-    public static Dictionary<int, MazeCell> indexedJunctions = new Dictionary<int, MazeCell>();
-    public static List<(int[] nodes, int[] edges)> cycles = new List<(int[] nodes, int[] edges)>();
-    public static Dictionary<int, (List<MazeCell> placement, float score)> indexedPlacement;
 
     // PRIVATE
+    static Dictionary<int, MazeCell> indexedJunctions = new Dictionary<int, MazeCell>();
+    static List<(int[] nodes, int[] edges)> cycles = new List<(int[] nodes, int[] edges)>();
     static EdgeData[] LabelledGraphConnections;
     static int maxLoopSearchDepth;
     static int maxRecursionDepth;
@@ -34,9 +34,7 @@ public class GraphFinder : MonoBehaviour
     // PUBLIC
     [HideInInspector] public Maze maze;
     [HideInInspector] public Spotfinder spotfinder;
-    public HashSet<int> allIsolatedAreas;
-    public List<KeyValuePair<HashSet<int>, IsolatedAreaData>> weightedIsolatedAreas;
-    public List<KeyValuePair<int, float>> weightedGraphAreas;
+    public List<KeyValuePair<int, float>> weightedAreas;
     public List<KeyValuePair<int, float>> weightedDeadEnds;
 
     // SERIALIZED
@@ -52,7 +50,6 @@ public class GraphFinder : MonoBehaviour
     List<MazeCell> ends = new List<MazeCell>();
     bool[,] visited;
     List<HashSet<int>> isolatedAreas = new List<HashSet<int>>();
-    ChartedPath chartedPath;
     // bidirectional BFS search collections
     bool[] fromVisited;
     bool[] toVisited;
@@ -85,7 +82,7 @@ public class GraphFinder : MonoBehaviour
 
     public void SetAllAreaParams()
     {
-        foreach(var area in GraphAreas)
+        foreach(var area in Areas)
         {
             area.Value.SetWeight(GetGraphAreaWeight(area.Key));
 
@@ -97,55 +94,30 @@ public class GraphFinder : MonoBehaviour
 
             if (area.Value.all.Contains(GameManager.StartCell) || area.Value.all.Contains(GameManager.EndCell))
                 area.Value.SetIsEntranceOrExit(true);
+
+            area.Value.FindAndSetPlacement();
         }
-    }
 
-    public bool HasCycles => cycles.Count > 0;
-
-    public ChartedPath ChartedPath => chartedPath;
-
-    public MazeCell GetIsolatedAreaEntryPoint(HashSet<int> isolatedArea)
-    {
-        foreach(var index in isolatedArea)
+        foreach(var isolated in IsolatedAreas)
         {
-            foreach(var end in GraphAreas[index].ends)
-            {
-                foreach(var connectedIndex in end.GetGraphAreaIndices())
-                {
-                    // need to come up with a solution for isolated areas that are between two other isolated areas
-                    // need to decide which side to pick (maybe both) as the entry point
-                    // possibly best to keep both ends if there are 2
+            foreach (var index in isolated.Key)
+                Areas[index].SetIsIsolated(true);
 
-                    //if (!isolatedArea.Contains(connectedIndex) && !allIsolatedAreas.Contains(connectedIndex))
-                    if (!isolatedArea.Contains(connectedIndex))
-                        return end;
-                }
-            }
+            isolated.Value.CalculateIsolatedScore(isolated.Key);
         }
-
-        return null;
     }
+
+    public static bool HasCycles => cycles.Count > 0;
 
     public HashSet<MazeCell> GetIsolatedAreaEntryPoints(HashSet<int> isolatedArea)
     {
         var points = new HashSet<MazeCell>();
 
         foreach (var index in isolatedArea)
-        {
-            foreach (var end in GraphAreas[index].ends)
-            {
+            foreach (var end in Areas[index].ends)
                 foreach (var connectedIndex in end.GetGraphAreaIndices())
-                {
-                    // need to come up with a solution for isolated areas that are between two other isolated areas
-                    // need to decide which side to pick (maybe both) as the entry point
-                    // possibly best to keep both ends if there are 2
-
-                    //if (!isolatedArea.Contains(connectedIndex) && !allIsolatedAreas.Contains(connectedIndex))
                     if (!isolatedArea.Contains(connectedIndex))
                         points.Add(end);
-                }
-            }
-        }
 
         return points;
     }
@@ -216,9 +188,9 @@ public class GraphFinder : MonoBehaviour
     {
         var junctionCells = new List<MazeCell>();
 
-        foreach (var endFrom in GraphAreas[from].ends)
+        foreach (var endFrom in Areas[from].ends)
         {
-            if (GraphAreas[to].ends.Contains(endFrom) && !junctionCells.Contains(endFrom))
+            if (Areas[to].ends.Contains(endFrom) && !junctionCells.Contains(endFrom))
                 junctionCells.Add(endFrom);
         }
 
@@ -234,7 +206,7 @@ public class GraphFinder : MonoBehaviour
     {
         var junctionCells = new List<MazeCell>();
 
-        foreach (var end in GraphAreas[index].ends)
+        foreach (var end in Areas[index].ends)
             if (end.GraphAreaIndices.Count > 1)
                 junctionCells.Add(end);
 
@@ -250,7 +222,7 @@ public class GraphFinder : MonoBehaviour
     {
         List<int> indices = new List<int>();
 
-        foreach (var cell in GraphAreas[index].ends)
+        foreach (var cell in Areas[index].ends)
         {
             //UnityEngine.Debug.Log($"Searching {cell.gameObject.name} for indices connected except {index}");
 
@@ -266,7 +238,7 @@ public class GraphFinder : MonoBehaviour
 
     public void AddToGraphArea(int index, List<MazeCell> area, List<MazeCell> ends = null)
     {
-        if (!GraphAreas.ContainsKey(index))
+        if (!Areas.ContainsKey(index))
         {
             UnityEngine.Debug.Log($"{gameObject.name} does not have a graph key for {index}");
             return;
@@ -275,11 +247,11 @@ public class GraphFinder : MonoBehaviour
         var cellsToAdd = new List<MazeCell>();
         foreach (var cell in area)
         {
-            if (!GraphAreas[index].all.Contains(cell))
+            if (!Areas[index].all.Contains(cell))
                 cellsToAdd.Add(cell);
         }
 
-        GraphAreas[index].all.AddRange(cellsToAdd);
+        Areas[index].all.AddRange(cellsToAdd);
 
 
         if (ends != null)
@@ -288,11 +260,11 @@ public class GraphFinder : MonoBehaviour
 
             foreach (var cell in ends)
             {
-                if (!GraphAreas[index].ends.Contains(cell))
+                if (!Areas[index].ends.Contains(cell))
                     endsToAdd.Add(cell);
             }
 
-            GraphAreas[index].ends.AddRange(endsToAdd);
+            Areas[index].ends.AddRange(endsToAdd);
         }
     }
 
@@ -305,7 +277,7 @@ public class GraphFinder : MonoBehaviour
 
         foreach (var key in cell.GraphAreaIndices)
         {
-            var part = GraphAreas[key];
+            var part = Areas[key];
 
             if (indexToIgnore > -1 && key == indexToIgnore)
                 continue;
@@ -335,7 +307,7 @@ public class GraphFinder : MonoBehaviour
 
         foreach (var key in cell.GraphAreaIndices)
         {
-            var part = GraphAreas[key];
+            var part = Areas[key];
 
             if (indexToIgnore > -1 && key == indexToIgnore)
                 continue;
@@ -365,14 +337,14 @@ public class GraphFinder : MonoBehaviour
     public List<MazeCell> GetConnections(MazeCell cell, bool includeSelf = false)
     {
         if (!cell.IsGraphConnection)
-            return new List<MazeCell>(GraphAreas[cell.GetGraphAreaIndices()[0]].ends);
+            return new List<MazeCell>(Areas[cell.GetGraphAreaIndices()[0]].ends);
         else
         {
             var connections = new List<MazeCell>();
 
             foreach (var key in cell.GraphAreaIndices)
             {
-                foreach (var item in GraphAreas[key].ends)
+                foreach (var item in Areas[key].ends)
                 {
                     if (!includeSelf && item == cell)
                         continue;
@@ -397,7 +369,7 @@ public class GraphFinder : MonoBehaviour
 
         foreach (var key in cell.GraphAreaIndices)
         {
-            foreach (var item in GraphAreas[key].ends)
+            foreach (var item in Areas[key].ends)
             {
                 if (item == cell || (!includeDeadEnds && !item.IsLockedConnection))
                     continue;
@@ -418,13 +390,13 @@ public class GraphFinder : MonoBehaviour
             if (index != existingIndex)
                 UnityEngine.Debug.Log($"{gameObject.name} does not belong to {index} returning only available index at {existingIndex}");
 
-            return new List<MazeCell>(GraphAreas[existingIndex].ends);
+            return new List<MazeCell>(Areas[existingIndex].ends);
         }
         else
         {
             var connections = new List<MazeCell>();
 
-            foreach (var item in GraphAreas[index].ends)
+            foreach (var item in Areas[index].ends)
             {
                 if (!includeSelf && item == cell)
                     continue;
@@ -444,7 +416,7 @@ public class GraphFinder : MonoBehaviour
         {
             int selected = cell.GetGraphAreaIndices()[0];
             var list = new List<(MazeCell cell, int index)>();
-            foreach (var end in GraphAreas[selected].ends)
+            foreach (var end in Areas[selected].ends)
                 list.Add((end, selected));
 
             return list;
@@ -459,7 +431,7 @@ public class GraphFinder : MonoBehaviour
                     continue;
 
 
-                foreach (var item in GraphAreas[key].ends)
+                foreach (var item in Areas[key].ends)
                 {
                     if (item == cell || (!getDeadEnds && !item.IsLockedConnection))
                         continue;
@@ -472,12 +444,12 @@ public class GraphFinder : MonoBehaviour
         }
     }
 
-    public static int GetAreaCellCount(int index) => GraphAreas[index].all.Count;
+    public static int GetAreaCellCount(int index) => Areas[index].all.Count;
     public static int GetAreaCellCount(List<int> indices)
     {
         int total = 0;
 
-        foreach (var area in GraphAreas)
+        foreach (var area in Areas)
             if (indices.Contains(area.Key))
                 total += area.Value.all.Count;
 
@@ -493,14 +465,14 @@ public class GraphFinder : MonoBehaviour
             if (cell.IsJunction)
                 return null;
 
-            return new List<MazeCell>(GraphAreas[cell.GetGraphAreaIndices()[0]].all);
+            return new List<MazeCell>(Areas[cell.GetGraphAreaIndices()[0]].all);
         }
         else
         {
             if (!cell.GraphAreaIndices.Contains(index))
                 return null;
 
-            return new List<MazeCell>(GraphAreas[index].all);
+            return new List<MazeCell>(Areas[index].all);
         }
 
     }
@@ -538,16 +510,13 @@ public class GraphFinder : MonoBehaviour
 
     public static bool IsDeadEnd(int index)
     {
-        bool deadEnd = false;
-
-        foreach (var end in GraphAreas[index].ends)
+        foreach (var end in Areas[index].ends)
             if (end.IsDeadEnd)
             {
-                deadEnd = true;
-                break;
+                return true;
             }
 
-        return deadEnd;
+        return false;
     }
 
     static int GetSharedIndexCount(MazeCell from, MazeCell to) => GetSharedIndices(from, to).Count;
@@ -564,7 +533,7 @@ public class GraphFinder : MonoBehaviour
         return indices;
     }
 
-    public int GetClosestSharedIndex(MazeCell from, MazeCell to)
+    public static int GetClosestSharedIndex(MazeCell from, MazeCell to)
     {
         var indices = new List<int>();
 
@@ -599,8 +568,8 @@ public class GraphFinder : MonoBehaviour
 
     public MazeCell GetSharedJunction(int from, int to)
     {
-        foreach (var end in GraphAreas[from].ends)
-            foreach (var other in GraphAreas[to].ends)
+        foreach (var end in Areas[from].ends)
+            foreach (var other in Areas[to].ends)
                 if (end == other)
                     return end;
 
@@ -619,14 +588,14 @@ public class GraphFinder : MonoBehaviour
 
     public static MazeCell GetRandomCellFromGraphArea(int index)
     {
-        var cells = GraphAreas[index].all;
+        var cells = Areas[index].all;
         return cells[GameManager.rngFree.Range(0, cells.Count - 1)];
     }
 
     public static MazeCell GetRandomCellFromGraphArea(List<int> indices)
     {
         var index = indices[GameManager.rngFree.Range(0, indices.Count)];
-        var cells = GraphAreas[index].all;
+        var cells = Areas[index].all;
         return cells[GameManager.rngFree.Range(0, cells.Count)];
     }
 
@@ -675,14 +644,14 @@ public class GraphFinder : MonoBehaviour
             return new HashSet<int>(temp[GameManager.rngFree.Range(0, temp.Count)]);
     }
 
-    public static float GetGraphAreaWeight(int index) => GraphAreas[index].all.Count / (float)AreaFinder.WalkableCellCount;
+    public static float GetGraphAreaWeight(int index) => Areas[index].all.Count / (float)AreaFinder.WalkableCellCount;
     public static float GetGraphAreaWeight(List<int> indices)
     {
         var finalCells = new List<MazeCell>();
 
         foreach (var index in indices)
         {
-            foreach (var cell in GraphAreas[index].all)
+            foreach (var cell in Areas[index].all)
                 if (!finalCells.Contains(cell))
                     finalCells.Add(cell);
         }
@@ -787,7 +756,7 @@ public class GraphFinder : MonoBehaviour
 
     public KeyValuePair<int, float> GetWeightedArea(int index)
     {
-        foreach (var pair in weightedGraphAreas)
+        foreach (var pair in weightedAreas)
             if (pair.Key == index)
                 return pair;
 
@@ -809,7 +778,7 @@ public class GraphFinder : MonoBehaviour
         var timer = new Stopwatch();
         timer.Start();
 
-        GraphAreas = new Dictionary<int, AreaData>();
+        Areas = new Dictionary<int, AreaData>();
         visited = new bool[maze.size.x, maze.size.y];
         frontier.Enqueue(GameManager.StartCell);
 
@@ -836,7 +805,7 @@ public class GraphFinder : MonoBehaviour
                 cell.SetGraphArea(index);
             }
             
-            GraphAreas.Add(index, new AreaData(new List<MazeCell>(currentArea), new List<MazeCell>(ends)));
+            Areas.Add(index, new AreaData(new List<MazeCell>(currentArea), new List<MazeCell>(ends)));
 
             index++;
         }
@@ -845,7 +814,7 @@ public class GraphFinder : MonoBehaviour
 
         List<MazeCell> cellsToTest = new List<MazeCell>();
 
-        foreach (var part in GraphAreas)
+        foreach (var part in Areas)
         {
             var count = part.Value.all.Count;
 
@@ -948,7 +917,7 @@ public class GraphFinder : MonoBehaviour
                     if (cell.GraphAreaIndices.Contains(coveredIndex))
                         i++;
 
-                if (i == 1 || (i == 2 && GraphAreas[coveredIndex].all.Count >= 3))
+                if (i == 1 || (i == 2 && Areas[coveredIndex].all.Count >= 3))
                     temp.Add(coveredIndex);
                 
             }
@@ -992,12 +961,12 @@ public class GraphFinder : MonoBehaviour
             }
 
             foreach(var indexToMerge in indicesToMerge)
-                if (GraphAreas.ContainsKey(indexToMerge))
-                    GraphAreas.Remove(indexToMerge);
+                if (Areas.ContainsKey(indexToMerge))
+                    Areas.Remove(indexToMerge);
             
 
-            if (!GraphAreas.ContainsKey(index))
-                GraphAreas.Add(index, new AreaData(new List<MazeCell>(currentArea), new List<MazeCell>(ends)));
+            if (!Areas.ContainsKey(index))
+                Areas.Add(index, new AreaData(new List<MazeCell>(currentArea), new List<MazeCell>(ends)));
             
 
             index++;
@@ -1025,12 +994,12 @@ public class GraphFinder : MonoBehaviour
                 var junctions = GetJunctionCells(index);
                 var junctionCount = junctions.Count;
 
-                if (junctionCount == 1 && GraphAreas[index].all.Count == 2)
+                if (junctionCount == 1 && Areas[index].all.Count == 2)
                 {
                     var smallestAreaIndex = GetSmallestAreaIndex(junctions[0], index);
                     MergeAreas(index, smallestAreaIndex, true);
                 }
-                else if (junctionCount == 2 && GraphAreas[index].all.Count == 3)
+                else if (junctionCount == 2 && Areas[index].all.Count == 3)
                 {
                     if (cell.IsInternalCorner() && !internalCornerIndices.Contains(index))
                     {
@@ -1075,7 +1044,7 @@ public class GraphFinder : MonoBehaviour
         List<EdgeData> labelledEdges = new List<EdgeData>();
         List<MazeCell> pruningList = new List<MazeCell>();
 
-        foreach(var area in GraphAreas)
+        foreach(var area in Areas)
         {
             foreach(var cell in area.Value.all)
             {
@@ -1143,7 +1112,7 @@ public class GraphFinder : MonoBehaviour
         // a bit poorly structured so making note
         // the recursive pruning of the loop tree
         // also tracks the isolated areas and puts them in hashsets for future use
-        PruneTree(pruningList);
+        PruneTreeAndTrackIsolated(pruningList);
 
         // remove isolated areas that are subsets of others
         TrimIsolatedAreas();
@@ -1221,13 +1190,10 @@ public class GraphFinder : MonoBehaviour
         // keeping track of the final graph indices used on map
         // for easy access. these are the keys to GraphAreas
         FinalGraphIndices = new List<int>();
-        foreach (var area in GraphAreas)
+        foreach (var area in Areas)
             FinalGraphIndices.Add(area.Key);
 
         priorityIndices.Clear();
-
-        // assign indexed placement
-        AssignIndexedPlacement();
 
         // DISPLAY
 
@@ -1235,7 +1201,7 @@ public class GraphFinder : MonoBehaviour
         {
             Color junctionColor = new Color(1f, 0f, 0.1f);
 
-            foreach(var area in GraphAreas)
+            foreach(var area in Areas)
             {
                 var randomColor = new Color(GameManager.rngFree.Range(0f, 1f), GameManager.rngFree.Range(0f, 1f), GameManager.rngFree.Range(0f, 1f));
 
@@ -1364,8 +1330,8 @@ public class GraphFinder : MonoBehaviour
     {
         var junctionCells = GetJunctionCells(from, to);
 
-        var endsToMerge = new List<MazeCell>(GraphAreas[from].ends);
-        var cellsToMerge = new List<MazeCell>(GraphAreas[from].all);
+        var endsToMerge = new List<MazeCell>(Areas[from].ends);
+        var cellsToMerge = new List<MazeCell>(Areas[from].all);
         var junctionsToDissolve = new List<MazeCell>();
 
         foreach(var cell in junctionCells)
@@ -1378,9 +1344,9 @@ public class GraphFinder : MonoBehaviour
         AddToGraphArea(to, cellsToMerge, endsToMerge);
 
         foreach (var junction in junctionsToDissolve)
-            GraphAreas[to].ends.Remove(junction);
+            Areas[to].ends.Remove(junction);
 
-        foreach(var cell in GraphAreas[from].all.ToList())
+        foreach(var cell in Areas[from].all.ToList())
         {
             cell.GraphAreaIndices.Remove(from);
 
@@ -1388,21 +1354,21 @@ public class GraphFinder : MonoBehaviour
                 cell.GraphAreaIndices.Add(to);
         }
 
-        GraphAreas.Remove(from);
+        Areas.Remove(from);
     }
 
     bool HasMadeConnection(MazeCell from, MazeCell to)
     {
         foreach(var key in from.GraphAreaIndices)
         {
-            if (GraphAreas[key].ends.Contains(to))
+            if (Areas[key].ends.Contains(to))
                 return true;
         }
 
         return false;
     }
 
-    void PruneTree(List<MazeCell> ends)
+    void PruneTreeAndTrackIsolated(List<MazeCell> ends)
     {
         foreach (var end in ends)
             CheckJunction(end);
@@ -1423,7 +1389,7 @@ public class GraphFinder : MonoBehaviour
             var indices = cell.GetGraphAreaIndices();
 
             foreach (var index in indices)
-                if (GraphAreas[index].ends.Count <= 2)
+                if (Areas[index].ends.Count <= 2)
                     area.Add(index);
 
             if (GetGraphAreaWeight(new List<int>(area)) >= areaSizeThreshold.max)
@@ -1663,30 +1629,27 @@ public class GraphFinder : MonoBehaviour
 
     void AssignAreaWeights()
     {
-        weightedGraphAreas = new List<KeyValuePair<int, float>>();
-        weightedIsolatedAreas = new List<KeyValuePair<HashSet<int>, IsolatedAreaData>>();
+        weightedAreas = new List<KeyValuePair<int, float>>();
+        IsolatedAreas = new List<KeyValuePair<HashSet<int>, IsolatedAreaData>>();
         weightedDeadEnds = new List<KeyValuePair<int, float>>();
-        allIsolatedAreas = new HashSet<int>();
 
-        foreach (var area in GraphAreas)
+        foreach (var area in Areas)
         {
             var weight = GetGraphAreaWeight(area.Key);
-            weightedGraphAreas.Add(new KeyValuePair<int, float>(area.Key, weight));
+            weightedAreas.Add(new KeyValuePair<int, float>(area.Key, weight));
         }
 
-        weightedGraphAreas.Sort((a, b) => a.Value.CompareTo(b.Value));
+        weightedAreas.Sort((a, b) => a.Value.CompareTo(b.Value));
 
         foreach (var area in isolatedAreas)
         {
-            allIsolatedAreas.UnionWith(area);
-
-            weightedIsolatedAreas.Add(new KeyValuePair<HashSet<int>, IsolatedAreaData>
+            IsolatedAreas.Add(new KeyValuePair<HashSet<int>, IsolatedAreaData>
                                      (area, new IsolatedAreaData(GetGraphAreaWeight(new List<int>(area)), GetIsolatedAreaEntryPoints(area))));
         }
 
-        weightedIsolatedAreas.Sort((a, b) => a.Value.weight.CompareTo(b.Value.weight));
+        IsolatedAreas.Sort((a, b) => a.Value.weight.CompareTo(b.Value.weight));
 
-        foreach (var area in GraphAreas)
+        foreach (var area in Areas)
         {
             if(area.Value.ends.Count == 2)
             {
@@ -1703,62 +1666,16 @@ public class GraphFinder : MonoBehaviour
 
     void AssignIsolatedEntryCells()
     {
-        foreach(var area in weightedIsolatedAreas)
+        foreach(var area in IsolatedAreas)
         {
             foreach(var index in area.Key)
             {
-                foreach(var cell in GraphAreas[index].all)
+                foreach(var cell in Areas[index].all)
                 {
                     cell.IsolatedEntryPoints = area.Value.entryPoints;
                 }
             }
         }
-    }
-
-    void AssignIndexedPlacement()
-    {
-        indexedPlacement = new Dictionary<int, (List<MazeCell> placement, float score)>();
-        var temp = new Dictionary<int, List<MazeCell>>();
-
-        foreach (var placed in spotfinder.PlacedSpots)
-        {
-            foreach(var connected in placed.connectedCells)
-            {
-                foreach(var index in connected.GetGraphAreaIndices())
-                {
-                    if (!temp.ContainsKey(index))
-                    {
-                        temp.Add(index, new List<MazeCell> { placed });
-                    }
-                    else
-                    {
-                        temp[index].Add(placed);
-                    }
-                }
-            }
-        }
-
-        foreach(var t in temp)
-        {
-            indexedPlacement.Add(t.Key, (t.Value, CalculateIndexScore(t.Key, t.Value.Count)));
-        }
-    }
-
-    float CalculateIndexScore(int index, int placedCount)
-    {
-        //float placed = (float)placedCount / spotfinder.PlacedSpots.Count;
-        //float walkable = GetWeightedArea(index).Value;
-        //float endCount = GraphAreas[index].ends.Count;
-
-        float total = 0f;
-
-        foreach (var cell in GraphAreas[index].all)
-            if(cell.placedConnectedCells.Count > 0)
-                total += cell.GetJunctionDistanceAverage();
-
-        return total / GraphAreas[index].all.Count;
-
-        //return (placed * walkable) / endCount * 1000f;
     }
 
     #endregion
@@ -1773,8 +1690,10 @@ public class GraphFinder : MonoBehaviour
         toParent = new (int node, int edge)[indexedJunctions.Count];
     }
 
-    public bool BiDirSearch(int from, int to, List<int> avoidIndices = null)
+    public bool BiDirSearch(int from, int to, out ChartedPath foundPath, List<int> avoidIndices = null)
     {
+        foundPath = new ChartedPath();
+
         if (from == -1 || to == -1)
             return false;
 
@@ -1813,7 +1732,7 @@ public class GraphFinder : MonoBehaviour
 
             if(intersectNode != -1)
             {
-                chartedPath = BuildPath(fromParent, toParent, from, to, intersectNode);
+                foundPath = BuildPath(fromParent, toParent, from, to, intersectNode);
                 return true;
             }
             
@@ -1822,8 +1741,10 @@ public class GraphFinder : MonoBehaviour
         return false;
     }
 
-    public bool BiDirSearch(MazeCell fromCell, MazeCell toCell, List<int> avoidIndices = null)
+    public bool BiDirSearch(MazeCell fromCell, MazeCell toCell, out ChartedPath foundPath, List<int> avoidIndices = null)
     {
+        foundPath = new ChartedPath();
+
         int from = fromCell.EndIndex;
         int to = toCell.EndIndex;
 
@@ -1865,7 +1786,7 @@ public class GraphFinder : MonoBehaviour
 
             if (intersectNode != -1)
             {
-                chartedPath = BuildPath(fromParent, toParent, from, to, intersectNode);
+                foundPath = BuildPath(fromParent, toParent, from, to, intersectNode);
                 return true;
             }
 
@@ -1931,19 +1852,19 @@ public class GraphFinder : MonoBehaviour
             i = toParent[i].node;
         }
 
-        UnityEngine.Debug.Log("Path found");
+        //UnityEngine.Debug.Log("Path found");
 
-        string test = "Path: ";
+        //string test = "Path: ";
 
-        for(int k = 0; k < cells.Count; k++)
-        {
-            test += cells[k];
+        //for(int k = 0; k < cells.Count; k++)
+        //{
+        //    test += cells[k];
 
-            if(k < indices.Count)
-                test += " - " + indices[k] + " - ";
-        }
+        //    if(k < indices.Count)
+        //        test += " - " + indices[k] + " - ";
+        //}
 
-        UnityEngine.Debug.Log(test);
+        //UnityEngine.Debug.Log(test);
 
         return new ChartedPath(cells.ToArray(), indices.ToArray());
     }
@@ -2160,9 +2081,10 @@ public class GraphFinder : MonoBehaviour
         }
     }
 
-    public struct IsolatedAreaData
+    public class IsolatedAreaData
     {
         public float weight;
+        public float placementScore;
         public HashSet<MazeCell> entryPoints;
 
         public IsolatedAreaData(float weight, HashSet<MazeCell> entryPoints)
@@ -2170,26 +2092,71 @@ public class GraphFinder : MonoBehaviour
             this.weight = weight;
             this.entryPoints = entryPoints;
         }
+
+        public float GetWeightedScore() => weight * placementScore;
+
+        public void CalculateIsolatedScore(HashSet<int> indices)
+        {
+            float score = 0;
+            int count = 0;
+
+            foreach(var index in indices)
+            {
+                int cellCount = Areas[index].all.Count;
+                score += Areas[index].placementScore * cellCount;
+                count += cellCount;
+            }
+
+            placementScore = score / count;
+        }
     }
 
     public class AreaData
     {
         public List<MazeCell> all;
         public List<MazeCell> ends;
+        public List<MazeCell> placement;
         public float weight;
+        public float placementScore;
         public List<KeyValuePair<float, MazeCell>> sortedVantagePoints;
         public List<Loot> loot;
         public List<CCTVCamera> cameras;
         public bool isMapEntranceOrExit = false;
+        public bool hasDeadEnd = false;
+        public bool isIsolated = false;
 
         // possible future additions
         // security system type
         // door with key
 
+        // utility
+        
+
         public AreaData(List<MazeCell> all, List<MazeCell> ends)
         {
             this.all = all;
             this.ends = ends;
+
+            foreach(var end in ends)
+                if (end.IsDeadEnd)
+                {
+                    hasDeadEnd = true;
+                    break;
+                }
+
+            placement = new List<MazeCell>();
+            float score = 0;
+
+            foreach(var cell in all)
+                foreach (var placed in cell.placedConnectedCells)
+                    if (!placement.Contains(placed))
+                    {
+                        placement.Add(placed);
+                        score += placed.PlacementScore;
+                    }
+
+            if(placement.Count > 0)
+                placementScore = score / placement.Count;
         }
 
         public AreaData(List<MazeCell> all, List<MazeCell> ends, float weight)
@@ -2197,13 +2164,80 @@ public class GraphFinder : MonoBehaviour
             this.all = all;
             this.ends = ends;
             this.weight = weight;
+
+            foreach (var end in ends)
+                if (end.IsDeadEnd)
+                {
+                    hasDeadEnd = true;
+                    break;
+                }
+
+            placement = new List<MazeCell>();
+            float score = 0;
+
+            foreach (var cell in all)
+                foreach (var placed in cell.placedConnectedCells)
+                    if (!placement.Contains(placed))
+                    {
+                        placement.Add(placed);
+                        score += placed.PlacementScore;
+                    }
+
+            if (placement.Count > 0)
+                placementScore = score / placement.Count;
         }
 
         public void SetWeight(float weight) => this.weight = weight;
         public void SetLoot(List<Loot> loot) => this.loot = loot;
         public void SetVantagePoints(List<KeyValuePair<float, MazeCell>> vantagePoints) => sortedVantagePoints = vantagePoints;
-        public void SetCammeras(List<CCTVCamera> cameras) => this.cameras = cameras;
         public void SetIsEntranceOrExit(bool isEntranceOrExit) => isMapEntranceOrExit = isEntranceOrExit;
+        public void SetIsIsolated(bool isIsolated) => this.isIsolated = isIsolated;
+        public void SetCameras(List<CCTVCamera> cameras) => this.cameras = cameras;
+
+        public void AddCamera(CCTVCamera camera)
+        {
+            if (cameras == null)
+                cameras = new List<CCTVCamera>();
+
+            if (!cameras.Contains(camera))
+                cameras.Add(camera);
+        }
+
+        public void FindAndSetPlacement()
+        {
+            placement = new List<MazeCell>();
+
+            foreach(var cell in all)
+                foreach(var placed in cell.placedConnectedCells)
+                    if (!placement.Contains(placed))
+                        placement.Add(placed);
+
+            if (placement.Count == 0)
+                return;
+
+            SetPlacementScore();
+        }
+
+        void SetPlacementScore()
+        {
+            float score = 0;
+
+            foreach (var cell in placement)
+                score += cell.PlacementScore;
+
+            placementScore = score / placement.Count;
+        }
+
+        public float GetWeightedScore() => weight * placementScore;
+
+        public MazeCell GetVantagePoint(float normalizedParameter)
+        {
+            var range = GameManager.GetScaledRange(normalizedParameter);
+            var final = Mathf.Min(1, GameManager.rngFree.Range(range.min, range.max));
+            var index = Mathf.RoundToInt((sortedVantagePoints.Count - 1) * final);
+
+            return sortedVantagePoints[index].Value;
+        }
     }
 
     #endregion
@@ -2214,118 +2248,35 @@ public class GraphFinder : MonoBehaviour
 
     void TestAreas()
     {
-        string test = "";
+        string test;
 
-        foreach (var area in GraphAreas)
+        foreach (var area in Areas)
         {
-            UnityEngine.Debug.Log($"Graph index {area.Key}");
-            UnityEngine.Debug.Log($"Weight:{area.Value.weight} IsEnterOrExit:{area.Value.isMapEntranceOrExit} Top Vantage:{area.Value.sortedVantagePoints[area.Value.sortedVantagePoints.Count-1].Value.gameObject.name}");
+            test = $"Area: {area.Key} ";
+            test += $" Weight:{area.Value.weight} ";
+
+            if(area.Value.placement.Count > 0)
+                test += $" score: {area.Value.placementScore} weighted score: {area.Value.GetWeightedScore()}";
+            if (area.Value.cameras != null)
+                test += $" camera count: {area.Value.cameras.Count}";
+
+            UnityEngine.Debug.Log(test);
         }
 
-        //for (int i = 0; i < maze.size.x; i++)
-        //{
-        //    for (int j = 0; j < maze.size.y; j++)
-        //    {
-        //        var cell = maze.cells[i, j];
-
-        //        if (cell.state > 1)
-        //            continue;
-
-        //        UnityEngine.Debug.Log($"Measured junctions for {cell.gameObject.name}");
-
-        //        foreach (var item in cell.MeasuredJunctions)
-        //        {
-        //            UnityEngine.Debug.Log($"distance to {item.Key.gameObject.name}: {item.Value}");
-        //        }
-        //    }
-        //}
-
-        //for(int j = 0; j < GraphEdges.GetLength(0); j++)
-        //{
-        //    string str = "Edge: ";
-        //    for(int k = 0; k <= 1; k++)
-        //    {
-        //        str += GraphEdges[j, k] + (k == 0 ? ", " : "");
-        //    }
-
-        //    UnityEngine.Debug.Log($"{str}");
-        //}
-
-        //for (int j = 0; j < LabelledGraphConnections.Length; j++)
-        //{
-        //    string str = "Edge: ";
-        //    for (int k = 0; k <= 1; k++)
-        //    {
-        //        str += LabelledGraphConnections[j][k] + " ";
-        //        str += indexedJunctions[LabelledGraphConnections[j][k]].gameObject.name + ", ";
-
-        //    }
-
-        //    str += " graph index: " + LabelledGraphConnections[j][2];
-
-        //    UnityEngine.Debug.Log(str);
-        //}
-
-        //foreach (var cycle in cycles)
-        //    PrintCycle(cycle.nodes, cycle.edges);
-
-        //foreach (var area in isolatedAreas)
-        //{
-        //    test = "Pre-trim Isolated Area: ";
-
-        //    foreach (var index in area)
-        //    {
-        //        test += index + "-";
-        //    }
-
-        //    UnityEngine.Debug.Log(test);
-        //}
-
-        //TrimIsolatedAreas();
-
-        //foreach (var area in isolatedAreas)
-        //{
-        //    test = "Post-trim Isolated Area: ";
-
-        //    foreach (var index in area)
-        //    {
-        //        test += index + "-";
-        //    }
-
-        //    UnityEngine.Debug.Log(test);
-        //}
-
-        //test = "Final Graph Indices: ";
-        //foreach (var index in FinalGraphIndices)
-        //    test += index + "-";
-        //UnityEngine.Debug.Log(test);
-
-        foreach (var area in weightedIsolatedAreas)
+        foreach (var area in IsolatedAreas)
         {
-            test = "Weighted Isolated Area: ";
+            test = "Isolated Area: ";
 
             foreach (var index in area.Key)
                 test += index + " - ";
 
-            test += "weight: " + area.Value.weight;
+            test += "weight: " + area.Value.weight + " score: " + area.Value.placementScore + " weighted score: " + area.Value.GetWeightedScore();
 
             foreach(var point in area.Value.entryPoints)
                 test += " entry: " + point.gameObject.name;
 
             UnityEngine.Debug.Log(test);
         }
-
-        //foreach (var placement in indexedPlacement)
-        //{
-        //    test = $"Placement area {placement.Key}: ";
-
-        //    //foreach (var cell in placement.Value.placement)
-        //    //    test += cell.gameObject.name + " - ";
-
-        //    test += placement.Value.score;
-
-        //    UnityEngine.Debug.Log(test);
-        //}
 
         //foreach (var area in weightedDeadEnds)
         //{
@@ -2334,12 +2285,12 @@ public class GraphFinder : MonoBehaviour
         //    UnityEngine.Debug.Log(test);
         //}
 
-        foreach (var area in weightedGraphAreas)
-        {
-            test = "Weighted Area: ";
-            test += area.Key + " - weight: " + area.Value;
-            UnityEngine.Debug.Log(test);
-        }
+        //foreach (var area in weightedGraphAreas)
+        //{
+        //    test = "Weighted Area: ";
+        //    test += area.Key + " - weight: " + area.Value;
+        //    UnityEngine.Debug.Log(test);
+        //}
     }
 
     public static void PrintCycle(int[] nodes, int[] edges)
@@ -2355,7 +2306,7 @@ public class GraphFinder : MonoBehaviour
         UnityEngine.Debug.Log($"{strIndices}");
     }
 
-    //string fromIndex, toIndex;
+    string fromX, fromY, toX, toY, from, to;
 
     private void OnGUI()
     {
@@ -2365,17 +2316,38 @@ public class GraphFinder : MonoBehaviour
         //if (GUI.Button(new Rect(10, 70, 80, 60), "Vantage"))
         //    CalculateAllVantageScores();
 
-        //fromIndex = GUI.TextField(new Rect(90, 70, 20, 60), fromIndex);
-        //toIndex = GUI.TextField(new Rect(110, 70, 20, 60), toIndex);
+        fromX = GUI.TextField(new Rect(90, 70, 20, 60), fromX);
+        fromY = GUI.TextField(new Rect(110, 70, 20, 60), fromY);
+        toX = GUI.TextField(new Rect(130, 70, 20, 60), toX);
+        toY = GUI.TextField(new Rect(150, 70, 20, 60), toY);
 
-        //if (GUI.Button(new Rect(10, 70, 80, 60), "Check Path"))
-        //{
-        //    int a, b;
-        //    Int32.TryParse(fromIndex, out a);
-        //    Int32.TryParse(toIndex, out b);
+        if (GUI.Button(new Rect(10, 70, 80, 60), "Check Path"))
+        {
+            int a, b, c, d;
+            int.TryParse(fromX, out a);
+            int.TryParse(fromY, out b);
+            int.TryParse(toX, out c);
+            int.TryParse(toY, out d);
 
-        //    BiDirSearch(a, b);
-        //}
+            var start = maze.cells[a, b];
+            var end = maze.cells[c, d];
+
+            if (BiDirSearch(start, end, out ChartedPath found))
+                found.DebugPath();
+        }
+
+        from = GUI.TextField(new Rect(90, 130, 20, 60), from);
+        to = GUI.TextField(new Rect(110, 130, 20, 60), to);
+
+        if (GUI.Button(new Rect(10, 130, 80, 60), "Index Path"))
+        {
+            int a, b;
+            int.TryParse(from, out a);
+            int.TryParse(to, out b);
+
+            if (BiDirSearch(a, b, out ChartedPath found))
+                found.DebugPath();
+        }
     }
 
 #endif

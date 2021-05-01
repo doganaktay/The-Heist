@@ -106,7 +106,6 @@ public abstract class AI : Character, IBehaviorTree
 
     // head movement
     float randomTimeBuffer;
-    int[] trigExponents = new int[3];
     float headMoveCoefficient;
     float multiplier;
     int lastSign;
@@ -169,140 +168,11 @@ public abstract class AI : Character, IBehaviorTree
 
     #endregion MonoBehaviour
 
-    #region BehaviorTree
+    #region Manager
 
-    protected abstract void GenerateBehaviorTree();
-
-    async UniTask RunBehaviorTree(CancellationToken token)
+    public void Report(ReportData report)
     {
-        await UniTask.Delay(1000, false, PlayerLoopTiming.Update, token);
-
-        while (!token.IsCancellationRequested && enabled)
-        {
-            (BehaviorTree as Node).Run();
-            await UniTask.Delay((int)(btWaitTime * 1000), false, PlayerLoopTiming.Update, token);
-        }
-    }
-
-    void StopBehaviorTree()
-    {
-        behaviorTreeTokenSource.Cancel();
-    }
-
-    private void ClearBehaviorTreeData()
-    {
-        ClearPath(ChartedPathType.Pursuit);
-        PointOfInterest = null;
-        PlayerObservationPoint = null;
-        ReadyForPursuit = false;
-        RegisterPlayer = false;
-        ActiveActionNode = null;
-    }
-
-    #endregion
-
-    #region Field Of View
-
-    public void SetFOV(FOVType type)
-    {
-        float radius, angle;
-
-        if (type == FOVType.Disabled)
-        {
-            fieldOfView.Disable();
-            return;
-        }
-        
-        if (!fieldOfView.isActiveAndEnabled)
-            fieldOfView.enabled = true;
-
-        radius = fovPresets[(int)type].radius;
-        angle = fovPresets[(int)type].angle;
-
-        fovTokenSource = fovTokenSource.Renew();
-
-        AdjustFOV(radius, angle, fovTokenSource.Token).Forget();
-    }
-
-    async UniTask AdjustFOV(float radius, float angle, CancellationToken token)
-    {
-        float timer = 0f;
-        float ratio = 0f;
-        float currentRadius = fieldOfView.viewRadius;
-        float currentAngle = fieldOfView.viewAngle;
-
-        if (!token.IsCancellationRequested)
-            fieldOfView.SetShaderRadius(radius);
-
-        while (ratio < 1f && !token.IsCancellationRequested)
-        {
-            fieldOfView.viewRadius = Mathf.Lerp(currentRadius, radius, ratio);
-            fieldOfView.viewAngle = Mathf.Lerp(currentAngle, angle, ratio);
-
-            timer += Time.deltaTime;
-            ratio = timer / FOVAdjustTime;
-
-            await UniTask.NextFrame(token);
-        }
-
-        //if(!token.IsCancellationRequested)
-        //    fieldOfView.SetShaderRadius(fieldOfView.viewRadius);
-    }
-
-    static List<(float radius, float angle)> fovPresets = new List<(float radius, float angle)>()
-    {
-        (1, 1),
-        (60, 60),
-        (70, 80),
-        (80, 100),
-        (30, 40),
-        (70, 120)
-    };
-
-    #endregion
-
-    #region Head Movement
-
-    protected async UniTask HeadMovement(CancellationToken token)
-    {
-        while(!token.IsCancellationRequested && !AimOverride)
-        {
-            var timeToUse = Time.time + randomTimeBuffer;
-            float amount = 1;
-
-            amount *= Mathf.Sin(headMoveCoefficient * timeToUse);
-            var sign = Mathf.Sign(amount);
-
-            if (lastSign != sign)
-            {
-                multiplier = GameManager.rngFree.Range(0, 2f);
-                lastSign = (int)sign;
-            }
-
-            var final = amount * multiplier * Mathf.Max(0, 1 - exposureRatio);
-
-            var rot = Quaternion.Euler(0f, 0f, final);
-            transform.rotation = rot * transform.rotation;
-
-            await UniTask.NextFrame();
-        }
-    }
-
-    float RandomValue()
-    {
-        var value = Mathf.Sin(Vector2.Dot(GameManager.rngFree.NextInsideUnitCircle(), new Vector2(12.9898f, 4.1414f))) * 43758.5453;
-        var fract = Convert.ToSingle(value - (int)value);
-        return fract * 100f;
-    }
-    
-    void SetRandomTimeBuffer() => randomTimeBuffer = RandomValue();
-    
-    void SetHeadMoveParams()
-    {
-        for(int i = 0; i < trigExponents.Length; i++)
-            trigExponents[i] = GameManager.rngFree.Roll() > 0.5 ? 1 : 3;
-
-        headMoveCoefficient = GameManager.rngFree.Range(4f, 5f);
+        manager.Report(report);
     }
 
     #endregion
@@ -492,6 +362,141 @@ public abstract class AI : Character, IBehaviorTree
 
     #endregion
 
+    #region BehaviorTree
+
+    protected abstract void GenerateBehaviorTree();
+
+    async UniTask RunBehaviorTree(CancellationToken token)
+    {
+        await UniTask.Delay(1000, false, PlayerLoopTiming.Update, token);
+
+        while (!token.IsCancellationRequested && enabled)
+        {
+            (BehaviorTree as Node).Run();
+            await UniTask.Delay((int)(btWaitTime * 1000), false, PlayerLoopTiming.Update, token);
+        }
+    }
+
+    void StopBehaviorTree()
+    {
+        behaviorTreeTokenSource.Cancel();
+    }
+
+    private void ClearBehaviorTreeData()
+    {
+        ClearPath(ChartedPathType.Pursuit);
+        PointOfInterest = null;
+        PlayerObservationPoint = null;
+        ReadyForPursuit = false;
+        RegisterPlayer = false;
+        ActiveActionNode = null;
+    }
+
+    #endregion
+
+    #region Field Of View
+
+    public void SetFOV(FOVType type)
+    {
+        float radius, angle;
+
+        if (type == FOVType.Disabled)
+        {
+            fieldOfView.Disable();
+            return;
+        }
+
+        if (!fieldOfView.isActiveAndEnabled)
+            fieldOfView.enabled = true;
+
+        radius = fovPresets[(int)type].radius;
+        angle = fovPresets[(int)type].angle;
+
+        fovTokenSource = fovTokenSource.Renew();
+
+        AdjustFOV(radius, angle, fovTokenSource.Token).Forget();
+    }
+
+    async UniTask AdjustFOV(float radius, float angle, CancellationToken token)
+    {
+        float timer = 0f;
+        float ratio = 0f;
+        float currentRadius = fieldOfView.viewRadius;
+        float currentAngle = fieldOfView.viewAngle;
+
+        if (!token.IsCancellationRequested)
+            fieldOfView.SetShaderRadius(radius);
+
+        while (ratio < 1f && !token.IsCancellationRequested)
+        {
+            fieldOfView.viewRadius = Mathf.Lerp(currentRadius, radius, ratio);
+            fieldOfView.viewAngle = Mathf.Lerp(currentAngle, angle, ratio);
+
+            timer += Time.deltaTime;
+            ratio = timer / FOVAdjustTime;
+
+            await UniTask.NextFrame(token);
+        }
+
+        //if(!token.IsCancellationRequested)
+        //    fieldOfView.SetShaderRadius(fieldOfView.viewRadius);
+    }
+
+    static List<(float radius, float angle)> fovPresets = new List<(float radius, float angle)>()
+    {
+        (1, 1),
+        (60, 60),
+        (70, 80),
+        (80, 100),
+        (30, 40),
+        (70, 120)
+    };
+
+    #endregion
+
+    #region Head Movement
+
+    protected async UniTask HeadMovement(CancellationToken token)
+    {
+        while (!token.IsCancellationRequested && !AimOverride)
+        {
+            var timeToUse = Time.time + randomTimeBuffer;
+            float amount = 1;
+
+            amount *= Mathf.Sin(headMoveCoefficient * timeToUse);
+            var sign = Mathf.Sign(amount);
+
+            if (lastSign != sign)
+            {
+                multiplier = GameManager.rngFree.Range(0, 2f);
+                lastSign = (int)sign;
+            }
+
+            var final = amount * multiplier * Mathf.Max(0, 1 - exposureRatio);
+
+            var rot = Quaternion.Euler(0f, 0f, final);
+            transform.rotation = rot * transform.rotation;
+
+            await UniTask.NextFrame();
+        }
+    }
+
+    float RandomValue()
+    {
+        var value = Mathf.Sin(Vector2.Dot(GameManager.rngFree.NextInsideUnitCircle(), new Vector2(12.9898f, 4.1414f))) * 43758.5453;
+        var fract = Convert.ToSingle(value - (int)value);
+        return fract * 100f;
+    }
+
+    void SetRandomTimeBuffer() => randomTimeBuffer = RandomValue();
+
+    void SetHeadMoveParams()
+    {
+        headMoveCoefficient = GameManager.rngFree.Range(4f, 5f);
+    }
+
+    #endregion
+
     #region Getters and Setters    
 
     void SetUtilityParams()
@@ -506,7 +511,7 @@ public abstract class AI : Character, IBehaviorTree
 
     public int GetCoverageSize()
     {
-        var size = loop.GetSize();
+        var size = loop.Size;
 
         if (size > 0)
             return size;
@@ -545,7 +550,7 @@ public abstract class AI : Character, IBehaviorTree
                 return pursuit;
         }
 
-        return new ChartedPath(null, new int[1]);
+        return new ChartedPath();
     }
 
     public void SetPath(ChartedPathType type, ChartedPath path)

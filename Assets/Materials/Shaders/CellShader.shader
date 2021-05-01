@@ -65,7 +65,7 @@
 				UNITY_SETUP_INSTANCE_ID(IN);
                 UNITY_TRANSFER_INSTANCE_ID(IN,OUT);
 				OUT.vertex = UnityObjectToClipPos(IN.vertex);
-				OUT.texcoord = (IN.texcoord-0.5);
+				OUT.texcoord = (IN.texcoord);
 				OUT.colorBase = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseColor);
 				OUT.colorSecondary = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _SecondaryColor);
 				OUT.blendFactor = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BlendFactor);
@@ -76,7 +76,7 @@
 
 			fixed4 SampleSpriteTexture (float2 uv)
 			{
-				fixed4 color = tex2D (_MainTex, uv);
+				fixed4 color = tex2D (_MainTex, uv) + 0.5;
 
 				return color;
 			}

@@ -8,6 +8,7 @@ public class PerObjectMaterialProperties : MonoBehaviour
     static readonly int blendFactorId = Shader.PropertyToID("_BlendFactor");
     static readonly int objectWorldPosId = Shader.PropertyToID("_ObjectPos");
     static readonly int fovRadiusId = Shader.PropertyToID("_Radius");
+    static readonly int mainTexId = Shader.PropertyToID("_MainTex");
 
     static MaterialPropertyBlock block;
 
@@ -70,8 +71,17 @@ public class PerObjectMaterialProperties : MonoBehaviour
     {
         block.Clear();
         myRenderer.GetPropertyBlock(block);
-
+        
         block.SetFloat(fovRadiusId, radius);
+        myRenderer.SetPropertyBlock(block);
+    }
+
+    public void SetTexture(Texture texture)
+    {
+        block.Clear();
+        myRenderer.GetPropertyBlock(block);
+
+        block.SetTexture(mainTexId, texture);
         myRenderer.SetPropertyBlock(block);
     }
 }

@@ -22,6 +22,11 @@ public abstract class AIManager : MonoBehaviour
         GameManager.MazeGenFinished += InitializeAI;
     }
 
+    public void Report(ReportData data)
+    {
+        OnReceiveReport(data);
+    }
+
     public void CreateNewAI(int count)
     {
         for (int i = 0; i < count; i++)
@@ -31,6 +36,7 @@ public abstract class AIManager : MonoBehaviour
 
             ai.name = aiTypeName + " " + activeAIs.Count;
             ai.transform.parent = transform;
+            ai.manager = this;
             activeAIs.Add(ai);
         }
     }
@@ -43,6 +49,7 @@ public abstract class AIManager : MonoBehaviour
 
             ai.name = aiTypeName + " " + activeAIs.Count;
             ai.transform.parent = transform;
+            ai.manager = this;
             activeAIs.Add(ai);
         }
     }
@@ -53,6 +60,7 @@ public abstract class AIManager : MonoBehaviour
 
         ai.name = aiTypeName + " " + activeAIs.Count;
         ai.transform.parent = transform;
+        ai.manager = this;
         activeAIs.Add(ai);
 
         return ai;
@@ -103,4 +111,5 @@ public abstract class AIManager : MonoBehaviour
 
     protected abstract void AssignRoles();
     protected abstract void OnInitializeAI();
+    protected abstract void OnReceiveReport(ReportData data);
 }

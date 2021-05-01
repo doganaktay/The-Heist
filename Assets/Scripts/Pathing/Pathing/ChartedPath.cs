@@ -18,12 +18,13 @@ public struct ChartedPath
         travelIndex = -1;
     }
 
-    public MazeCell First => cells[0];
-    public MazeCell Last => cells[cells.Length - 1];
+    public MazeCell Start => cells[0];
+    public MazeCell End => cells[cells.Length - 1];
+    public int Size => cells.Length;
 
     public (MazeCell cell, int index) GetNext(MazeCell cell, bool isEntry = false)
     {
-        if (cells == null || indices == null)
+        if (cells is null || indices is null)
             return (null, -1);
 
         bool found = false;
@@ -80,9 +81,6 @@ public struct ChartedPath
 
         return (cells[travelIndex + 1], travelIndex == -1 || !found ? -1 : indices[travelIndex]);
     }
-
-    public MazeCell Start => cells[0];
-    public MazeCell End => cells[cells.Length - 1];
     
     public int GetIndex(MazeCell start, MazeCell end)
     {
@@ -132,8 +130,6 @@ public struct ChartedPath
         travelIndex = -1;
     }
 
-    public int GetSize() => cells.Length;
-
     public float GetWeight() => GraphFinder.GetGraphAreaWeight(new List<int>(indices));
 
     public bool Contains(int index)
@@ -154,7 +150,12 @@ public struct ChartedPath
 
         for(int i = 0; i < cells.Length; i++)
         {
-            str += cells[i].gameObject.name + " - " + indices[i] + " - ";
+            str += cells[i].gameObject.name + " - ";
+
+            if (i == indices.Length)
+                continue;
+
+            str += indices[i] + " - ";
         }
 
         Debug.Log(str);

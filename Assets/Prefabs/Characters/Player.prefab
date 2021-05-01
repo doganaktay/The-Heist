@@ -227,11 +227,12 @@ MonoBehaviour:
   obstacleMask:
     serializedVersion: 2
     m_Bits: 8704
-  visibleTargets: []
   meshResolution: 2
   edgeResolveIterations: 1
   edgeDstThreshold: 0.1
   maskCutawayDst: 0
+  owner: {fileID: 0}
+  visibleTargets: []
   aim: {fileID: 928625601923451}
   zOffset: 0
   canDraw: 1
@@ -343,7 +344,7 @@ Transform:
   m_GameObject: {fileID: 7495380814707733899}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: -4}
-  m_LocalScale: {x: 7, y: 7, z: 1}
+  m_LocalScale: {x: 6, y: 6, z: 1}
   m_Children:
   - {fileID: 928625601923451}
   - {fileID: 2844324702518575320}
@@ -429,6 +430,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 77a463e92a4f845aea3f6a761697ebe7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  maxTravelDistance: 0
+  distanceTravelled: 0
+  aim: {fileID: 0}
+  aimOverrideTarget: {fileID: 0}
   isOnGrid: 1
   pathDriftMultiplier: 0
   lagPercent:
@@ -441,8 +446,6 @@ MonoBehaviour:
   turnSpeed:
     min: 4
     max: 6
-  aim: {fileID: 0}
-  aimOverrideTarget: {fileID: 0}
   projectilePrefab: {fileID: 372506298171578869, guid: 3f7dd9ebfb0ea4133bfb93dfe5f47185,
     type: 3}
   soundBombPrefab: {fileID: -8828769137660388836, guid: a36dba4683cd143d7a515737ecccc028,

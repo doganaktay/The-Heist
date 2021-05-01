@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Default Local Group
+  m_EditorClassIdentifier: 
+  m_GroupName: Default Local Group
+  m_Data:
+    m_SerializedData: []
+  m_GUID: 090cc5509a59f41aeb5e912d92642014
+  m_SerializeEntries:
+  - m_GUID: 1e55750c5d1174415a3b182ea4e30f35
+    m_Address: Assets/Art/Kenney/ground_tiles_2.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 692412476596e47e2b9481e088a57373
+    m_Address: Assets/Art/Kenney/ground_tiles_1.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 31a815f700e714b41986d896efc2eacb, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: afc152fe3494d4938a7b385205d8cd7e, type: 2}
+    - {fileID: 11400000, guid: ff6791e43037d43d7b157d5ef6de922b, type: 2}

@@ -42,7 +42,6 @@ public class TouchUI : MonoBehaviour
     private void Start()
     {
         cam = Camera.main;
-        SetUpUIDimensions();
     }
 
     private void Update()
@@ -92,8 +91,11 @@ public class TouchUI : MonoBehaviour
         }
     }
 
-    private void SetUpUIDimensions()
+    public void SetupUIDimensions(float mazeHeight)
     {
+        var topMenuHeight = (1 - mazeHeight) * Screen.height;
+        var mainMenuHeight = mazeHeight * Screen.height;
+
         var topUIRect = topUIBar.GetComponent<RectTransform>();
         topUIRect.sizeDelta = new Vector2(Screen.width, topMenuHeight);
         topUIRect.anchoredPosition = new Vector2(0f, -topMenuHeight / 2f);

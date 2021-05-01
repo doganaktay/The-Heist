@@ -14,11 +14,17 @@ public class Post : ActionNode
     {
         owner.IsActive = true;
 
-        owner.SetBehaviorParams(BehaviorType.Casual, FOVType.Post, false);
 
         var timeLimit = owner.GetPostTime();
 
-        Debug.Log($"{owner.gameObject.name} posting at: {owner.CurrentCell.gameObject.name}");
+        var indices = owner.CurrentCell.GetGraphAreaIndices();
+        var index = indices[GameManager.rngFree.Range(0, indices.Count)];
+        var target = GraphFinder.Areas[index].GetVantagePoint(owner.foresight);
+
+        await owner.GoTo(token, target);
+
+        owner.SetBehaviorParams(BehaviorType.Casual, FOVType.Post, false);
+
         var directions = owner.CurrentCell.GetPostDirections();
         var selected = directions[GameManager.rngFree.Range(0, directions.Count)];
 

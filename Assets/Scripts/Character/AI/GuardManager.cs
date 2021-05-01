@@ -23,6 +23,22 @@ public class GuardManager : AIManager
     Dictionary<AI, HashSet<int>> assignedAreas = new Dictionary<AI, HashSet<int>>();
     Dictionary<AI, ChartedPath> assignedLoops = new Dictionary<AI, ChartedPath>();
 
+    #region Coordinate
+
+    protected override void OnReceiveReport(ReportData data)
+    {
+        string test = $"Chase report observe: {data.observationPoint}";
+
+        if(data.destination != null)
+            test += $" destination: {data.destination.gameObject.name}";
+
+        test += $" by {data.owner.gameObject.name}";
+
+        Debug.Log(test);
+    }
+
+    #endregion
+
     #region Initialize
 
     protected override void OnInitializeAI()
@@ -51,7 +67,7 @@ public class GuardManager : AIManager
                 ai.assignedIndices.Add(index);
                 assignedAreas.Add(ai, new HashSet<int> { index });
 
-                foreach (var area in graphFinder.weightedGraphAreas)
+                foreach (var area in graphFinder.weightedAreas)
                     if (area.Key == index)
                     {
                         currentCoverage += area.Value;
@@ -116,7 +132,7 @@ public class GuardManager : AIManager
                 assignedAreas.Add(ai, current);
             }
 
-            foreach (var weighted in graphFinder.weightedGraphAreas)
+            foreach (var weighted in graphFinder.weightedAreas)
                 foreach (var index in current)
                     if (weighted.Key == index)
                     {
@@ -158,7 +174,7 @@ public class GuardManager : AIManager
             assignedLoops.Add(ai, current);
             ai.SetPath(ChartedPathType.Loop, current);
 
-            foreach (var weighted in graphFinder.weightedGraphAreas)
+            foreach (var weighted in graphFinder.weightedAreas)
                 for (int j = 0; j < current.indices.Length; j++)
                     if (weighted.Key == current.indices[j])
                     {

@@ -164,6 +164,9 @@ public class CCTV : MonoBehaviour
 
                 cameras.Add(cam);
 
+                // add to graph
+                AddCamToArea(sortedSpots[i].coords, cam);
+
                 j++;
             }
         }
@@ -255,6 +258,28 @@ public class CCTV : MonoBehaviour
         }
 
         return results;
+    }
+
+    void AddCamToArea(IntVector2 coords, CCTVCamera cam)
+    {
+        var location = maze.cells[coords.x, coords.y];
+        var finalCells = new List<MazeCell>();
+
+        if (location.state > 1)
+        {
+            foreach (var cell in location.connectedCells)
+                finalCells.Add(cell);
+        }
+        else
+            finalCells.Add(location);
+
+        foreach(var cell in finalCells)
+        {
+            var indices = cell.GetGraphAreaIndices();
+
+            foreach(var index in indices)
+                GraphFinder.Areas[index].AddCamera(cam);
+        }
     }
 
     static List<(int mask, Vector2 direction, float maxViewAngle)> CamPosVectors = new List<(int mask, Vector2 direction, float maxViewAngle)>

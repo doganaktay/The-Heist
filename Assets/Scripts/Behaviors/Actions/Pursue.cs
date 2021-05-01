@@ -26,7 +26,7 @@ public class Pursue : ActionNode
 
         (MazeCell cell, int index) next;
         next = path.GetNext(owner.CurrentCell);
-        var last = path.Last;
+        var last = path.End;
 
         while (next.cell != null && !token.IsCancellationRequested)
         {
@@ -60,7 +60,6 @@ public class Pursue : ActionNode
             next = path.GetNext(owner.CurrentCell);
         }
 
-        path.Clear();
         owner.ClearPath(ChartedPathType.Pursuit);
         
         owner.IsActive = false;

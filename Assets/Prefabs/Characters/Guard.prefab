@@ -28,7 +28,7 @@ Transform:
   m_GameObject: {fileID: 5284805516819639902}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: -1}
-  m_LocalScale: {x: 7, y: 7, z: 1}
+  m_LocalScale: {x: 6, y: 6, z: 1}
   m_Children:
   - {fileID: 5833953138234766926}
   - {fileID: 1302414067693877602}
@@ -47,6 +47,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ad7c8c03e1514fa08e0b4f4b359ef09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  maxTravelDistance: 0
+  distanceTravelled: 0
+  aim: {fileID: 0}
+  aimOverrideTarget: {fileID: 0}
   isOnGrid: 1
   pathDriftMultiplier: 0.05
   lagPercent:
@@ -59,10 +63,6 @@ MonoBehaviour:
   turnSpeed:
     min: 4.8
     max: 5.2
-  maxTravelDistance: 0
-  distanceTravelled: 0
-  aim: {fileID: 0}
-  aimOverrideTarget: {fileID: 0}
   fieldOfView: {fileID: 3954462537585510568}
   body: {fileID: 5833953138234766926}
   manager: {fileID: 0}
@@ -224,12 +224,12 @@ MonoBehaviour:
   obstacleMask:
     serializedVersion: 2
     m_Bits: 8704
-  owner: {fileID: 0}
-  visibleTargets: []
   meshResolution: 1
   edgeResolveIterations: 1
   edgeDstThreshold: 0.1
   maskCutawayDst: 0.1
+  owner: {fileID: 0}
+  visibleTargets: []
   aim: {fileID: 5284805516819639897}
   zOffset: 0
   canDraw: 1
