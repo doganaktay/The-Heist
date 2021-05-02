@@ -145,13 +145,15 @@ public abstract class AI : Character, IBehaviorTree
         distanceTravelled = GameManager.rngFree.Range(0, maxTravelDistance);
 
         Track(lifetimeToken).Forget();
-        HeadMovement(lifetimeToken).Forget();
+
+        var btToken = behaviorTreeTokenSource.Token.Merge(lifetimeToken).Token;
 
         SetRandomTimeBuffer();
         SetHeadMoveParams();
+        HeadMovement(btToken).Forget(); // using BT token for head movement as well, since BT stopped means AI disabled
 
         GenerateBehaviorTree();
-        RunBehaviorTree(behaviorTreeTokenSource.Token.Merge(lifetimeToken).Token).Forget();
+        RunBehaviorTree(btToken).Forget();
     }
 
     //string lastNode = "";
@@ -209,7 +211,10 @@ public abstract class AI : Character, IBehaviorTree
         SetAlertStatus();
 
         behaviorTreeTokenSource = new CancellationTokenSource();
-        RunBehaviorTree(behaviorTreeTokenSource.Token.Merge(lifetimeToken).Token).Forget();
+        var btToken = behaviorTreeTokenSource.Token.Merge(lifetimeToken).Token;
+
+        HeadMovement(btToken).Forget();
+        RunBehaviorTree(btToken).Forget();
     }
 
     public void SetBehavior(ActionNode nextActiveNode, Func<CancellationToken, UniTask> behavior)

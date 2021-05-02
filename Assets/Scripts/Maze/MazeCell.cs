@@ -64,8 +64,8 @@ public class MazeCell : FastPriorityQueueNode
 	[SerializeField] PerObjectMaterialProperties props;
 
 	// PRIVATE
-	Color initialColor;
-	List<Color> requestedIndicatorColors = new List<Color>();
+	Color combinedEffectColor = Color.white;
+	int effectColorCount;
 	private MazeCellEdge[] edges = new MazeCellEdge[MazeDirections.Count];
 	int unexploredDirectionCount = -1;
 
@@ -396,38 +396,51 @@ public class MazeCell : FastPriorityQueueNode
 
 	public void SetTexture(Texture texture) => props.SetTexture(texture);
 
-	public void IndicateAOE(Color aoeColor)
+	public void AddEffectColor(Color effectColor)
     {
-
-		//requestedIndicatorColors.Add(aoeColor);
-		props.SetSecondaryColor();
-    }
-
-	public void ClearAOE(Color aoeColor)
-    {
-		//requestedIndicatorColors.Remove(aoeColor);
-		props.SetBaseColor();
-	}
-
-	private Color MixIndicatorColors()
-    {
-		if (requestedIndicatorColors.Count == 0)
-			return initialColor;
-
-		float tempR = 0;
-		float tempG = 0;
-		float tempB = 0;
-		foreach(var color in requestedIndicatorColors)
+		if(effectColorCount == 0)
         {
-			tempR += color.r;
-			tempG += color.g;
-			tempB += color.b;
+			effectColorCount++;
+			combinedEffectColor = effectColor;
         }
+        else
+        {
+			float tempR = combinedEffectColor.r * effectColorCount + effectColor.r;
+			float tempG = combinedEffectColor.g * effectColorCount + effectColor.g;
+			float tempB = combinedEffectColor.b * effectColorCount + effectColor.b;
 
-		return new Color(tempR / requestedIndicatorColors.Count,
-						 tempG / requestedIndicatorColors.Count,
-						 tempB / requestedIndicatorColors.Count);
+			effectColorCount++;
+
+			combinedEffectColor = new Color(tempR / effectColorCount, tempG / effectColorCount, tempB / effectColorCount);
+		}
+
+		props.SetEffectColor(combinedEffectColor, 1);
     }
+
+	public void RemoveEffectColor(Color effectColor)
+    {
+		if(effectColorCount - 1 <= 0)
+        {
+			effectColorCount = 0;
+			combinedEffectColor = Color.white;
+
+			props.SetEffectColor(combinedEffectColor, 0);
+		}
+        else
+        {
+			float tempR = combinedEffectColor.r * effectColorCount - effectColor.r;
+			float tempG = combinedEffectColor.g * effectColorCount - effectColor.g;
+			float tempB = combinedEffectColor.b * effectColorCount - effectColor.b;
+
+			effectColorCount--;
+
+			combinedEffectColor = new Color(tempR / effectColorCount, tempG / effectColorCount, tempB / effectColorCount);
+
+			props.SetEffectColor(combinedEffectColor, 1);
+		}
+
+		
+	}
 
 #if UNITY_EDITOR
 	public void PrintCellInfo()

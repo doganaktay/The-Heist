@@ -20,7 +20,7 @@ public class SoundBomb : PlaceableItem, IPropagatable
         affectedCells = AcquirePropagationArea(position, strength, minThreshold);
         foreach(var affected in affectedCells)
         {
-            affected.cell.IndicateAOE(notificationColor);
+            affected.cell.AddEffectColor(notificationColor);
         }
     }
 
@@ -32,22 +32,17 @@ public class SoundBomb : PlaceableItem, IPropagatable
     public override void UseItem()
     {
         Debug.Log($"Detonating sound bomb affecting {affectedCells.Count} cells at {position.gameObject.name}");
+
         foreach(var pair in affectedCells)
-        {
             NotificationModule.MakeNotification(pair.cell, new CellNotificationData(CellNotificationType.Sound, pair.ratio, position));
-            pair.cell.ClearAOE(notificationColor);
-        }
 
         Destroy(gameObject, 0.1f);
     }
 
     private void OnDestroy()
     {
-        // clearing notification color from cells when item is removed instead of used
         foreach (var pair in affectedCells)
-        {
             if(pair.cell)
-                pair.cell.ClearAOE(notificationColor);
-        }
+                pair.cell.RemoveEffectColor(notificationColor);
     }
 }

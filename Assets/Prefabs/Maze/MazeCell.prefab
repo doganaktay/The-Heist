@@ -188,5 +188,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7832fa6c7ce264e6699f3feafa641d98, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  BaseColor: {r: 1, g: 0.99215686, b: 0.84313726, a: 1}
-  SecondaryColor: {r: 0.25943398, g: 0.28905466, b: 1, a: 1}
+  BaseColor: {r: 1, g: 0.93298227, b: 0.7028302, a: 1}
+  SecondaryColor: {r: 0.8235294, g: 0.77254903, b: 0.6, a: 1}
+  EffectColor: {r: 0.25490198, g: 0.30980393, b: 0.9607844, a: 0}

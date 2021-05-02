@@ -119,9 +119,6 @@ public class FieldOfView : MonoBehaviour
 
 			foreach (var target in visibleTargets)
 			{
-				//if (target.TryGetComponent(out T tryVisible) && exactMatch ? tryVisible.CurrentBehaviorType == behaviorType : tryVisible.CurrentBehaviorType > behaviorType)
-				//    list.Add(tryVisible);
-
 				if (target.TryGetComponent(out T tryVisible))
 				{
 					if (exactMatch ? tryVisible.CurrentBehaviorType == behaviorType : tryVisible.CurrentBehaviorType > behaviorType)

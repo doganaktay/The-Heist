@@ -5,6 +5,7 @@ public class PerObjectMaterialProperties : MonoBehaviour
 {
     static readonly int baseColorId = Shader.PropertyToID("_BaseColor");
     static readonly int secondaryColorId = Shader.PropertyToID("_SecondaryColor");
+    static readonly int effectColorId = Shader.PropertyToID("_EffectColor");
     static readonly int blendFactorId = Shader.PropertyToID("_BlendFactor");
     static readonly int objectWorldPosId = Shader.PropertyToID("_ObjectPos");
     static readonly int fovRadiusId = Shader.PropertyToID("_Radius");
@@ -46,6 +47,16 @@ public class PerObjectMaterialProperties : MonoBehaviour
 
         block.SetColor(secondaryColorId, SecondaryColor);
         block.SetFloat(blendFactorId, 1f);
+        myRenderer.SetPropertyBlock(block);
+    }
+
+    public void SetEffectColor(Color color, float blendFactor)
+    {
+        block.Clear();
+        myRenderer.GetPropertyBlock(block);
+
+        block.SetColor(effectColorId, color);
+        block.SetFloat(blendFactorId, blendFactor);
         myRenderer.SetPropertyBlock(block);
     }
 

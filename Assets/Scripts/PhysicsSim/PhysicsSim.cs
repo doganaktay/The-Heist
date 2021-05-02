@@ -81,11 +81,9 @@ public class PhysicsSim : MonoBehaviour
         playerCopy.name = "Player Copy";
 
         // destroy children unnecessary for simulation
-        //Destroy(playerCopy.transform.GetChild(2).gameObject);
-        //Destroy(playerCopy.transform.GetChild(1).gameObject);
         Destroy(playerCopy.transform.GetChild(0).gameObject);
 
-        playerCopy.GetComponent<Renderer>().enabled = false;
+        playerCopy.GetComponentInChildren<Renderer>().enabled = false;
 
         objectPairs.Add(player.gameObject, playerCopy.gameObject);
         transformPairsToSync.Add((player.transform, playerCopyTransform));
@@ -150,8 +148,6 @@ public class PhysicsSim : MonoBehaviour
             holderCopy.transform.parent = sceneHolder.transform;
 
             holderCopy.name = placement.name + " Copy";
-
-            //Destroy(holderCopy.transform.GetChild(1).gameObject);
 
             foreach (var r in holderCopy.GetComponentsInChildren<Renderer>())
             {

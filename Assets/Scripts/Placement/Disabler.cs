@@ -11,7 +11,7 @@ public class Disabler : PlaceableItem
     public override void Place(MazeCell cell)
     {
         base.Place(cell);
-        position.IndicateAOE(notificationColor);
+        position.AddEffectColor(notificationColor);
     }
 
 
@@ -30,6 +30,6 @@ public class Disabler : PlaceableItem
     private void OnDestroy()
     {
         if(position)
-            position.ClearAOE(notificationColor);
+            position.RemoveEffectColor(notificationColor);
     }
 }
