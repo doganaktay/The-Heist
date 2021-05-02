@@ -2316,38 +2316,38 @@ public class GraphFinder : MonoBehaviour
         //if (GUI.Button(new Rect(10, 70, 80, 60), "Vantage"))
         //    CalculateAllVantageScores();
 
-        fromX = GUI.TextField(new Rect(90, 70, 20, 60), fromX);
-        fromY = GUI.TextField(new Rect(110, 70, 20, 60), fromY);
-        toX = GUI.TextField(new Rect(130, 70, 20, 60), toX);
-        toY = GUI.TextField(new Rect(150, 70, 20, 60), toY);
+        //fromX = GUI.TextField(new Rect(90, 70, 20, 60), fromX);
+        //fromY = GUI.TextField(new Rect(110, 70, 20, 60), fromY);
+        //toX = GUI.TextField(new Rect(130, 70, 20, 60), toX);
+        //toY = GUI.TextField(new Rect(150, 70, 20, 60), toY);
 
-        if (GUI.Button(new Rect(10, 70, 80, 60), "Check Path"))
-        {
-            int a, b, c, d;
-            int.TryParse(fromX, out a);
-            int.TryParse(fromY, out b);
-            int.TryParse(toX, out c);
-            int.TryParse(toY, out d);
+        //if (GUI.Button(new Rect(10, 70, 80, 60), "Check Path"))
+        //{
+        //    int a, b, c, d;
+        //    int.TryParse(fromX, out a);
+        //    int.TryParse(fromY, out b);
+        //    int.TryParse(toX, out c);
+        //    int.TryParse(toY, out d);
 
-            var start = maze.cells[a, b];
-            var end = maze.cells[c, d];
+        //    var start = maze.cells[a, b];
+        //    var end = maze.cells[c, d];
 
-            if (BiDirSearch(start, end, out ChartedPath found))
-                found.DebugPath();
-        }
+        //    if (BiDirSearch(start, end, out ChartedPath found))
+        //        found.DebugPath();
+        //}
 
-        from = GUI.TextField(new Rect(90, 130, 20, 60), from);
-        to = GUI.TextField(new Rect(110, 130, 20, 60), to);
+        //from = GUI.TextField(new Rect(90, 130, 20, 60), from);
+        //to = GUI.TextField(new Rect(110, 130, 20, 60), to);
 
-        if (GUI.Button(new Rect(10, 130, 80, 60), "Index Path"))
-        {
-            int a, b;
-            int.TryParse(from, out a);
-            int.TryParse(to, out b);
+        //if (GUI.Button(new Rect(10, 130, 80, 60), "Index Path"))
+        //{
+        //    int a, b;
+        //    int.TryParse(from, out a);
+        //    int.TryParse(to, out b);
 
-            if (BiDirSearch(a, b, out ChartedPath found))
-                found.DebugPath();
-        }
+        //    if (BiDirSearch(a, b, out ChartedPath found))
+        //        found.DebugPath();
+        //}
     }
 
 #endif

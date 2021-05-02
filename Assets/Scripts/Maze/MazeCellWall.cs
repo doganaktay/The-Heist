@@ -20,6 +20,7 @@ public class MazeCellWall : MazeCellEdge
         cellB.specialConnectedCells.Add(cellA);
         IsPassable = true;
         SetSpecialColor();
+        GetComponentInChildren<SpriteRenderer>().sortingOrder = 1;
     }
 
     public MazeCell CheckCell(MazeCell cell)

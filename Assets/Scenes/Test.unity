@@ -1178,7 +1178,7 @@ MonoBehaviour:
   pathfinder: {fileID: 0}
   areafinder: {fileID: 0}
   layout: {fileID: 0}
-  showDebugDisplay: 1
+  showDebugDisplay: 0
   placeCount: 50
   activeTileSet:
   - tile: {fileID: 8386142516564089489, guid: d04209405199f426a907890238cd12ef, type: 3}
@@ -1824,7 +1824,7 @@ MonoBehaviour:
     max: 0.25
   loopSearchLimit: 30
   recursionLimit: 20
-  showDebugDisplay: 1
+  showDebugDisplay: 0
 --- !u!1001 &1245003532
 PrefabInstance:
   m_ObjectHideFlags: 0

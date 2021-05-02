@@ -11,6 +11,10 @@ public abstract class Character : MonoBehaviour
 
     // STATIC
 
+    // PUBLIC
+    public static int isMovingId = Animator.StringToHash("IsMoving");
+    public static int isAimingId = Animator.StringToHash("IsAiming");
+
     // PRIVATE
     readonly static int cellLayerMask = 1 << 10;
 
@@ -25,6 +29,7 @@ public abstract class Character : MonoBehaviour
     [HideInInspector] public Transform aim; // used if Character has aim for LookAt
     [HideInInspector] public bool AimOverride { get; set; } = false;
     [HideInInspector] public Transform aimOverrideTarget;
+    [HideInInspector] public Animator animator;
     public Action PositionChange;
     public CancellationToken lifetimeToken;
 
@@ -66,6 +71,8 @@ public abstract class Character : MonoBehaviour
 
     protected virtual void Start()
     {
+        animator = GetComponentInChildren<Animator>();
+
         posHits = new Collider2D[10];
 
         currentSpeed = GameManager.rngFree.Range(speed.min, speed.max);
@@ -176,14 +183,15 @@ public abstract class Character : MonoBehaviour
         moveTokenSource = new CancellationTokenSource().Token.Merge(lifetimeToken);
 
         isMoving = false;
+        animator.SetBool(isMovingId, false);
         currentPath?.Clear();
     }
 
     async UniTask GoTo(List<MazeCell> path, float speed, CancellationToken token)
     {
         currentPath = path;
-
         isMoving = true;
+        animator.SetBool(isMovingId, true);
 
         int i = 1;
 
@@ -270,6 +278,7 @@ public abstract class Character : MonoBehaviour
         }
 
         isMoving = false;
+        animator.SetBool(isMovingId, false);
         currentPath.Clear();
     }
 

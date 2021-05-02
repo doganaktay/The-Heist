@@ -138,6 +138,7 @@ namespace Archi.Touch
             {
                 aimTouchPivot = cam.ScreenToWorldPoint(finger.screenPos);
                 aiming = true;
+                player.animator.SetBool(Player.isAimingId, true);
 
                 if (player.IsMoving)
                     player.StopGoTo();
@@ -172,6 +173,7 @@ namespace Archi.Touch
                 player.ResetTrajectory();
                 TouchUI.instance.ShowAimUI = false;
                 aiming = false;
+                player.animator.SetBool(Player.isAimingId, false);
             }
         }
 

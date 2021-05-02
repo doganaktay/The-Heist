@@ -81,8 +81,8 @@ public class PhysicsSim : MonoBehaviour
         playerCopy.name = "Player Copy";
 
         // destroy children unnecessary for simulation
-        Destroy(playerCopy.transform.GetChild(2).gameObject);
-        Destroy(playerCopy.transform.GetChild(1).gameObject);
+        //Destroy(playerCopy.transform.GetChild(2).gameObject);
+        //Destroy(playerCopy.transform.GetChild(1).gameObject);
         Destroy(playerCopy.transform.GetChild(0).gameObject);
 
         playerCopy.GetComponent<Renderer>().enabled = false;
@@ -123,9 +123,6 @@ public class PhysicsSim : MonoBehaviour
                             wall.transform.localScale.y * maze.cellScaleX,
                             1f);
             wallCopy.transform.parent = sceneHolder.transform;
-
-
-            Destroy(wallCopy.transform.GetChild(1).gameObject);
 
             foreach (var r in wallCopy.GetComponentsInChildren<Renderer>())
             {
