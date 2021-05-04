@@ -408,9 +408,10 @@ public class GraphFinder : MonoBehaviour
         }
     }
 
-    public int GetOtherConnectionCount(MazeCell cell, int index) => GetOtherConnections(cell, index).Count;
+    public int GetOtherConnectionCount(MazeCell cell, int fromIndex, bool getDeadEnds = true, int requiredIndex = -1)
+        => GetOtherConnections(cell, fromIndex, getDeadEnds, requiredIndex).Count;
 
-    public List<(MazeCell cell, int index)> GetOtherConnections(MazeCell cell, int index, bool getDeadEnds = true)
+    public List<(MazeCell cell, int index)> GetOtherConnections(MazeCell cell, int fromIndex, bool getDeadEnds = true, int requiredIndex = -1)
     {
         if (!cell.IsGraphConnection)
         {
@@ -427,7 +428,7 @@ public class GraphFinder : MonoBehaviour
 
             foreach (var key in cell.GraphAreaIndices)
             {
-                if (index == key)
+                if (key == fromIndex || (requiredIndex > -1 && key != requiredIndex))
                     continue;
 
 
@@ -1226,8 +1227,6 @@ public class GraphFinder : MonoBehaviour
     {
         if (visited[currentCell.pos.x, currentCell.pos.y])
             return;
-
-        //UnityEngine.Debug.Log($"Searching {currentCell.gameObject.name}");
 
         if (currentCell.connectedCells.Count < 3 || (currentCell.connectedCells.Count >= 3 && currentCell.UnexploredDirectionCount == 1))
             visited[currentCell.pos.x, currentCell.pos.y] = true;

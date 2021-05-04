@@ -438,8 +438,6 @@ public class MazeCell : FastPriorityQueueNode
 
 			props.SetEffectColor(combinedEffectColor, 1);
 		}
-
-		
 	}
 
 #if UNITY_EDITOR

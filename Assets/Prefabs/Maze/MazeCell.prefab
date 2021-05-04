@@ -120,7 +120,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8729661452945738215}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 3116785791752703769}
@@ -165,15 +165,15 @@ SpriteRenderer:
   m_SortingLayerID: -1396082921
   m_SortingLayer: 1
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: c902fe85e03bd4883b140761772baf5b, type: 3}
+  m_Sprite: {fileID: 21300000, guid: bfb89ae64e4e143428ee2a3303386344, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 2.56, y: 2.56}
+  m_Size: {x: 1, y: 1}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 0
+  m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!114 &7304802737816680090
@@ -188,6 +188,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7832fa6c7ce264e6699f3feafa641d98, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  BaseColor: {r: 1, g: 0.93298227, b: 0.7028302, a: 1}
-  SecondaryColor: {r: 0.8235294, g: 0.77254903, b: 0.6, a: 1}
-  EffectColor: {r: 0.25490198, g: 0.30980393, b: 0.9607844, a: 0}
+  BaseColor: {r: 0.9490196, g: 0.84313726, b: 0.52156866, a: 1}
+  SecondaryColor: {r: 0.8509804, g: 0.5686275, b: 0.32156864, a: 1}

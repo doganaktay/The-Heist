@@ -22,7 +22,7 @@ public class PathDesigner : MonoBehaviour
 
     public ChartedPath GetPursuitPath(AI ai, MazeCell current, MazeCell observation)
     {
-        var start = GetSearchStart(current, observation);
+        var start = GetSearchStart(current, observation, out bool haveSharedIndex);
 
         if (start.cell == null)
             return new ChartedPath();
@@ -45,7 +45,18 @@ public class PathDesigner : MonoBehaviour
             var next = cellsToExplore.Dequeue();
             cells.Add(next.cell);
 
-            var candidates = graph.GetOtherConnections(next.cell, next.index);
+            List<(MazeCell cell, int index)> candidates;
+
+            if (!haveSharedIndex && start.cell != observation)
+            {
+                candidates = graph.GetOtherConnections(next.cell, next.index, true, observation.GetGraphAreaIndices()[0]);
+
+                haveSharedIndex = true;
+            }
+            else
+            {
+                candidates = graph.GetOtherConnections(next.cell, next.index);
+            }
 
             if (candidates.Count == 1)
             {
@@ -82,9 +93,11 @@ public class PathDesigner : MonoBehaviour
         return new ChartedPath();
     }
 
-    public (MazeCell cell, int index) GetSearchStart(MazeCell current, MazeCell observation)
+    public (MazeCell cell, int index) GetSearchStart(MazeCell current, MazeCell observation, out bool haveSharedIndex)
     {
         var shareIndex = GraphFinder.GetClosestSharedIndex(current, observation);
+
+        haveSharedIndex = shareIndex != -1 ? true : false;
 
         if(shareIndex != -1)
         {

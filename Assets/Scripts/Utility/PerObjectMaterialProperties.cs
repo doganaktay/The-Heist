@@ -26,6 +26,7 @@ public class PerObjectMaterialProperties : MonoBehaviour
 
         block.Clear();
         block.SetColor(baseColorId, BaseColor);
+        block.SetColor(secondaryColorId, SecondaryColor);
         myRenderer = GetComponent<Renderer>();
         myRenderer.SetPropertyBlock(block);
     }
