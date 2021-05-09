@@ -248,9 +248,6 @@ public class GameManager : MonoBehaviour
 		propagationModule.BuildConnectivityGrid();
 		areafinder.SetPassableWalls();
 		graphFinder.Initialize();
-
-		// for testing
-		curator.AssignRandomPriorities();
     }
 
 	public void RestartGame()

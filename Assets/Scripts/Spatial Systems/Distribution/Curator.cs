@@ -20,6 +20,11 @@ public class Curator : MonoBehaviour
     //    GameManager.MazeGenFinished -= AssignRandomPriorities;
     //}
 
+    public void AssignPriorities()
+    {
+
+    }
+
     int maxAttempt = 100;
     public void AssignRandomPriorities()
     {
