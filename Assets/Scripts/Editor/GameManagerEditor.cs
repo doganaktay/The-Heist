@@ -8,6 +8,7 @@ public class GameManagerEditor : Editor
 {
     // parameters
     SerializedObject so;
+    SerializedProperty _SteppedConstruction;
     SerializedProperty _gridSizeX, _gridSizeY;
     SerializedProperty _cellSizeX, _cellSizeY;
     SerializedProperty _parameterDeviation, _biasMultipliersMin, _biasMultipliersMax;
@@ -32,6 +33,8 @@ public class GameManagerEditor : Editor
         so = serializedObject;
 
         // params
+        _SteppedConstruction = so.FindProperty("SteppedConstruction");
+
         _gridSizeX = so.FindProperty("gridSizeX");
         _gridSizeY = so.FindProperty("gridSizeY");
         _cellSizeX = so.FindProperty("cellSizeX");
@@ -95,6 +98,14 @@ public class GameManagerEditor : Editor
         GUILayout.Space(10);
 
         so.Update();
+
+        using (new GUILayout.HorizontalScope())
+        {
+            GUILayout.Label("Step Construction:", GUILayout.Width(110));
+            EditorGUILayout.PropertyField(_SteppedConstruction, GUIContent.none, GUILayout.Width(30));
+        }
+
+        GUILayout.Space(5);
 
         GUILayout.Label("Maze", title);
         GUILayout.Space(2);

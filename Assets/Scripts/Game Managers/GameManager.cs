@@ -8,7 +8,13 @@ using Cysharp.Threading.Tasks;
 
 public class GameManager : MonoBehaviour
 {
-    #region Data
+	#region Data
+
+#if UNITY_EDITOR
+
+	[SerializeField] bool SteppedConstruction = false;
+
+#endif
 
 	// STATIC
 
@@ -217,23 +223,21 @@ public class GameManager : MonoBehaviour
 		// pass references to touchControl
 		touchControl.player = player;
 
+#if UNITY_EDITOR
 		// set up areas, placeable slots and simulation
-		ConstructScene();
-
-		// directional light reset
-		lights.StartRotation();
-
-		await UniTask.NextFrame();
-
-		spotfinder.CollectPlacementScores();
-		graphFinder.CalculateAllVantageScores();
-		graphFinder.SetAllAreaParams();
+		if(!SteppedConstruction)
+			await ConstructScene();
+		else
+			await ConstructSceneTest();
+#else
+		await ConstructScene();
+#endif
 
 		// call event
 		MazeGenFinished();
     }
 
-	private void ConstructScene()
+	private async UniTask ConstructScene()
     {
 		pathfinder.NewPath();
 		areafinder.FindAreas();
@@ -248,7 +252,16 @@ public class GameManager : MonoBehaviour
 		propagationModule.BuildConnectivityGrid();
 		areafinder.SetPassableWalls();
 		graphFinder.Initialize();
-    }
+
+		await UniTask.NextFrame();
+
+		spotfinder.CollectPlacementScores();
+		graphFinder.CalculateAllVantageScores();
+		graphFinder.SetAllAreaParams();
+
+		curator.AssignPriorities();
+	}
+
 
 	public void RestartGame()
 	{
@@ -260,14 +273,66 @@ public class GameManager : MonoBehaviour
 		layout.ClearChildren();
 		spawnedObjects.ClearChildren();
 		cctvHolder.ClearChildren(1);
+		curator.gameObject.ClearChildren();
 
 		InitRNG();
 		BeginGame().Forget();
 	}
 
-    #endregion
+#if UNITY_EDITOR
 
-    #region RNG
+	private async UniTask ConstructSceneTest()
+	{
+		pathfinder.NewPath();
+		await WaitForInput();
+		areafinder.FindAreas();
+		await WaitForInput();
+		physicsSim.ConstructSimulationScene();
+		await WaitForInput();
+		areafinder.MakeRooms();
+		await WaitForInput();
+		spotfinder.DeterminePlacement();
+		await WaitForInput();
+		areafinder.FindAreas();
+		await WaitForInput();
+		areafinder.DropWalls(true);
+		await WaitForInput();
+		//physicsSim.AddLayout(); // enable to include placement in physics sim
+		pathfinder.NewPath();
+		await WaitForInput();
+		areafinder.FindAreas();
+		await WaitForInput();
+		propagationModule.BuildConnectivityGrid();
+		await WaitForInput();
+		areafinder.SetPassableWalls();
+		await WaitForInput();
+		graphFinder.Initialize();
+		await WaitForInput();
+		spotfinder.CollectPlacementScores();
+		await WaitForInput();
+		graphFinder.CalculateAllVantageScores();
+		await WaitForInput();
+		graphFinder.SetAllAreaParams();
+		await WaitForInput();
+		curator.AssignPriorities();
+	}
+
+	private async UniTask WaitForInput()
+    {
+		while (true)
+        {
+			await UniTask.NextFrame();
+
+			if (Input.GetKeyDown(KeyCode.Alpha9))
+				break;
+        }
+    }
+
+#endif
+
+#endregion
+
+#region RNG
 
     void InitRNG()
     {
@@ -306,9 +371,9 @@ public class GameManager : MonoBehaviour
         }
     }
 
-	#endregion
+#endregion
 
-	#region Utility
+#region Utility
 
 	public static MinMaxData GetScaledRange(float param, bool canBeNegative = false)
     {
@@ -320,9 +385,9 @@ public class GameManager : MonoBehaviour
 
 	public void GenerateSeed() => seed = new RNG((uint)DateTime.Now.Ticks).NextUint();
 
-    #endregion
+#endregion
 
-    #region Editor Only
+#region Editor Only
 
 #if UNITY_EDITOR
 
@@ -349,5 +414,5 @@ public class GameManager : MonoBehaviour
 
 #endif
 
-	#endregion
+#endregion
 }

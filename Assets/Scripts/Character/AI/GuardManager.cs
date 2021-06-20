@@ -186,6 +186,10 @@ public class GuardManager : AIManager
 
             Debug.Log($"{ai.gameObject.name} loop");
             current.DebugPath();
+
+            // if we have leftover guards to place, make them wander
+            if (guardCounter < guardCount.max)
+                CreateNewAI((int)guardCount.max - guardCounter);
         }
     }
 

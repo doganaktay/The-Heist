@@ -8,6 +8,7 @@ public class AreaData
     public List<MazeCell> placement;
     public float weight;
     public float placementScore;
+    public float weightedScore;
     public List<KeyValuePair<float, MazeCell>> sortedVantagePoints;
     public List<Loot> loot;
     public List<CCTVCamera> cameras;
@@ -78,6 +79,11 @@ public class AreaData
             placementScore = score / placement.Count;
     }
 
+    // weighted score is tampered with junction count
+    // so that large areas with many junctions
+    // pay a penalty
+    public void CalculateWeightedScore() => weightedScore = placementScore * (weight / (ends.Count == 1 ? 1 : (hasDeadEnd ? ends.Count - 1 : ends.Count)));
+
     public void SetWeight(float weight) => this.weight = weight;
     public void SetLoot(List<Loot> loot) => this.loot = loot;
     public void SetVantagePoints(List<KeyValuePair<float, MazeCell>> vantagePoints) => sortedVantagePoints = vantagePoints;
@@ -120,8 +126,6 @@ public class AreaData
         placementScore = score / placement.Count;
     }
 
-    public float GetWeightedScore() => placementScore / weight;
-
     public MazeCell GetVantagePoint(float normalizedParameter)
     {
         var range = GameManager.GetScaledRange(normalizedParameter);
@@ -129,5 +133,23 @@ public class AreaData
         var index = Mathf.RoundToInt((sortedVantagePoints.Count - 1) * final);
 
         return sortedVantagePoints[index].Value;
+    }
+
+    public MazeCell GetTopPlacement()
+    {
+        float max = float.MinValue;
+        MazeCell found = null;
+
+        foreach(var cell in placement)
+        {
+            var score = cell.GetPlacementScore();
+            if(score > max)
+            {
+                max = score;
+                found = cell;
+            }
+        }
+
+        return found;
     }
 }

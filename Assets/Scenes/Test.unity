@@ -1091,7 +1091,7 @@ MonoBehaviour:
   pathfinder: {fileID: 0}
   wallDropPercent: 0.1
   passableWallPercent: 0.25
-  displayCellID: 0
+  displayCellID: 1
 --- !u!4 &600934098
 Transform:
   m_ObjectHideFlags: 0
@@ -2783,6 +2783,10 @@ MonoBehaviour:
   areafinder: {fileID: 0}
   graphfinder: {fileID: 0}
   spotfinder: {fileID: 0}
+  lootPrefab: {fileID: 4822729737009434541, guid: 32b391ee946e74cdab4e9b4198ba19b1,
+    type: 3}
+  maxCritAreaCount: 0
+  maxHighAreaCount: 8
 --- !u!1 &1958125023
 GameObject:
   m_ObjectHideFlags: 0
@@ -3218,6 +3222,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb7e0c9303d164566b81b8e18ca168af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  SteppedConstruction: 0
   reuseSeed: 0
   seedFromSave: 0
   seed: 1497105506

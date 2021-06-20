@@ -6,6 +6,7 @@ public class IsolatedAreaData
 {
     public float weight;
     public float placementScore;
+    public float weightedScore;
     public HashSet<MazeCell> entryPoints;
 
     public IsolatedAreaData(float weight, HashSet<MazeCell> entryPoints)
@@ -14,15 +15,30 @@ public class IsolatedAreaData
         this.entryPoints = entryPoints;
     }
 
-    public float GetWeightedScore() => weight * placementScore;
+    public void CalculatePlacementScore(HashSet<int> indices)
+    {
+        float score = 0;
+        int count = 0;
 
-    public void CalculateIsolatedScore(HashSet<int> indices)
+        // this ignores the overlapping cells
+        // between indices when counting
+        foreach(var index in indices)
+        {
+            var area = GraphFinder.Areas[index];
+            score += area.placementScore;
+            count += area.all.Count;
+        }
+
+        placementScore = score / count;
+    }
+
+    public void CalculateWeightedScore(HashSet<int> indices)
     {
         float score = 0;
 
         foreach (var index in indices)
-            score += GraphFinder.Areas[index].placementScore;
+            score += GraphFinder.Areas[index].weightedScore;
 
-        placementScore = score / indices.Count;
+        weightedScore = score / indices.Count;
     }
 }

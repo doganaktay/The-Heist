@@ -382,10 +382,10 @@ public class AreaFinder : MonoBehaviour
                     labels[j, i] = linkedLow[labels[j, i]].Min();
                     grid[j, i].areaIndex = labels[j, i];
 
-                    #if UNITY_EDITOR
+#if UNITY_EDITOR
                     if (displayCellID)
                         grid[j, i].cellText.text = labels[j, i].ToString();
-                    #endif
+#endif
 
                     if (!lowCellAreas.ContainsKey(labels[j, i]))
                     {
@@ -400,10 +400,10 @@ public class AreaFinder : MonoBehaviour
                     labels[j, i] = linkedHigh[labels[j, i]].Min();
                     grid[j, i].areaIndex = labels[j, i];
 
-                    #if UNITY_EDITOR
+#if UNITY_EDITOR
                     if (displayCellID)
                         grid[j, i].cellText.text = labels[j, i].ToString();
-                    #endif
+#endif
 
                     if (!highCellAreas.ContainsKey(labels[j, i]))
                     {
@@ -418,10 +418,10 @@ public class AreaFinder : MonoBehaviour
                     labels[j, i] = linkedPlaced[labels[j, i]].Min();
                     grid[j, i].areaIndex = labels[j, i];
 
-                    #if UNITY_EDITOR
+#if UNITY_EDITOR
                     if (displayCellID)
                         grid[j, i].cellText.text = labels[j, i].ToString();
-                    #endif
+#endif
 
                     if (!placedAreas.ContainsKey(labels[j, i]))
                     {
@@ -469,13 +469,13 @@ public class AreaFinder : MonoBehaviour
                 {
                     var d = grid[j, i].distanceFromStart[0];
 
-                    #if UNITY_EDITOR
+#if UNITY_EDITOR
                     if (displayCellID)
                     {
                         grid[j, i].cellText.color = Color.white;
                         grid[j, i].cellText.text = d.ToString();
                     }
-                    #endif
+#endif
                 }   
             }
         }   
@@ -501,13 +501,13 @@ public class AreaFinder : MonoBehaviour
                 highCellConnected[grid[point.row, point.col].areaIndex].Add(grid[point.row, m]);
                 lowCellConnected[grid[point.row, m].areaIndex].Add(grid[point.row, point.col]);
 
-                #if UNITY_EDITOR
+#if UNITY_EDITOR
                 if (displayCellID)
                 {
                     grid[point.row, m].cellText.color = Color.magenta;
                     grid[point.row, point.col].cellText.color = Color.yellow;
                 }
-                #endif
+#endif
             }
         }
 
@@ -520,13 +520,13 @@ public class AreaFinder : MonoBehaviour
                 highCellConnected[grid[point.row, point.col].areaIndex].Add(grid[l, point.col]);
                 lowCellConnected[grid[l, point.col].areaIndex].Add(grid[point.row, point.col]);
 
-                #if UNITY_EDITOR
+#if UNITY_EDITOR
                 if (displayCellID)
                 {
                     grid[l, point.col].cellText.color = Color.magenta;
                     grid[point.row, point.col].cellText.color = Color.yellow;
                 }
-                #endif
+#endif
             }
         }
 
@@ -539,13 +539,13 @@ public class AreaFinder : MonoBehaviour
                 highCellConnected[grid[point.row, point.col].areaIndex].Add(grid[point.row, h]);
                 lowCellConnected[grid[point.row, h].areaIndex].Add(grid[point.row, point.col]);
 
-                #if UNITY_EDITOR
+#if UNITY_EDITOR
                 if (displayCellID)
                 {
                     grid[point.row, h].cellText.color = Color.magenta;
                     grid[point.row, point.col].cellText.color = Color.yellow;
                 }
-                #endif
+#endif
             }
         }
         if (k >= 0 && !grid[k, point.col].searched && grid[point.row, point.col].connectedCells.Contains(grid[k, point.col]))
@@ -558,13 +558,13 @@ public class AreaFinder : MonoBehaviour
                 highCellConnected[grid[point.row, point.col].areaIndex].Add(grid[k, point.col]);
                 lowCellConnected[grid[k, point.col].areaIndex].Add(grid[point.row, point.col]);
 
-                #if UNITY_EDITOR
+#if UNITY_EDITOR
                 if (displayCellID)
                 {
                     grid[k, point.col].cellText.color = Color.magenta;
                     grid[point.row, point.col].cellText.color = Color.yellow;
                 }
-                #endif
+#endif
             }
         }
     }

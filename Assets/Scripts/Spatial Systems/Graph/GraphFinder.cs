@@ -15,7 +15,8 @@ public enum IndexPriority
 public enum SortType
 {
     Weight,
-    Score
+    Score,
+    WeightedScore
 }
 
 public class GraphFinder : MonoBehaviour
@@ -103,6 +104,7 @@ public class GraphFinder : MonoBehaviour
                 area.Value.SetIsEntranceOrExit(true);
 
             area.Value.FindAndSetPlacement();
+            area.Value.CalculateWeightedScore();
         }
 
         foreach(var isolated in IsolatedAreas)
@@ -110,7 +112,8 @@ public class GraphFinder : MonoBehaviour
             foreach (var index in isolated.Key)
                 Areas[index].SetIsIsolated(true);
 
-            isolated.Value.CalculateIsolatedScore(isolated.Key);
+            isolated.Value.CalculatePlacementScore(isolated.Key);
+            isolated.Value.CalculateWeightedScore(isolated.Key);
         }
     }
 
@@ -131,6 +134,12 @@ public class GraphFinder : MonoBehaviour
                     list = list.OrderBy(kvp => kvp.Value.placementScore).ToList();
                 else
                     list = list.OrderByDescending(kvp => kvp.Value.placementScore).ToList();
+                break;
+            case SortType.WeightedScore:
+                if (!descending)
+                    list = list.OrderBy(kvp => kvp.Value.weightedScore).ToList();
+                else
+                    list = list.OrderByDescending(kvp => kvp.Value.weightedScore).ToList();
                 break;
             default:
                 break;
@@ -156,6 +165,12 @@ public class GraphFinder : MonoBehaviour
                     list = list.OrderBy(kvp => kvp.Value.placementScore).ToList();
                 else
                     list = list.OrderByDescending(kvp => kvp.Value.placementScore).ToList();
+                break;
+            case SortType.WeightedScore:
+                if (!descending)
+                    list = list.OrderBy(kvp => kvp.Value.weightedScore).ToList();
+                else
+                    list = list.OrderByDescending(kvp => kvp.Value.weightedScore).ToList();
                 break;
             default:
                 break;
@@ -2102,40 +2117,90 @@ public class GraphFinder : MonoBehaviour
     {
         string test;
 
-        foreach (var area in Areas)
-        {
-            test = $"Area: {area.Key} ";
-            test += $" weight: {area.Value.weight} ";
-
-            if(area.Value.placement.Count > 0)
-                test += $" score: {area.Value.placementScore} weighted score: {area.Value.GetWeightedScore()}";
-            if (area.Value.cameras != null)
-                test += $" camera count: {area.Value.cameras.Count}";
-
-            UnityEngine.Debug.Log(test);
-        }
-
-        foreach (var area in IsolatedAreas)
-        {
-            test = "Isolated Area: ";
-
-            foreach (var index in area.Key)
-                test += index + " - ";
-
-            test += "weight: " + area.Value.weight + " score: " + area.Value.placementScore + " weighted score: " + area.Value.GetWeightedScore();
-
-            foreach(var point in area.Value.entryPoints)
-                test += " entry: " + point.gameObject.name;
-
-            UnityEngine.Debug.Log(test);
-        }
-
-        //foreach (var area in weightedGraphAreas)
+        //foreach (var area in Areas)
         //{
-        //    test = "Weighted Area: ";
-        //    test += area.Key + " - weight: " + area.Value;
+        //    test = $"Area: {area.Key} ";
+        //    test += $" weight: {area.Value.weight} ";
+
+        //    if(area.Value.placement.Count > 0)
+        //        test += $" score: {area.Value.placementScore} weighted score: {area.Value.weightedScore}";
+        //    if (area.Value.cameras != null)
+        //        test += $" camera count: {area.Value.cameras.Count}";
+
         //    UnityEngine.Debug.Log(test);
         //}
+
+        //foreach (var area in IsolatedAreas)
+        //{
+        //    test = "Isolated Area: ";
+
+        //    foreach (var index in area.Key)
+        //        test += index + " - ";
+
+        //    test += "weight: " + area.Value.weight + " weighted score: " + area.Value.weightedScore;
+
+        //    foreach(var point in area.Value.entryPoints)
+        //        test += " entry: " + point.gameObject.name;
+
+        //    UnityEngine.Debug.Log(test);
+        //}
+
+        var areaList = GetAreasSorted(SortType.Weight);
+        test = "Sorted by weight: ";
+        foreach(var item in areaList)
+        {
+            test += item.Key + $" ({item.Value.weight}) -";
+        }
+        UnityEngine.Debug.Log(test);
+
+        areaList = GetAreasSorted(SortType.Score);
+        test = "Sorted by score: ";
+        foreach (var item in areaList)
+        {
+            test += item.Key + $" ({item.Value.placementScore}) -";
+        }
+        UnityEngine.Debug.Log(test);
+
+        areaList = GetAreasSorted(SortType.WeightedScore);
+        test = "Sorted by weighted score: ";
+        foreach (var item in areaList)
+        {
+            test += item.Key + $" ({item.Value.weightedScore}) -";
+        }
+        UnityEngine.Debug.Log(test);
+
+        var isolatedList = GetIsolatedAreasSorted(SortType.Weight);
+        test = "Isolated sorted by weight: ";
+        foreach (var item in isolatedList)
+        {
+            foreach (var index in item.Key)
+                test += index + "-";
+
+            test += $" ({item.Value.weight}) - ";
+        }
+        UnityEngine.Debug.Log(test);
+
+        isolatedList = GetIsolatedAreasSorted(SortType.Score);
+        test = "Isolated sorted by score: ";
+        foreach (var item in isolatedList)
+        {
+            foreach (var index in item.Key)
+                test += index + "-";
+
+            test += $" ({item.Value.placementScore}) - ";
+        }
+        UnityEngine.Debug.Log(test);
+
+        isolatedList = GetIsolatedAreasSorted(SortType.WeightedScore);
+        test = "Isolated sorted by weighted score: ";
+        foreach (var item in isolatedList)
+        {
+            foreach (var index in item.Key)
+                test += index + "-";
+
+            test += $" ({item.Value.weightedScore}) - ";
+        }
+        UnityEngine.Debug.Log(test);
     }
 
     public static void PrintCycle(int[] nodes, int[] edges)

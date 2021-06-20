@@ -4,11 +4,17 @@ using UnityEngine;
 
 public class Curator : MonoBehaviour
 {
-    public Maze maze;
-    public Pathfinder pathfinder;
-    public AreaFinder areafinder;
-    public GraphFinder graphfinder;
-    public Spotfinder spotfinder;
+    [HideInInspector] public Maze maze;
+    [HideInInspector] public Pathfinder pathfinder;
+    [HideInInspector] public AreaFinder areafinder;
+    [HideInInspector] public GraphFinder graphfinder;
+    [HideInInspector] public Spotfinder spotfinder;
+    public Loot lootPrefab;
+    [SerializeField] int maxCritAreaCount = 2;
+    [SerializeField] int maxHighAreaCount = 5;
+    int currentCritAreaCount;
+    int currentHighAreaCount;
+    List<Loot> placedLoot = new List<Loot>();
 
     //private void OnEnable()
     //{
@@ -22,34 +28,69 @@ public class Curator : MonoBehaviour
 
     public void AssignPriorities()
     {
+        currentCritAreaCount = maxCritAreaCount;
+        currentHighAreaCount = maxHighAreaCount;
 
-    }
-
-    int maxAttempt = 100;
-    public void AssignRandomPriorities()
-    {
-        var assigned = new List<int>();
-
-        for(int i = 0; i < 10; i++)
+        var topAreas = GraphFinder.GetAreasSorted(SortType.WeightedScore, true);
+        for(int i = 0; i < topAreas.Count; i++)
         {
-            int attempt = 0;
-            var randomIndex = GraphFinder.FinalGraphIndices[GameManager.rngSeeded.Range(0, GraphFinder.FinalGraphIndices.Count)];
+            //if (i == 0)
+            //{
+            //    var topPosition = topAreas[i].Value.GetTopPlacement();
+            //    var loot = Instantiate(lootPrefab, topPosition.transform.position, Quaternion.identity);
+            //    loot.gameObject.name = "Loot";
+            //    loot.transform.parent = transform;
+            //    placedLoot.Add(loot);
+            //}
 
-            while(assigned.Contains(randomIndex) && attempt < maxAttempt)
-            {
-                randomIndex = GraphFinder.FinalGraphIndices[GameManager.rngSeeded.Range(0, GraphFinder.FinalGraphIndices.Count)];
-                attempt++;
-            }
+            var area = topAreas[i];
 
-            if (attempt >= maxAttempt)
+            if (area.Value.isMapEntranceOrExit)
                 continue;
 
-            var priority = GameManager.rngFree.Roll(0.1f) ? IndexPriority.Critical : IndexPriority.High;
-            graphfinder.RegisterPriorityIndex(randomIndex, priority);
+            if (currentCritAreaCount > 0)
+            {
+                graphfinder.RegisterPriorityIndex(area.Key, IndexPriority.Critical);
+                currentCritAreaCount--;
+            }
+            else
+                break;
+        }
 
-            assigned.Add(randomIndex);
+        var topIsolated = GraphFinder.GetIsolatedAreasSorted(SortType.WeightedScore, true);
+        for(int i = 0; i < topIsolated.Count; i++)
+        {
+            var isolated = topIsolated[i];
 
-            //Debug.Log($"Asssigning {priority.ToString()} to index {randomIndex}");
+            bool isAllowed = true;
+            foreach(var index in isolated.Key)
+                if (GraphFinder.Areas[index].isMapEntranceOrExit)
+                {
+                    isAllowed = false;
+                    break;
+                }
+
+            if (!isAllowed)
+                break;
+
+            if (isolated.Key.Count > currentHighAreaCount)
+                continue;
+            else
+            {
+                foreach(var index in isolated.Key)
+                {
+                    if(GraphFinder.Areas[index].priority < IndexPriority.High)
+                    {
+                        graphfinder.RegisterPriorityIndex(index, IndexPriority.High);
+                    }
+
+                    if (currentHighAreaCount-- <= 0)
+                        break;
+                }
+            }
+
+            if (currentHighAreaCount <= 0)
+                break;
         }
     }
 }
